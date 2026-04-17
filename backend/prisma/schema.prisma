@@ -4,6 +4,14 @@ generator client {
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum SystemRole {
+  DOCENTE
+  EVALUADOR
+  COORDINADOR
+  ESTUDIANTE
 }
 
 enum ProjectStatus {
@@ -39,13 +47,6 @@ enum SummaryChecklistResult {
   PARCIAL
 }
 
-enum ProjectUserRole {
-  DOCENTE
-  EVALUADOR
-  COORDINADOR
-  ESTUDIANTE
-}
-
 enum YesNoOption {
   SI
   NO
@@ -62,6 +63,7 @@ model User {
   name         String
   email        String        @unique
   password     String?
+  role         SystemRole
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   projectUsers ProjectUser[]
@@ -101,12 +103,11 @@ model Project {
 }
 
 model ProjectUser {
-  id        Int             @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   projectId Int
   userId    Int
-  rol       ProjectUserRole
-  project   Project         @relation(fields: [projectId], references: [id])
-  user      User            @relation(fields: [userId], references: [id])
+  project   Project @relation(fields: [projectId], references: [id])
+  user      User    @relation(fields: [userId], references: [id])
 
   @@unique([projectId, userId])
   @@map("project_users")
