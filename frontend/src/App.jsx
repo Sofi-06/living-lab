@@ -44,6 +44,8 @@ function getGuardedElement(requiredRole, element) {
   return element
 }
 
+import EditarUsuario from './pages/coordinador/usuarios/editar-usuario/EditarUsuario'
+
 function CoordinadorRoute() {
   return getGuardedElement('COORDINADOR', <CoordinadorDashboard />)
 }
@@ -54,6 +56,10 @@ function CoordinadorUsersRoute() {
 
 function CoordinadorCreateUserRoute() {
   return getGuardedElement('COORDINADOR', <CrearUsuario />)
+}
+
+function CoordinadorEditUserRoute() {
+  return getGuardedElement('COORDINADOR', <EditarUsuario />)
 }
 
 function DocenteRoute() {
@@ -89,6 +95,7 @@ function App() {
 
         <Route path="/coordinador/usuarios" element={<CoordinadorUsersRoute />} />
         <Route path="/coordinador/usuarios/crear-usuario" element={<CoordinadorCreateUserRoute />} />
+        <Route path="/coordinador/usuarios/editar-usuario/:id" element={<CoordinadorEditUserRoute />} />
 
         <Route path="/docente" element={<DocenteRoute />} />
 

@@ -29,6 +29,10 @@ export function getUsers(search = '') {
   return requestJson(`/users${suffix}`)
 }
 
+export function getUser(userId) {
+  return requestJson(`/users/${userId}`)
+}
+
 export function createUser(data) {
   return requestJson('/users', {
     method: 'POST',

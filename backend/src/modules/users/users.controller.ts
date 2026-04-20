@@ -24,6 +24,11 @@ export class UsersController {
     return this.usersService.getUsers(search);
   }
 
+  @Get(':id')
+  getUser(@Param('id') id: string) {
+    return this.usersService.getUser(id);
+  }
+
   @Patch(':id')
   updateUser(@Param('id') id: string, @Body() body: Record<string, unknown>) {
     return this.usersService.updateUser(id, body);

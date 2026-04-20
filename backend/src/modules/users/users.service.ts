@@ -93,6 +93,26 @@ export class UsersService {
     return { users };
   }
 
+  async getUser(rawId: string) {
+    const userId = this.parseUserId(rawId);
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    return { user };
+  }
+
   async updateUser(
     rawId: string,
     body: Record<string, unknown>,
@@ -127,6 +147,13 @@ export class UsersService {
 
     if (typeof body.role === 'string') {
       data.role = this.parseRole(body.role);
+    }
+
+    if (typeof body.password === 'string') {
+      const password = body.password.trim();
+      if (password) {
+        data.password = await hash(password, PASSWORD_SALT_ROUNDS);
+      }
     }
 
     if (Object.keys(data).length === 0) {

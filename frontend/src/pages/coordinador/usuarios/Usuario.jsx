@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardNavbar from '../../../components/navbar/DashboardNavbar'
 import { clearSessionUser } from '../../../utils/session'
-import { deleteUser, getUsers, updateUser } from '../../../services/users'
+import { deleteUser, getUsers } from '../../../services/users'
 import './Usuario.css'
 
 const NAV_LINKS = [
@@ -44,9 +44,6 @@ function Usuario() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
-  const [editingUser, setEditingUser] = useState(null)
-  const [editForm, setEditForm] = useState({ name: '', email: '', role: 'DOCENTE' })
-  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -114,19 +111,8 @@ function Usuario() {
     navigate('/login', { replace: true })
   }
 
-  function openEditModal(user) {
-    setMessage('')
-    setEditingUser(user)
-    setEditForm({
-      name: user.name ?? '',
-      email: user.email ?? '',
-      role: user.role ?? 'DOCENTE',
-    })
-  }
-
-  function closeEditModal() {
-    if (saving) return
-    setEditingUser(null)
+  function handleEditClick(user) {
+    navigate(`/coordinador/usuarios/editar-usuario/${user.id}`)
   }
 
   async function handleDelete(user) {
@@ -138,41 +124,13 @@ function Usuario() {
       setUsers((currentUsers) => currentUsers.filter((item) => item.id !== user.id))
       setMessage(`Usuario ${user.name} eliminado correctamente.`)
       setError('')
-      if (editingUser?.id === user.id) {
-        setEditingUser(null)
-      }
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : 'No se pudo eliminar el usuario')
       setMessage('')
     }
   }
 
-  async function handleSave(event) {
-    event.preventDefault()
-    if (!editingUser) return
 
-    setSaving(true)
-    setError('')
-    setMessage('')
-
-    try {
-      const payload = await updateUser(editingUser.id, {
-        name: editForm.name,
-        email: editForm.email,
-        role: editForm.role,
-      })
-
-      setUsers((currentUsers) =>
-        currentUsers.map((item) => (item.id === payload.user.id ? payload.user : item)),
-      )
-      setEditingUser(null)
-      setMessage(`Usuario ${payload.user.name} actualizado correctamente.`)
-    } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'No se pudo actualizar el usuario')
-    } finally {
-      setSaving(false)
-    }
-  }
 
   return (
     <div className="coor-users-page">
@@ -252,7 +210,7 @@ function Usuario() {
                       <td>{formatDate(user.createdAt)}</td>
                       <td>
                         <div className="coor-users-actions">
-                          <button type="button" onClick={() => openEditModal(user)}>
+                          <button type="button" onClick={() => handleEditClick(user)}>
                             Editar
                           </button>
                           <button type="button" className="danger" onClick={() => handleDelete(user)}>
@@ -268,73 +226,6 @@ function Usuario() {
           </div>
         </section>
       </main>
-
-      {editingUser ? (
-        <div className="coor-users-modal-backdrop" role="presentation" onClick={closeEditModal}>
-          <div
-            className="coor-users-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="coor-users-modal-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="coor-users-modal-head">
-              <div>
-                <p className="coor-users-eyebrow">Editar usuario</p>
-                <h3 id="coor-users-modal-title">{editingUser.name}</h3>
-              </div>
-              <button type="button" className="coor-users-close" onClick={closeEditModal}>
-                Cerrar
-              </button>
-            </div>
-
-            <form className="coor-users-form" onSubmit={handleSave}>
-              <label>
-                <span>Nombre</span>
-                <input
-                  type="text"
-                  value={editForm.name}
-                  onChange={(event) => setEditForm((current) => ({ ...current, name: event.target.value }))}
-                  required
-                />
-              </label>
-
-              <label>
-                <span>Correo</span>
-                <input
-                  type="email"
-                  value={editForm.email}
-                  onChange={(event) => setEditForm((current) => ({ ...current, email: event.target.value }))}
-                  required
-                />
-              </label>
-
-              <label>
-                <span>Rol</span>
-                <select
-                  value={editForm.role}
-                  onChange={(event) => setEditForm((current) => ({ ...current, role: event.target.value }))}
-                >
-                  {ROLE_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <div className="coor-users-form-actions">
-                <button type="button" className="secondary" onClick={closeEditModal}>
-                  Cancelar
-                </button>
-                <button type="submit" disabled={saving}>
-                  {saving ? 'Guardando...' : 'Guardar cambios'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      ) : null}
     </div>
   )
 }
