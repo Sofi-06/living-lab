@@ -1,6 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import Login from './components/login/Login'
 import CoordinadorDashboard from './pages/coordinador/CoordinadorDashboard'
+import Usuario from './pages/coordinador/usuarios/Usuario'
+import CrearUsuario from './pages/coordinador/usuarios/crear-usuario/CrearUsuario'
 import DocenteDashboard from './pages/docente/DocenteDashboard'
 import EvaluadorDashboard from './pages/evaluador/EvaluadorDashboard'
 import { getSessionUser } from './utils/session'
@@ -46,6 +48,14 @@ function CoordinadorRoute() {
   return getGuardedElement('COORDINADOR', <CoordinadorDashboard />)
 }
 
+function CoordinadorUsersRoute() {
+  return getGuardedElement('COORDINADOR', <Usuario />)
+}
+
+function CoordinadorCreateUserRoute() {
+  return getGuardedElement('COORDINADOR', <CrearUsuario />)
+}
+
 function DocenteRoute() {
   return getGuardedElement('DOCENTE', <DocenteDashboard />)
 }
@@ -76,6 +86,9 @@ function App() {
           path="/coordinador"
           element={<CoordinadorRoute />}
         />
+
+        <Route path="/coordinador/usuarios" element={<CoordinadorUsersRoute />} />
+        <Route path="/coordinador/usuarios/crear-usuario" element={<CoordinadorCreateUserRoute />} />
 
         <Route path="/docente" element={<DocenteRoute />} />
 

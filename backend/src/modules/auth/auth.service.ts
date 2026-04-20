@@ -1,6 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { compare, hash } from 'bcryptjs';
 import { PrismaService } from '../../database/prisma.service';
 import { LoginDto } from './dto/login.dto';
+
+const PASSWORD_SALT_ROUNDS = 10;
 
 type LoginUser = {
   id: number;
@@ -33,8 +36,27 @@ export class AuthService {
       },
     });
 
-    if (!user || user.password !== password) {
+    if (!user?.password) {
       throw new UnauthorizedException('Correo o contrasena incorrectos');
+    }
+
+    const usesHash = this.isBcryptHash(user.password);
+    const isPasswordValid = usesHash
+      ? await compare(password, user.password)
+      : user.password === password;
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Correo o contrasena incorrectos');
+    }
+
+    // Transparently upgrade legacy plaintext passwords after successful login.
+    if (!usesHash) {
+      const hashedPassword = await hash(password, PASSWORD_SALT_ROUNDS);
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword },
+      });
     }
 
     return {
@@ -46,5 +68,13 @@ export class AuthService {
         role: String(user.role),
       },
     };
+  }
+
+  private isBcryptHash(value: string) {
+    return (
+      value.startsWith('$2a$') ||
+      value.startsWith('$2b$') ||
+      value.startsWith('$2y$')
+    );
   }
 }

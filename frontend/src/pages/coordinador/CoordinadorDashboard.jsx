@@ -6,11 +6,11 @@ import { clearSessionUser, getSessionUser } from '../../utils/session'
 import { getDashboardMetrics } from '../../services/dashboard'
 
 const NAV_LINKS = [
-  { label: 'Dashboard' },
-  { label: 'Proyectos' },
-  { label: 'Empresas' },
-  { label: 'Usuarios' },
-  { label: 'Reportes' },
+  { label: 'Dashboard', path: '/coordinador' },
+  { label: 'Proyectos', path: '/coordinador' },
+  { label: 'Empresas', path: '/coordinador' },
+  { label: 'Usuarios', path: '/coordinador/usuarios' },
+  { label: 'Reportes', path: '/coordinador' },
 ]
 
 const KPI_TEMPLATES = [
@@ -76,6 +76,7 @@ function CoordinadorDashboard() {
 
   const summaryItems = metrics?.summary || []
   const recentActivity = metrics?.recentActivity || []
+  const totalUsers = summaryItems.find((item) => item.label === 'Usuarios registrados')?.value ?? 0
 
   function handleLogout() {
     clearSessionUser()
@@ -92,6 +93,7 @@ function CoordinadorDashboard() {
             <div>
               <h1>Bienvenid@, {sessionUser?.name || 'Usuario'}!</h1>
               <p>Panel de control de Coordinador · {today}</p>
+              <p>Total de usuarios registrados: {totalUsers}</p>
             </div>
           </article>
 

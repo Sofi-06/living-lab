@@ -1,4 +1,5 @@
 import './DashboardNavbar.css'
+import { useNavigate } from 'react-router-dom'
 import {
   MdDashboard,
   MdFolderOpen,
@@ -29,6 +30,14 @@ function MenuIcon({ name, className = '' }) {
 }
 
 function DashboardNavbar({ links, onLogout, activeIndex = 0 }) {
+  const navigate = useNavigate()
+
+  function handleNavigate(path) {
+    if (typeof path === 'string' && path.trim()) {
+      navigate(path)
+    }
+  }
+
   return (
     <aside className="dashboard-navbar-shell" aria-label="Menu principal">
       <div className="dashboard-navbar-rail">
@@ -64,6 +73,7 @@ function DashboardNavbar({ links, onLogout, activeIndex = 0 }) {
               type="button"
               key={`${link.label}-${index}`}
               className={index === activeIndex ? 'navbar-link navbar-link-active' : 'navbar-link'}
+              onClick={() => handleNavigate(link.path)}
             >
               <span className="navbar-link-text">{link.label}</span>
             </button>
