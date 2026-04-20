@@ -1,10 +1,31 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import './Login.css'
 import loginIllustration from '../../assets/Login.jpg'
 import campusLogo from '../../assets/Copia-de-FInal-Logo-campusprueba2-2-1-scaled.png'
 import { loginUser } from '../../services/auth'
+import { getSessionUser, saveSessionUser } from '../../utils/session'
+
+const ROLE_PATHS = {
+  COORDINADOR: '/coordinador',
+  DOCENTE: '/docente',
+  EVALUADOR: '/evaluador',
+}
+
+function normalizeRole(rawRole) {
+  if (typeof rawRole !== 'string') return ''
+  const normalized = rawRole.trim().toUpperCase()
+  return ROLE_PATHS[normalized] ? normalized : ''
+}
+
+function roleToPath(rawRole) {
+  const role = normalizeRole(rawRole)
+  return role ? ROLE_PATHS[role] : '/login'
+}
 
 function Login() {
+  const navigate = useNavigate()
+
   const [form, setForm] = useState({
     email: '',
     password: '',
@@ -13,6 +34,15 @@ function Login() {
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState({ type: '', message: '' })
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    const currentUser = getSessionUser()
+    const destination = roleToPath(currentUser?.role)
+
+    if (currentUser && destination !== '/login') {
+      navigate(destination, { replace: true })
+    }
+  }, [navigate])
 
   function handleChange(event) {
     const { name, value } = event.target
@@ -52,11 +82,14 @@ function Login() {
 
     try {
       const response = await loginUser(form)
-      sessionStorage.setItem('sessionUser', JSON.stringify(response.user))
-      setStatus({
-        type: 'success',
-        message: `Bienvenido, ${response.user.name}.`,
-      })
+      const userRole = normalizeRole(response?.user?.role)
+
+      if (!userRole) {
+        throw new Error('Tu cuenta no tiene un rol valido para el dashboard')
+      }
+
+      saveSessionUser(response.user)
+      navigate(roleToPath(userRole), { replace: true })
     } catch (error) {
       setStatus({
         type: 'error',

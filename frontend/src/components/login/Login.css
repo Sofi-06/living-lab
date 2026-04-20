@@ -87,7 +87,7 @@
 #login-title {
   margin: 0;
   color: var(--title);
-  font-size: clamp(1.85rem, 2.2vw, 2.45rem);
+  font-size: clamp(1.5rem, 1.6vw, 1.95rem);
   font-weight: 700;
   line-height: 1.04;
   letter-spacing: -0.03em;
@@ -112,12 +112,12 @@
 
 .status-message.success {
   background: rgba(25, 207, 215, 0.12);
-  color: #0d6a70;
+  color: #0a4f54;
 }
 
 .status-message.error {
-  background: rgba(196, 61, 61, 0.12);
-  color: #a72f2f;
+  background: #7a1f1f;
+  color: #ffffff;
 }
 
 .field {
@@ -169,7 +169,7 @@
   border-radius: 999px;
   background: var(--button);
   color: #ffffff;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: transform 160ms ease, background-color 160ms ease;
@@ -211,7 +211,7 @@
   }
 
   #login-title {
-    font-size: 1.8rem;
+    font-size: 1.7rem;
   }
 }
 
@@ -249,7 +249,7 @@
   }
 
   #login-title {
-    font-size: 2.4rem;
+    font-size: 1.85rem;
   }
 
   .login-form {
@@ -258,14 +258,14 @@
   }
 
   .field span {
-    font-size: 16px;
+    font-size: 15px;
   }
 
   .field input {
     height: 58px;
     padding: 0 22px;
     border-width: 3px;
-    font-size: 16px;
+    font-size: 15px;
   }
 }
 
@@ -284,11 +284,11 @@
   }
 
   #login-title {
-    font-size: 1.95rem;
+    font-size: 1.6rem;
   }
 
   .field span {
-    font-size: 16px;
+    font-size: 15px;
   }
 
   .field input {
@@ -299,7 +299,7 @@
   .submit-btn {
     width: 140px;
     height: 46px;
-    font-size: 17px;
+    font-size: 15px;
   }
 
   .link-btn {
