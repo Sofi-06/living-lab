@@ -7,8 +7,8 @@ import { getDashboardMetrics } from '../../services/dashboard'
 
 const NAV_LINKS = [
   { label: 'Dashboard', path: '/coordinador' },
-  { label: 'Proyectos', path: '/coordinador' },
-  { label: 'Empresas', path: '/coordinador' },
+  { label: 'Proyectos', path: '/coordinador/proyectos' },
+  { label: 'Empresas', path: '/coordinador/empresas' },
   { label: 'Usuarios', path: '/coordinador/usuarios' },
   { label: 'Reportes', path: '/coordinador' },
 ]

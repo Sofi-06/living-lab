@@ -7,8 +7,8 @@ import './EditarUsuario.css'
 
 const NAV_LINKS = [
   { label: 'Dashboard', path: '/coordinador' },
-  { label: 'Proyectos', path: '/coordinador' },
-  { label: 'Empresas', path: '/coordinador' },
+  { label: 'Proyectos', path: '/coordinador/proyectos' },
+  { label: 'Empresas', path: '/coordinador/empresas' },
   { label: 'Usuarios', path: '/coordinador/usuarios' },
   { label: 'Reportes', path: '/coordinador' },
 ]
@@ -130,48 +130,52 @@ function EditarUsuario() {
           ) : (
             <form className="coor-edit-form" onSubmit={handleSubmit}>
               <label>
-                <span>Nombre</span>
                 <input
                   type="text"
                   value={form.name}
                   onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
                   required
+                  placeholder=" "
                 />
+                <span>Nombre</span>
               </label>
 
               <label>
-                <span>Correo</span>
                 <input
                   type="email"
                   value={form.email}
                   onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
                   required
+                  placeholder=" "
                 />
+                <span>Correo</span>
               </label>
 
               <label>
-                <span>Rol</span>
                 <select
                   value={form.role}
                   onChange={(event) => setForm((current) => ({ ...current, role: event.target.value }))}
+                  required
                 >
+                  <option value="" disabled hidden></option>
                   {ROLE_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
                   ))}
                 </select>
+                <span>Rol</span>
               </label>
 
               <label>
-                <span>Contrasena (Opcional)</span>
                 <input
                   type="password"
-                  placeholder="Dejar en blanco para no cambiar"
                   value={form.password}
                   onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
                   minLength={4}
+                  placeholder=" "
                 />
+                <span>Contrasena (Opcional)</span>
               </label>
 
               <button type="submit" disabled={saving}>

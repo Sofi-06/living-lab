@@ -14,7 +14,10 @@
 
 .coor-edit-main {
   min-width: 0;
-  padding: 10px 10px 10px 0;
+  padding: 20px 20px 20px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .coor-edit-card {
@@ -23,7 +26,7 @@
   border: 1px solid #e4e7f0;
   box-shadow: 0 9px 28px rgba(46, 58, 91, 0.05);
   padding: 20px;
-  max-width: 760px;
+  width: min(100%, 760px);
 }
 
 .coor-edit-head {
@@ -84,50 +87,76 @@
 }
 
 .coor-edit-form {
-  margin-top: 16px;
+  margin-top: 30px;
   display: grid;
   gap: 12px;
 }
 
+
 .coor-edit-form label {
-  display: grid;
-  gap: 6px;
+  display: block;
+  position: relative;
+  margin-bottom: 18px;
 }
 
 .coor-edit-form span {
-  font-size: 12px;
-  font-weight: 700;
-  color: #5f6f92;
+  position: absolute;
+  left: 0;
+  top: 13px;
+  font-size: 15px;
+  color: #7a95e5;
+  pointer-events: none;
+  transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
+
 
 .coor-edit-form input,
 .coor-edit-form select {
   width: 100%;
-  border: 1px solid #dbe1ef;
-  border-radius: 14px;
-  padding: 11px 14px;
+  border: none;
+  border-bottom: 2px solid #dbe1ef;
+  border-radius: 0;
+  padding: 13px 0 7px 0;
   font: inherit;
-  background: #fbfcff;
-  color: #23314f;
+  background: transparent;
+  color: #22305a;
   outline: none;
+  transition: border-color 0.2s;
+  box-shadow: none;
 }
 
 .coor-edit-form input:focus,
 .coor-edit-form select:focus {
-  border-color: #7a95e5;
-  box-shadow: 0 0 0 3px rgba(119, 146, 232, 0.16);
+  border-color: #4460ba;
+}
+
+.coor-edit-form input:focus + span,
+.coor-edit-form input:not(:placeholder-shown) + span,
+.coor-edit-form select:focus + span,
+.coor-edit-form select:not([value=""]) + span {
+  top: -10px;
+  font-size: 12px;
+  color: #4460ba;
+  background: #fff;
+  padding: 0 4px;
+  border-radius: 4px;
 }
 
 .coor-edit-form button {
-  margin-top: 4px;
+  margin-top: 8px;
   border: none;
-  border-radius: 12px;
-  background: #2d4ca3;
-  color: #ffffff;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #4460ba 60%, #7a95e5 100%);
+  color: #fff;
   font: inherit;
   font-weight: 800;
-  padding: 11px 14px;
+  padding: 13px 0;
   cursor: pointer;
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(68,96,186,0.08);
+  transition: background 0.2s;
 }
 
 .coor-edit-form button:disabled {
@@ -144,6 +173,7 @@
 
   .coor-edit-main {
     padding: 14px;
+    align-items: flex-start;
   }
 }
 

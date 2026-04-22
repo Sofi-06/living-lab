@@ -1,8 +1,16 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import Login from './components/login/Login'
 import CoordinadorDashboard from './pages/coordinador/CoordinadorDashboard'
+import Proyecto from './pages/coordinador/proyectos/Proyecto'
+import CrearProyecto from './pages/coordinador/proyectos/crear-proyecto/CrearProyecto'
+import DetalleProyecto from './pages/coordinador/proyectos/detalle-proyecto/DetalleProyecto'
+import EditarProyecto from './pages/coordinador/proyectos/editar-proyecto/EditarProyecto'
+import Empresa from './pages/coordinador/empresas/Empresa'
+import CrearEmpresa from './pages/coordinador/empresas/crear-empresa/CrearEmpresa'
+import EditarEmpresa from './pages/coordinador/empresas/editar-empresa/EditarEmpresa'
 import Usuario from './pages/coordinador/usuarios/Usuario'
 import CrearUsuario from './pages/coordinador/usuarios/crear-usuario/CrearUsuario'
+import EditarUsuario from './pages/coordinador/usuarios/editar-usuario/EditarUsuario'
 import DocenteDashboard from './pages/docente/DocenteDashboard'
 import EvaluadorDashboard from './pages/evaluador/EvaluadorDashboard'
 import { getSessionUser } from './utils/session'
@@ -44,14 +52,40 @@ function getGuardedElement(requiredRole, element) {
   return element
 }
 
-import EditarUsuario from './pages/coordinador/usuarios/editar-usuario/EditarUsuario'
-
 function CoordinadorRoute() {
   return getGuardedElement('COORDINADOR', <CoordinadorDashboard />)
 }
 
 function CoordinadorUsersRoute() {
   return getGuardedElement('COORDINADOR', <Usuario />)
+}
+
+function CoordinadorProjectsRoute() {
+  return getGuardedElement('COORDINADOR', <Proyecto />)
+}
+
+function CoordinadorCreateProjectRoute() {
+  return getGuardedElement('COORDINADOR', <CrearProyecto />)
+}
+
+function CoordinadorEditProjectRoute() {
+  return getGuardedElement('COORDINADOR', <EditarProyecto />)
+}
+
+function CoordinadorProjectDetailRoute() {
+  return getGuardedElement('COORDINADOR', <DetalleProyecto />)
+}
+
+function CoordinadorCompaniesRoute() {
+  return getGuardedElement('COORDINADOR', <Empresa />)
+}
+
+function CoordinadorCreateCompanyRoute() {
+  return getGuardedElement('COORDINADOR', <CrearEmpresa />)
+}
+
+function CoordinadorEditCompanyRoute() {
+  return getGuardedElement('COORDINADOR', <EditarEmpresa />)
 }
 
 function CoordinadorCreateUserRoute() {
@@ -93,6 +127,13 @@ function App() {
           element={<CoordinadorRoute />}
         />
 
+        <Route path="/coordinador/proyectos" element={<CoordinadorProjectsRoute />} />
+        <Route path="/coordinador/proyectos/crear-proyecto" element={<CoordinadorCreateProjectRoute />} />
+        <Route path="/coordinador/proyectos/:id" element={<CoordinadorProjectDetailRoute />} />
+        <Route path="/coordinador/proyectos/editar-proyecto/:id" element={<CoordinadorEditProjectRoute />} />
+        <Route path="/coordinador/empresas" element={<CoordinadorCompaniesRoute />} />
+        <Route path="/coordinador/empresas/crear-empresa" element={<CoordinadorCreateCompanyRoute />} />
+        <Route path="/coordinador/empresas/editar-empresa/:id" element={<CoordinadorEditCompanyRoute />} />
         <Route path="/coordinador/usuarios" element={<CoordinadorUsersRoute />} />
         <Route path="/coordinador/usuarios/crear-usuario" element={<CoordinadorCreateUserRoute />} />
         <Route path="/coordinador/usuarios/editar-usuario/:id" element={<CoordinadorEditUserRoute />} />

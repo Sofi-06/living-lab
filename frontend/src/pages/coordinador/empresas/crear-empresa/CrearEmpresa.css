@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap');
 
-.coor-create-page {
+.coor-create-company-page {
   min-height: 100vh;
   background: radial-gradient(circle at 18% 18%, #dbe6ff 0, transparent 34%),
     radial-gradient(circle at 95% 10%, #d8edf9 0, transparent 24%), #f2f4f8;
@@ -12,7 +12,7 @@
   font-family: 'Nunito', 'Segoe UI', sans-serif;
 }
 
-.coor-create-main {
+.coor-create-company-main {
   min-width: 0;
   padding: 20px 20px 20px 0;
   display: flex;
@@ -20,7 +20,7 @@
   align-items: center;
 }
 
-.coor-create-card {
+.coor-create-company-card {
   background: #ffffff;
   border-radius: 20px;
   border: 1px solid #e4e7f0;
@@ -29,14 +29,14 @@
   width: min(100%, 760px);
 }
 
-.coor-create-head {
+.coor-create-company-head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
 }
 
-.coor-create-eyebrow {
+.coor-create-company-eyebrow {
   margin: 0 0 8px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
@@ -45,17 +45,17 @@
   color: #4460ba;
 }
 
-.coor-create-head h1 {
+.coor-create-company-head h1 {
   margin: 0;
   color: #22305a;
 }
 
-.coor-create-head p {
+.coor-create-company-head p {
   margin: 8px 0 0;
   color: #5f6f92;
 }
 
-.coor-create-back {
+.coor-create-company-back {
   border: none;
   border-radius: 12px;
   background: #eef1f8;
@@ -66,7 +66,7 @@
   cursor: pointer;
 }
 
-.coor-create-alert {
+.coor-create-company-alert {
   margin-top: 14px;
   border-radius: 14px;
   padding: 12px 14px;
@@ -74,32 +74,31 @@
   font-weight: 700;
 }
 
-.coor-create-alert.success {
+.coor-create-company-alert.success {
   background: #eefbf3;
   color: #1c7b44;
   border: 1px solid #ccefd9;
 }
 
-.coor-create-alert.error {
+.coor-create-company-alert.error {
   background: #fff0f0;
   color: #b23b3b;
   border: 1px solid #f1c9c9;
 }
 
-.coor-create-form {
+.coor-create-company-form {
   margin-top: 30px;
   display: grid;
   gap: 12px;
 }
 
-
-.coor-create-form label {
+.coor-create-company-form label {
   display: block;
   position: relative;
   margin-bottom: 18px;
 }
 
-.coor-create-form span {
+.coor-create-company-form span {
   position: absolute;
   left: 0;
   top: 13px;
@@ -111,9 +110,7 @@
   letter-spacing: 0.02em;
 }
 
-
-.coor-create-form input,
-.coor-create-form select {
+.coor-create-company-form input {
   width: 100%;
   border: none;
   border-bottom: 2px solid #dbe1ef;
@@ -127,15 +124,12 @@
   box-shadow: none;
 }
 
-.coor-create-form input:focus,
-.coor-create-form select:focus {
+.coor-create-company-form input:focus {
   border-color: #4460ba;
 }
 
-.coor-create-form input:focus + span,
-.coor-create-form input:not(:placeholder-shown) + span,
-.coor-create-form select:focus + span,
-.coor-create-form select:not([value=""]) + span {
+.coor-create-company-form input:focus + span,
+.coor-create-company-form input:not(:placeholder-shown) + span {
   top: -10px;
   font-size: 12px;
   color: #4460ba;
@@ -144,7 +138,7 @@
   border-radius: 4px;
 }
 
-.coor-create-form button {
+.coor-create-company-form button {
   margin-top: 8px;
   border: none;
   border-radius: 8px;
@@ -159,26 +153,26 @@
   transition: background 0.2s;
 }
 
-.coor-create-form button:disabled {
+.coor-create-company-form button:disabled {
   cursor: wait;
   opacity: 0.72;
 }
 
 @media (max-width: 980px) {
-  .coor-create-page {
+  .coor-create-company-page {
     grid-template-columns: 1fr;
     padding: 0;
     gap: 0;
   }
 
-  .coor-create-main {
+  .coor-create-company-main {
     padding: 14px;
     align-items: flex-start;
   }
 }
 
 @media (max-width: 640px) {
-  .coor-create-head {
+  .coor-create-company-head {
     flex-direction: column;
     align-items: stretch;
   }
