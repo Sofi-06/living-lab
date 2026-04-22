@@ -23,11 +23,15 @@ async function requestJson(path, options = {}) {
   return payload
 }
 
-export function getProjects(search = '') {
+export function getProjects(search = '', options = {}) {
   const query = new URLSearchParams()
 
   if (typeof search === 'string' && search.trim()) {
     query.set('search', search.trim())
+  }
+
+  if (options?.userId !== undefined && options?.userId !== null && options.userId !== '') {
+    query.set('userId', String(options.userId))
   }
 
   const suffix = query.toString() ? `?${query.toString()}` : ''
@@ -48,6 +52,13 @@ export function createProject(data) {
 export function updateProject(projectId, data) {
   return requestJson(`/projects/${projectId}`, {
     method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}
+
+export function createProjectEvidence(projectId, data) {
+  return requestJson(`/projects/${projectId}/evidences`, {
+    method: 'POST',
     body: JSON.stringify(data),
   })
 }

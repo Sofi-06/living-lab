@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Login.css'
-import loginIllustration from '../../assets/Login.jpg'
-import campusLogo from '../../assets/Copia-de-FInal-Logo-campusprueba2-2-1-scaled.png'
+import universityBackdrop from '../../assets/715.jpg'
+import campusLogo from '../../assets/Logo santoto camina-02.png'
 import { loginUser } from '../../services/auth'
 import { getSessionUser, saveSessionUser } from '../../utils/session'
 
@@ -102,10 +102,16 @@ function Login() {
 
   return (
     <main className="login-page">
-      <section className="login-layout" aria-label="Pantalla de inicio de sesion">
-        <aside className="login-visual" aria-hidden="true">
-          <img src={loginIllustration} alt="" className="visual-image" />
-        </aside>
+      <section
+        className="login-layout"
+        aria-label="Pantalla de inicio de sesion"
+        style={{ '--login-backdrop': `url(${universityBackdrop})` }}
+      >
+        <div className="login-scene" aria-hidden="true">
+          <div className="login-orb orb-a" />
+          <div className="login-orb orb-b" />
+          <div className="login-orb orb-c" />
+        </div>
 
         <section className="login-panel" aria-labelledby="login-title">
           <div className="login-card">
@@ -117,7 +123,7 @@ function Login() {
                   className="brand-logo"
                 />
               </div>
-              <h1 id="login-title">Iniciar Sesion</h1>
+              <h1 id="login-title">Iniciar Sesión</h1>
             </header>
 
             <form className="login-form" onSubmit={handleSubmit} noValidate>
@@ -129,42 +135,48 @@ function Login() {
 
               <label className="field">
                 <span>Correo institucional</span>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="usuario@usantotomas.edu.co"
-                  value={form.email}
-                  onChange={handleChange}
-                  autoComplete="email"
-                  aria-invalid={Boolean(errors.email)}
-                  aria-describedby={errors.email ? 'email-error' : undefined}
-                />
+                <div className="field-control">
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="usuario@usantotomas.edu.co"
+                    value={form.email}
+                    onChange={handleChange}
+                    autoComplete="email"
+                    aria-invalid={Boolean(errors.email)}
+                    aria-describedby={errors.email ? 'email-error' : undefined}
+                  />
+                </div>
                 {errors.email ? <small id="email-error">{errors.email}</small> : null}
               </label>
 
               <label className="field">
-                <span>Contrasena</span>
-                <input
-                  type="password"
-                  name="password"
-                  placeholder="********"
-                  value={form.password}
-                  onChange={handleChange}
-                  autoComplete="current-password"
-                  aria-invalid={Boolean(errors.password)}
-                  aria-describedby={errors.password ? 'password-error' : undefined}
-                />
+                <span>Contraseña</span>
+                <div className="field-control">
+                  <input
+                    type="password"
+                    name="password"
+                    placeholder="********"
+                    value={form.password}
+                    onChange={handleChange}
+                    autoComplete="current-password"
+                    aria-invalid={Boolean(errors.password)}
+                    aria-describedby={errors.password ? 'password-error' : undefined}
+                  />
+                </div>
                 {errors.password ? (
                   <small id="password-error">{errors.password}</small>
                 ) : null}
               </label>
 
+              <div className="login-meta login-meta-single">
+                <button type="button" className="link-btn">
+                  Olvido su contraseña?
+                </button>
+              </div>
+
               <button type="submit" className="submit-btn" disabled={isSubmitting}>
                 {isSubmitting ? 'Ingresando...' : 'Ingresar'}
-              </button>
-
-              <button type="button" className="link-btn">
-                Olvido su contrasena?
               </button>
             </form>
           </div>

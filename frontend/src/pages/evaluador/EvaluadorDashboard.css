@@ -24,8 +24,9 @@
 
 .eval-main {
   min-width: 0;
-  padding: 10px 10px 10px 0;
-  display: block;
+  padding: 10px 10px 24px 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .eval-grid {

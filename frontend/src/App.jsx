@@ -12,6 +12,8 @@ import Usuario from './pages/coordinador/usuarios/Usuario'
 import CrearUsuario from './pages/coordinador/usuarios/crear-usuario/CrearUsuario'
 import EditarUsuario from './pages/coordinador/usuarios/editar-usuario/EditarUsuario'
 import DocenteDashboard from './pages/docente/DocenteDashboard'
+import DocenteProyecto from './pages/docente/proyecto/DocenteProyecto'
+import DetalleDocenteProyecto from './pages/docente/proyecto/detalle-proyecto/DetalleDocenteProyecto'
 import EvaluadorDashboard from './pages/evaluador/EvaluadorDashboard'
 import { getSessionUser } from './utils/session'
 
@@ -100,6 +102,14 @@ function DocenteRoute() {
   return getGuardedElement('DOCENTE', <DocenteDashboard />)
 }
 
+function DocenteProjectsRoute() {
+  return getGuardedElement('DOCENTE', <DocenteProyecto />)
+}
+
+function DocenteProjectDetailRoute() {
+  return getGuardedElement('DOCENTE', <DetalleDocenteProyecto />)
+}
+
 function EvaluadorRoute() {
   return getGuardedElement('EVALUADOR', <EvaluadorDashboard />)
 }
@@ -139,6 +149,8 @@ function App() {
         <Route path="/coordinador/usuarios/editar-usuario/:id" element={<CoordinadorEditUserRoute />} />
 
         <Route path="/docente" element={<DocenteRoute />} />
+        <Route path="/docente/proyectos" element={<DocenteProjectsRoute />} />
+        <Route path="/docente/proyectos/:id" element={<DocenteProjectDetailRoute />} />
 
         <Route
           path="/evaluador"

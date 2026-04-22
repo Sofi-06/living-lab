@@ -1,16 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardNavbar from '../../components/navbar/DashboardNavbar'
+import DashboardFooter from '../../components/footer/DashboardFooter'
 import './DocenteDashboard.css'
 import { clearSessionUser, getSessionUser } from '../../utils/session'
 import { getDashboardMetrics } from '../../services/dashboard'
 
 const NAV_LINKS = [
-  { label: 'Dashboard' },
-  { label: 'Proyectos' },
-  { label: 'Empresas' },
-  { label: 'Usuarios' },
-  { label: 'Reportes' },
+  { label: 'Dashboard', path: '/docente' },
+  { label: 'Proyectos', path: '/docente/proyectos' },
 ]
 
 const KPI_TEMPLATES = [
@@ -19,8 +17,6 @@ const KPI_TEMPLATES = [
   { label: 'Evidencias pendientes', key: 'evidencesPending', tone: 'warning' },
   { label: 'Evaluaciones pendientes', key: 'evaluationsPending', tone: 'warning' },
 ]
-
-
 
 function DocenteDashboard() {
   const navigate = useNavigate()
@@ -130,8 +126,8 @@ function DocenteDashboard() {
               ))}
             </div>
           </article>
-
         </section>
+        <DashboardFooter />
       </main>
     </div>
   )

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardNavbar from '../../components/navbar/DashboardNavbar'
+import DashboardFooter from '../../components/footer/DashboardFooter'
 import './CoordinadorDashboard.css'
 import { clearSessionUser, getSessionUser } from '../../utils/session'
 import { getDashboardMetrics } from '../../services/dashboard'
@@ -134,6 +135,7 @@ function CoordinadorDashboard() {
           </article>
 
         </section>
+        <DashboardFooter />
       </main>
     </div>
   )

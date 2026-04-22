@@ -20,8 +20,11 @@ export class ProjectsController {
   }
 
   @Get()
-  getProjects(@Query('search') search?: string) {
-    return this.projectsService.getProjects(search);
+  getProjects(
+    @Query('search') search?: string,
+    @Query('userId') userId?: string,
+  ) {
+    return this.projectsService.getProjects(search, userId);
   }
 
   @Get(':id')
@@ -35,6 +38,14 @@ export class ProjectsController {
     @Body() body: Record<string, unknown>,
   ) {
     return this.projectsService.updateProject(id, body);
+  }
+
+  @Post(':id/evidences')
+  createEvidence(
+    @Param('id') id: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.projectsService.createEvidence(id, body);
   }
 
   @Delete(':id')

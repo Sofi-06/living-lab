@@ -200,6 +200,10 @@ type ProjectDetailResponse = {
   project: ProjectDetailRecord;
 };
 
+type ProjectEvidenceResponse = {
+  evidence: ProjectEvidenceRecord;
+};
+
 @Injectable()
 export class ProjectsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -209,7 +213,10 @@ export class ProjectsService {
       body.companyId,
       'La empresa es obligatoria',
     );
-    const titulo = this.parseRequiredText(body.titulo, 'El titulo es obligatorio');
+    const titulo = this.parseRequiredText(
+      body.titulo,
+      'El titulo es obligatorio',
+    );
     const descripcionProblema = this.parseRequiredText(
       body.descripcionProblema,
       'La descripcion del problema es obligatoria',
@@ -219,7 +226,10 @@ export class ProjectsService {
       'El resultado esperado es obligatorio',
     );
     const estado = this.parseProjectStatus(body.estado);
-    const fechaInicio = this.parseOptionalDate(body.fechaInicio, 'La fecha de inicio');
+    const fechaInicio = this.parseOptionalDate(
+      body.fechaInicio,
+      'La fecha de inicio',
+    );
     const fechaFin = this.parseOptionalDate(body.fechaFin, 'La fecha de fin');
     const userIds = this.parseUserIds(body.userIds);
 
@@ -261,59 +271,71 @@ export class ProjectsService {
     return { project: this.mapProject(project) };
   }
 
-  async getProjects(rawSearch?: string) {
+  async getProjects(rawSearch?: string, rawUserId?: string) {
     const search = typeof rawSearch === 'string' ? rawSearch.trim() : '';
+    const userId = rawUserId
+      ? this.parseEntityId(rawUserId, 'Identificador de usuario invalido')
+      : null;
     const statusFilter = this.normalizeStatusFilter(search);
+    const filters: Prisma.ProjectWhereInput[] = [];
 
-    const where = search
-      ? {
-          OR: [
-            { titulo: { contains: search, mode: 'insensitive' as const } },
-            {
-              descripcionProblema: {
-                contains: search,
-                mode: 'insensitive' as const,
+    if (search) {
+      filters.push({
+        OR: [
+          { titulo: { contains: search } },
+          {
+            descripcionProblema: {
+              contains: search,
+            },
+          },
+          {
+            resultadoEsperado: {
+              contains: search,
+            },
+          },
+          {
+            company: {
+              is: {
+                nombre: { contains: search },
               },
             },
-            {
-              resultadoEsperado: {
-                contains: search,
-                mode: 'insensitive' as const,
-              },
-            },
-            {
-              company: {
-                is: {
-                  nombre: { contains: search, mode: 'insensitive' as const },
+          },
+          {
+            projectUsers: {
+              some: {
+                user: {
+                  OR: [
+                    {
+                      name: {
+                        contains: search,
+                      },
+                    },
+                    {
+                      email: {
+                        contains: search,
+                      },
+                    },
+                  ],
                 },
               },
             },
-            {
-              projectUsers: {
-                some: {
-                  user: {
-                    OR: [
-                      {
-                        name: {
-                          contains: search,
-                          mode: 'insensitive' as const,
-                        },
-                      },
-                      {
-                        email: {
-                          contains: search,
-                          mode: 'insensitive' as const,
-                        },
-                      },
-                    ],
-                  },
-                },
-              },
-            },
-            ...(statusFilter ? [{ estado: statusFilter }] : []),
-          ],
-        }
-      : undefined;
+          },
+          ...(statusFilter ? [{ estado: statusFilter }] : []),
+        ],
+      });
+    }
+
+    if (userId) {
+      filters.push({
+        projectUsers: {
+          some: {
+            userId,
+          },
+        },
+      });
+    }
+
+    const where = filters.length > 0 ? { AND: filters } : undefined;
 
     const projects = await this.prisma.project.findMany({
       where,
@@ -336,6 +358,98 @@ export class ProjectsService {
     }
 
     return { project: this.mapProjectDetail(project) };
+  }
+
+  async createEvidence(
+    rawId: string,
+    body: Record<string, unknown>,
+  ): Promise<ProjectEvidenceResponse> {
+    const projectId = this.parseProjectId(rawId);
+    const projectPhaseId = this.parseEntityId(
+      body.projectPhaseId,
+      'La fase del proyecto es obligatoria',
+    );
+    const userId = this.parseEntityId(body.userId, 'El usuario es obligatorio');
+    const titulo = this.parseRequiredText(
+      body.titulo,
+      'El titulo es obligatorio',
+    );
+    const descripcion =
+      typeof body.descripcion === 'string'
+        ? this.parseOptionalText(body.descripcion)
+        : null;
+    const archivo = this.parseRequiredText(
+      body.archivo,
+      'El enlace del archivo es obligatorio',
+    );
+
+    await this.ensureProjectExists(projectId);
+    await this.ensureUsersExist([userId]);
+
+    const projectPhase = await this.prisma.projectPhase.findFirst({
+      where: {
+        id: projectPhaseId,
+        projectId,
+      },
+      select: {
+        id: true,
+        phase: {
+          select: {
+            nombre: true,
+          },
+        },
+      },
+    });
+
+    if (!projectPhase) {
+      throw new NotFoundException('La fase del proyecto no existe');
+    }
+
+    const evidence = await this.prisma.evidence.create({
+      data: {
+        projectPhaseId,
+        userId,
+        titulo,
+        descripcion,
+        archivo,
+      },
+      select: {
+        id: true,
+        titulo: true,
+        descripcion: true,
+        archivo: true,
+        estado: true,
+        observaciones: true,
+        fecha: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    return {
+      evidence: {
+        id: evidence.id,
+        fase: projectPhase.phase.nombre,
+        titulo: evidence.titulo,
+        descripcion: evidence.descripcion,
+        archivo: evidence.archivo,
+        estado: evidence.estado,
+        observaciones: evidence.observaciones,
+        fecha: evidence.fecha,
+        user: {
+          id: evidence.user.id,
+          name: evidence.user.name,
+          email: evidence.user.email,
+          role: evidence.user.role,
+        },
+      },
+    };
   }
 
   async updateProject(
@@ -364,12 +478,18 @@ export class ProjectsService {
     let nextFechaFin = existingProject.fechaFin;
 
     if (body.companyId !== undefined) {
-      companyId = this.parseEntityId(body.companyId, 'La empresa es obligatoria');
+      companyId = this.parseEntityId(
+        body.companyId,
+        'La empresa es obligatoria',
+      );
       data.company = { connect: { id: companyId } };
     }
 
     if (typeof body.titulo === 'string') {
-      data.titulo = this.parseExistingText(body.titulo, 'El titulo es obligatorio');
+      data.titulo = this.parseExistingText(
+        body.titulo,
+        'El titulo es obligatorio',
+      );
     }
 
     if (typeof body.descripcionProblema === 'string') {
@@ -546,6 +666,11 @@ export class ProjectsService {
     return value;
   }
 
+  private parseOptionalText(rawValue: string) {
+    const value = this.normalizeText(rawValue);
+    return value || null;
+  }
+
   private parseProjectStatus(rawValue: unknown): ProjectStatus {
     if (typeof rawValue !== 'string') {
       throw new BadRequestException('El estado es obligatorio');
@@ -590,16 +715,20 @@ export class ProjectsService {
 
   private parseUserIds(rawValue: unknown) {
     if (!Array.isArray(rawValue)) {
-      throw new BadRequestException('Debes asignar al menos un usuario al proyecto');
+      throw new BadRequestException(
+        'Debes asignar al menos un usuario al proyecto',
+      );
     }
 
-    const userIds = [...new Set(rawValue.map((value) => Number(value)))];
+    const userIds = [...new Set(rawValue.map(Number))];
 
     if (
       userIds.length === 0 ||
       userIds.some((userId) => !Number.isInteger(userId) || userId <= 0)
     ) {
-      throw new BadRequestException('Debes asignar al menos un usuario al proyecto');
+      throw new BadRequestException(
+        'Debes asignar al menos un usuario al proyecto',
+      );
     }
 
     return userIds;
@@ -616,6 +745,17 @@ export class ProjectsService {
     }
   }
 
+  private async ensureProjectExists(projectId: number) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Proyecto no encontrado');
+    }
+  }
+
   private async ensureUsersExist(userIds: number[]) {
     const users = await this.prisma.user.findMany({
       where: { id: { in: userIds } },
@@ -627,10 +767,7 @@ export class ProjectsService {
     }
   }
 
-  private validateDateRange(
-    fechaInicio: Date | null,
-    fechaFin: Date | null,
-  ) {
+  private validateDateRange(fechaInicio: Date | null, fechaFin: Date | null) {
     if (fechaInicio && fechaFin && fechaFin < fechaInicio) {
       throw new BadRequestException(
         'La fecha de fin no puede ser anterior a la fecha de inicio',
@@ -654,7 +791,7 @@ export class ProjectsService {
   }
 
   private normalizeText(value: string) {
-    return value.trim().replace(/\s+/g, ' ');
+    return value.trim().replaceAll(/\s+/g, ' ');
   }
 
   private mapProject(project: ProjectWithRelations): ProjectRecord {
@@ -681,7 +818,9 @@ export class ProjectsService {
     };
   }
 
-  private mapProjectDetail(project: ProjectDetailWithRelations): ProjectDetailRecord {
+  private mapProjectDetail(
+    project: ProjectDetailWithRelations,
+  ): ProjectDetailRecord {
     const baseProject = this.mapProject(project);
 
     return {
@@ -713,11 +852,15 @@ export class ProjectsService {
       checklist: project.summaryChecklist.map((item) =>
         this.mapChecklistItem(item),
       ),
-      businessValidation: this.mapBusinessValidation(project.businessValidation),
+      businessValidation: this.mapBusinessValidation(
+        project.businessValidation,
+      ),
     };
   }
 
-  private mapChecklistItem(item: ProjectDetailWithRelations['summaryChecklist'][number]): ProjectChecklistRecord {
+  private mapChecklistItem(
+    item: ProjectDetailWithRelations['summaryChecklist'][number],
+  ): ProjectChecklistRecord {
     return {
       id: item.id,
       fase: item.fase,
