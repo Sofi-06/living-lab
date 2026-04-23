@@ -4,7 +4,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, ProjectStatus } from '@prisma/client';
+import { extname } from 'node:path';
 import { PrismaService } from '../../database/prisma.service';
+
+const DEFAULT_PROJECT_PHASES = [
+  'Co-creacion',
+  'Accion',
+  'Medicion',
+  'Iteracion',
+  'Narrativa',
+  'Apropiacion',
+] as const;
 
 const projectListSelect = {
   id: true,
@@ -204,6 +214,11 @@ type ProjectEvidenceResponse = {
   evidence: ProjectEvidenceRecord;
 };
 
+type UploadedEvidenceFile = {
+  filename: string;
+  originalname: string;
+};
+
 @Injectable()
 export class ProjectsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -348,6 +363,8 @@ export class ProjectsService {
 
   async getProject(rawId: string): Promise<ProjectDetailResponse> {
     const projectId = this.parseProjectId(rawId);
+    await this.ensureDefaultProjectPhases(projectId);
+
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       select: projectDetailSelect,
@@ -363,8 +380,11 @@ export class ProjectsService {
   async createEvidence(
     rawId: string,
     body: Record<string, unknown>,
+    file?: UploadedEvidenceFile,
   ): Promise<ProjectEvidenceResponse> {
     const projectId = this.parseProjectId(rawId);
+    await this.ensureDefaultProjectPhases(projectId);
+
     const projectPhaseId = this.parseEntityId(
       body.projectPhaseId,
       'La fase del proyecto es obligatoria',
@@ -378,10 +398,12 @@ export class ProjectsService {
       typeof body.descripcion === 'string'
         ? this.parseOptionalText(body.descripcion)
         : null;
-    const archivo = this.parseRequiredText(
-      body.archivo,
-      'El enlace del archivo es obligatorio',
-    );
+
+    if (!file) {
+      throw new BadRequestException('El archivo es obligatorio');
+    }
+
+    const archivo = this.buildEvidenceFileUrl(projectId, file.filename);
 
     await this.ensureProjectExists(projectId);
     await this.ensureUsersExist([userId]);
@@ -756,6 +778,55 @@ export class ProjectsService {
     }
   }
 
+  private async ensureDefaultProjectPhases(projectId: number) {
+    await this.ensureProjectExists(projectId);
+
+    const existingPhases = await this.prisma.phase.findMany({
+      where: {
+        nombre: {
+          in: [...DEFAULT_PROJECT_PHASES],
+        },
+      },
+      select: {
+        id: true,
+        nombre: true,
+      },
+    });
+
+    const indexedPhases = new Map(
+      existingPhases.map((phase) => [phase.nombre, phase]),
+    );
+    const missingPhaseNames = DEFAULT_PROJECT_PHASES.filter(
+      (phaseName) => !indexedPhases.has(phaseName),
+    );
+
+    if (missingPhaseNames.length > 0) {
+      await this.prisma.phase.createMany({
+        data: missingPhaseNames.map((nombre) => ({ nombre })),
+        skipDuplicates: true,
+      });
+    }
+
+    const phases = await this.prisma.phase.findMany({
+      where: {
+        nombre: {
+          in: [...DEFAULT_PROJECT_PHASES],
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    await this.prisma.projectPhase.createMany({
+      data: phases.map((phase) => ({
+        projectId,
+        phaseId: phase.id,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
   private async ensureUsersExist(userIds: number[]) {
     const users = await this.prisma.user.findMany({
       where: { id: { in: userIds } },
@@ -792,6 +863,16 @@ export class ProjectsService {
 
   private normalizeText(value: string) {
     return value.trim().replaceAll(/\s+/g, ' ');
+  }
+
+  private buildEvidenceFileUrl(projectId: number, filename: string) {
+    const safeFilename = filename.replace(/\\/g, '/');
+
+    if (!safeFilename || safeFilename.includes('..') || extname(safeFilename) === '') {
+      throw new BadRequestException('Nombre de archivo invalido');
+    }
+
+    return `/uploads/${projectId}/${safeFilename}`;
   }
 
   private mapProject(project: ProjectWithRelations): ProjectRecord {

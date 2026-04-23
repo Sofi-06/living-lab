@@ -5,6 +5,8 @@ import { getProject } from '../../../../services/projects'
 import { clearSessionUser } from '../../../../utils/session'
 import './DetalleProyecto.css'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
+
 const NAV_LINKS = [
   { label: 'Dashboard', path: '/coordinador' },
   { label: 'Proyectos', path: '/coordinador/proyectos' },
@@ -72,6 +74,12 @@ function formatDate(value) {
 
 function normalizeText(value) {
   return typeof value === 'string' ? value.trim().toLowerCase() : ''
+}
+
+function resolveEvidenceUrl(value) {
+  if (typeof value !== 'string' || !value.trim()) return '#'
+  if (value.startsWith('http://') || value.startsWith('https://')) return value
+  return `${API_BASE_URL}${value}`
 }
 
 function DetailValue({ label, value }) {
@@ -271,7 +279,7 @@ function DetalleProyecto() {
                   </td>
                   <td>
                     <a
-                      href={evidence.archivo}
+                      href={resolveEvidenceUrl(evidence.archivo)}
                       target="_blank"
                       rel="noreferrer"
                       className="coor-project-detail-link"

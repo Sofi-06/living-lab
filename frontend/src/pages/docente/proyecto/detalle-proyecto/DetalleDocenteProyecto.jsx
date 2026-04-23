@@ -6,6 +6,8 @@ import { clearSessionUser, getSessionUser } from '../../../../utils/session'
 import '../../../coordinador/proyectos/detalle-proyecto/DetalleProyecto.css'
 import './DetalleDocenteProyecto.css'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
+
 const NAV_LINKS = [
   { label: 'Dashboard', path: '/docente' },
   { label: 'Proyectos', path: '/docente/proyectos' },
@@ -51,7 +53,7 @@ const EMPTY_EVIDENCE_FORM = {
   projectPhaseId: '',
   titulo: '',
   descripcion: '',
-  archivo: '',
+  archivo: null,
 }
 
 function formatDate(value) {
@@ -70,6 +72,12 @@ function formatDate(value) {
 
 function normalizeText(value) {
   return typeof value === 'string' ? value.trim().toLowerCase() : ''
+}
+
+function resolveEvidenceUrl(value) {
+  if (typeof value !== 'string' || !value.trim()) return '#'
+  if (value.startsWith('http://') || value.startsWith('https://')) return value
+  return `${API_BASE_URL}${value}`
 }
 
 function DetalleDocenteProyecto() {
@@ -154,8 +162,9 @@ function DetalleDocenteProyecto() {
   }, [project])
 
   function handleEvidenceFieldChange(event) {
-    const { name, value } = event.target
-    setEvidenceForm((current) => ({ ...current, [name]: value }))
+    const { name, value, files } = event.target
+    const nextValue = name === 'archivo' ? files?.[0] ?? null : value
+    setEvidenceForm((current) => ({ ...current, [name]: nextValue }))
   }
 
   async function handleEvidenceSubmit(event) {
@@ -315,13 +324,11 @@ function DetalleDocenteProyecto() {
             </label>
 
             <label className="doc-evidence-field doc-evidence-field-full">
-              <span>Enlace del archivo</span>
+              <span>Archivo</span>
               <input
-                type="url"
+                type="file"
                 name="archivo"
-                value={evidenceForm.archivo}
                 onChange={handleEvidenceFieldChange}
-                placeholder="https://..."
                 required
               />
             </label>
@@ -367,7 +374,7 @@ function DetalleDocenteProyecto() {
                       </td>
                       <td>
                         <a
-                          href={evidence.archivo}
+                          href={resolveEvidenceUrl(evidence.archivo)}
                           target="_blank"
                           rel="noreferrer"
                           className="coor-project-detail-link"

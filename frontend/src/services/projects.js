@@ -1,12 +1,14 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 
 async function requestJson(path, options = {}) {
-  const headers = {
-    'Content-Type': 'application/json',
-  }
+  const headers = {}
 
   if (options.headers) {
     Object.assign(headers, options.headers)
+  }
+
+  if (options.body && !(options.body instanceof FormData) && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json'
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -57,9 +59,17 @@ export function updateProject(projectId, data) {
 }
 
 export function createProjectEvidence(projectId, data) {
+  const formData = new FormData()
+
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      formData.append(key, value)
+    }
+  })
+
   return requestJson(`/projects/${projectId}/evidences`, {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: formData,
   })
 }
 
