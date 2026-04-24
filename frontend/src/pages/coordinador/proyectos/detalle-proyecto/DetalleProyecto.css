@@ -108,6 +108,14 @@
   padding: 20px;
 }
 
+.coor-project-detail-shell-summary {
+  padding: 18px;
+}
+
+.coor-project-detail-shell-summary .coor-project-detail-progress-grid {
+  margin: 0;
+}
+
 .coor-project-detail-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -138,6 +146,12 @@
 .coor-project-detail-copy-grid,
 .coor-project-detail-validation-grid {
   display: grid;
+  gap: 14px;
+}
+
+.coor-project-detail-progress-grid {
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 14px;
 }
 
@@ -179,6 +193,252 @@
   margin: 0;
   color: #344461;
   line-height: 1.55;
+}
+
+.coor-project-detail-progress-card {
+  background: linear-gradient(135deg, #18315f 0%, #244887 55%, #4f78bf 100%);
+  border-radius: 18px;
+  padding: 22px;
+  color: #fff;
+  display: grid;
+  gap: 18px;
+}
+
+.coor-project-detail-mini-label {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.coor-project-detail-progress-card h3,
+.coor-project-detail-flow-card h3,
+.coor-project-detail-evaluation-card h3 {
+  margin: 0;
+}
+
+.coor-project-detail-progress-card p,
+.coor-project-detail-flow-card p,
+.coor-project-detail-evaluation-card p {
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+
+.coor-project-detail-progress-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: end;
+}
+
+.coor-project-detail-progress-meter {
+  min-width: 120px;
+  text-align: right;
+}
+
+.coor-project-detail-progress-value {
+  font-size: clamp(34px, 4.6vw, 50px);
+  line-height: 1;
+  font-weight: 800;
+}
+
+.coor-project-detail-progress-label {
+  display: block;
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.coor-project-detail-progress-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+}
+
+.coor-project-detail-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f6d96b 0%, #fff1b8 100%);
+}
+
+.coor-project-detail-progress-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.coor-project-detail-progress-meta-item {
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.coor-project-detail-progress-meta strong,
+.coor-project-detail-progress-meta span {
+  display: block;
+}
+
+.coor-project-detail-progress-meta span {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.78);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+}
+
+.coor-project-detail-progress-meta strong {
+  margin-top: 6px;
+  font-size: 16px;
+}
+
+.coor-project-detail-flow-card,
+.coor-project-detail-evaluation-card {
+  background: #fbfcff;
+  border: 1px solid #e8edf7;
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.coor-project-detail-flow-list,
+.coor-project-detail-evaluation-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.coor-project-detail-flow-item,
+.coor-project-detail-evaluation-item {
+  border: 1px solid #e8edf7;
+  border-radius: 16px;
+  background: #fff;
+  padding: 14px;
+}
+
+.coor-project-detail-flow-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 7px 11px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.coor-project-detail-flow-badge.current {
+  background: #e7f0ff;
+  color: #2758b7;
+}
+
+.coor-project-detail-flow-badge.completed {
+  background: #e8f8ef;
+  color: #1b7d47;
+}
+
+.coor-project-detail-flow-badge.locked {
+  background: #fff7dc;
+  color: #8e6a05;
+}
+
+.coor-project-detail-flow-badge.available {
+  background: #eef1f8;
+  color: #4f6188;
+}
+
+.coor-project-detail-phase-track {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.coor-project-detail-phase-track-item {
+  border-radius: 16px;
+  padding: 14px;
+  border: 1px solid #e4eaf6;
+  background: #fff;
+  display: grid;
+  gap: 12px;
+}
+
+.coor-project-detail-phase-track-item.current {
+  border-color: #96b1ea;
+  background: linear-gradient(180deg, #f7faff 0%, #ffffff 100%);
+  box-shadow: 0 10px 24px rgba(68, 96, 186, 0.08);
+}
+
+.coor-project-detail-phase-track-item.completed {
+  border-color: #cde8d9;
+  background: linear-gradient(180deg, #f6fcf8 0%, #ffffff 100%);
+}
+
+.coor-project-detail-phase-track-item.locked {
+  background: #fafbfe;
+}
+
+.coor-project-detail-phase-track-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.coor-project-detail-phase-track-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #eef3ff;
+  color: #3150a1;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.coor-project-detail-phase-track-body {
+  display: grid;
+  gap: 4px;
+}
+
+.coor-project-detail-phase-track-body strong {
+  color: #22305a;
+  font-size: 15px;
+}
+
+.coor-project-detail-phase-track-body span {
+  color: #7482a3;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.coor-project-detail-evaluation-item-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.coor-project-detail-evaluation-item-head strong {
+  color: #22305a;
+}
+
+.coor-project-detail-evaluation-item-copy {
+  margin: 12px 0 0;
+  color: #344461;
+  line-height: 1.5;
 }
 
 .coor-project-detail-table-wrap {
@@ -298,10 +558,16 @@
   }
 
   .coor-project-detail-hero,
+  .coor-project-detail-progress-grid,
   .coor-project-detail-grid,
   .coor-project-detail-copy-grid,
-  .coor-project-detail-validation-grid {
+  .coor-project-detail-validation-grid,
+  .coor-project-detail-progress-meta {
     grid-template-columns: 1fr;
+  }
+
+  .coor-project-detail-phase-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -312,5 +578,18 @@
 
   .coor-project-detail-hero-actions {
     width: 100%;
+  }
+
+  .coor-project-detail-progress-head,
+  .coor-project-detail-phase-track {
+    grid-template-columns: 1fr;
+  }
+
+  .coor-project-detail-progress-head {
+    display: grid;
+  }
+
+  .coor-project-detail-progress-meter {
+    text-align: left;
   }
 }

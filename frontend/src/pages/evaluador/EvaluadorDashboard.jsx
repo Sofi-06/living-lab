@@ -6,12 +6,9 @@ import './EvaluadorDashboard.css'
 import { clearSessionUser, getSessionUser } from '../../utils/session'
 import { getDashboardMetrics } from '../../services/dashboard'
 
-const NAV_LINKS = [
-  { label: 'Dashboard' },
-  { label: 'Proyectos' },
-  { label: 'Empresas' },
-  { label: 'Usuarios' },
-  { label: 'Reportes' },
+const EVALUADOR_NAV_LINKS = [
+  { label: 'Dashboard', path: '/evaluador' },
+  { label: 'Proyectos', path: '/evaluador/proyectos' },
 ]
 
 const KPI_TEMPLATES = [
@@ -20,8 +17,6 @@ const KPI_TEMPLATES = [
   { label: 'Evidencias pendientes', key: 'evidencesPending', tone: 'warning' },
   { label: 'Evaluaciones pendientes', key: 'evaluationsPending', tone: 'warning' },
 ]
-
-
 
 function EvaluadorDashboard() {
   const navigate = useNavigate()
@@ -85,14 +80,14 @@ function EvaluadorDashboard() {
 
   return (
     <div className="eval-page">
-      <DashboardNavbar links={NAV_LINKS} onLogout={handleLogout} activeIndex={0} />
+      <DashboardNavbar links={EVALUADOR_NAV_LINKS} onLogout={handleLogout} activeIndex={0} />
 
       <main className="eval-main">
         <section className="eval-grid">
           <article className="eval-block eval-hero-block">
             <div>
               <h1>Bienvenid@, {sessionUser?.name || 'Usuario'}!</h1>
-              <p>Panel de control de Evaluador · {today}</p>
+              <p>Panel de control de Evaluador - {today}</p>
             </div>
           </article>
 
@@ -131,7 +126,6 @@ function EvaluadorDashboard() {
               ))}
             </div>
           </article>
-
         </section>
         <DashboardFooter />
       </main>

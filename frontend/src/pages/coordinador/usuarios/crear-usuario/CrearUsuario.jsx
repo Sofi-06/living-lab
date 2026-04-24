@@ -1,23 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import DashboardNavbar from '../../../../components/navbar/DashboardNavbar'
+import DashboardNavbar, { COORDINADOR_LINKS } from '../../../../components/navbar/DashboardNavbar'
 import { createUser } from '../../../../services/users'
 import { clearSessionUser } from '../../../../utils/session'
 import './CrearUsuario.css'
-
-const NAV_LINKS = [
-  { label: 'Dashboard', path: '/coordinador' },
-  { label: 'Proyectos', path: '/coordinador/proyectos' },
-  { label: 'Empresas', path: '/coordinador/empresas' },
-  { label: 'Usuarios', path: '/coordinador/usuarios' },
-  { label: 'Reportes', path: '/coordinador' },
-]
-
 const ROLE_OPTIONS = [
   { value: 'COORDINADOR', label: 'Coordinador' },
-  { value: 'DOCENTE', label: 'Docente' },
+  { value: 'PARTICIPANTE', label: 'Participante' },
   { value: 'EVALUADOR', label: 'Evaluador' },
-  { value: 'ESTUDIANTE', label: 'Estudiante' },
+  { value: 'REPRESENTANTE', label: 'Representante' },
 ]
 
 function CrearUsuario() {
@@ -26,7 +17,7 @@ function CrearUsuario() {
     name: '',
     email: '',
     password: '',
-    role: 'DOCENTE',
+    role: 'PARTICIPANTE',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -59,14 +50,8 @@ function CrearUsuario() {
     setMessage('')
 
     try {
-      const payload = await createUser(form)
-      setMessage(`Usuario ${payload.user.name} creado correctamente.`)
-      setForm((current) => ({
-        ...current,
-        name: '',
-        email: '',
-        password: '',
-      }))
+      await createUser(form)
+      navigate('/coordinador/usuarios', { replace: true })
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : 'No se pudo crear el usuario')
     } finally {
@@ -76,7 +61,7 @@ function CrearUsuario() {
 
   return (
     <div className="coor-create-page">
-      <DashboardNavbar links={NAV_LINKS} onLogout={handleLogout} activeIndex={3} />
+      <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={3} />
 
       <main className="coor-create-main">
         <section className="coor-create-card">

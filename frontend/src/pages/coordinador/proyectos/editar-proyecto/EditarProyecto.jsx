@@ -1,19 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import DashboardNavbar from '../../../../components/navbar/DashboardNavbar'
+import DashboardNavbar, { COORDINADOR_LINKS } from '../../../../components/navbar/DashboardNavbar'
+import SearchableSelect from '../../../../components/searchable-select/SearchableSelect'
 import { getCompanies } from '../../../../services/companies'
 import { getProject, updateProject } from '../../../../services/projects'
 import { getUsers } from '../../../../services/users'
 import { clearSessionUser } from '../../../../utils/session'
 import './EditarProyecto.css'
-
-const NAV_LINKS = [
-  { label: 'Dashboard', path: '/coordinador' },
-  { label: 'Proyectos', path: '/coordinador/proyectos' },
-  { label: 'Empresas', path: '/coordinador/empresas' },
-  { label: 'Usuarios', path: '/coordinador/usuarios' },
-  { label: 'Reportes', path: '/coordinador' },
-]
 
 const STATUS_OPTIONS = [
   { value: 'PENDING', label: 'Pendiente' },
@@ -21,10 +14,6 @@ const STATUS_OPTIONS = [
   { value: 'COMPLETED', label: 'Completado' },
   { value: 'CANCELLED', label: 'Cancelado' },
 ]
-
-function normalizeText(value) {
-  return typeof value === 'string' ? value.trim().toLowerCase() : ''
-}
 
 function toDateInputValue(value) {
   return typeof value === 'string' && value ? value.slice(0, 10) : ''
@@ -35,21 +24,28 @@ function EditarProyecto() {
   const { id } = useParams()
   const [form, setForm] = useState({
     companyId: '',
+    participanteId: '',
+    evaluadorId: '',
     titulo: '',
     descripcionProblema: '',
     resultadoEsperado: '',
     estado: 'PENDING',
     fechaInicio: '',
     fechaFin: '',
-    userIds: [],
   })
   const [companies, setCompanies] = useState([])
-  const [users, setUsers] = useState([])
-  const [userSearch, setUserSearch] = useState('')
+  const [participantes, setParticipantes] = useState([])
+  const [evaluadores, setEvaluadores] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+
+  const selectedCompany = companies.find((company) => String(company.id) === form.companyId) ?? null
+  const selectedParticipante =
+    participantes.find((user) => String(user.id) === form.participanteId) ?? null
+  const selectedEvaluador =
+    evaluadores.find((user) => String(user.id) === form.evaluadorId) ?? null
 
   function handleLogout() {
     clearSessionUser()
@@ -66,35 +62,39 @@ function EditarProyecto() {
       setError('')
 
       try {
-        const [projectPayload, companiesPayload, usersPayload] = await Promise.all([
+        const [projectPayload, companiesPayload, participantesPayload, evaluadoresPayload] = await Promise.all([
           getProject(id),
           getCompanies(),
-          getUsers(),
+          getUsers('', { role: 'PARTICIPANTE' }),
+          getUsers('', { role: 'EVALUADOR' }),
         ])
 
         if (!cancelled) {
           const project = projectPayload?.project
 
           setCompanies(companiesPayload?.companies ?? [])
-          setUsers(usersPayload?.users ?? [])
+          setParticipantes(participantesPayload?.users ?? [])
+          setEvaluadores(evaluadoresPayload?.users ?? [])
 
           if (project) {
             setForm({
               companyId: String(project.companyId ?? ''),
+              participanteId: String(project.participanteId ?? ''),
+              evaluadorId: String(project.evaluadorId ?? ''),
               titulo: project.titulo ?? '',
               descripcionProblema: project.descripcionProblema ?? '',
               resultadoEsperado: project.resultadoEsperado ?? '',
               estado: project.estado ?? 'PENDING',
               fechaInicio: toDateInputValue(project.fechaInicio),
               fechaFin: toDateInputValue(project.fechaFin),
-              userIds: (project.users ?? []).map((user) => user.id),
             })
           }
         }
       } catch (loadError) {
         if (!cancelled) {
           setCompanies([])
-          setUsers([])
+          setParticipantes([])
+          setEvaluadores([])
           setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar el proyecto')
         }
       } finally {
@@ -125,26 +125,6 @@ function EditarProyecto() {
     return () => clearTimeout(timeout)
   }, [error])
 
-  const filteredUsers = useMemo(() => {
-    const term = normalizeText(userSearch)
-
-    if (!term) return users
-
-    return users.filter((user) => {
-      const haystack = `${normalizeText(user.name)} ${normalizeText(user.email)} ${normalizeText(user.role)}`
-      return haystack.includes(term)
-    })
-  }, [userSearch, users])
-
-  function handleToggleUser(userId) {
-    setForm((current) => ({
-      ...current,
-      userIds: current.userIds.includes(userId)
-        ? current.userIds.filter((item) => item !== userId)
-        : [...current.userIds, userId],
-    }))
-  }
-
   async function handleSubmit(event) {
     event.preventDefault()
     if (!id) return
@@ -154,12 +134,13 @@ function EditarProyecto() {
     setMessage('')
 
     try {
-      const payload = await updateProject(id, {
+      await updateProject(id, {
         ...form,
         companyId: Number(form.companyId),
+        participanteId: Number(form.participanteId),
+        evaluadorId: Number(form.evaluadorId),
       })
-
-      setMessage(`Proyecto ${payload.project.titulo} actualizado correctamente.`)
+      navigate('/coordinador/proyectos', { replace: true })
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : 'No se pudo actualizar el proyecto')
     } finally {
@@ -169,7 +150,7 @@ function EditarProyecto() {
 
   return (
     <div className="coor-project-form-page">
-      <DashboardNavbar links={NAV_LINKS} onLogout={handleLogout} activeIndex={1} />
+      <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={1} />
 
       <main className="coor-project-form-main">
         <section className="coor-project-form-card">
@@ -177,7 +158,7 @@ function EditarProyecto() {
             <div>
               <p className="coor-project-form-eyebrow">Administracion</p>
               <h1>Editar proyecto</h1>
-              <p>Actualiza la empresa, el estado y las personas que hacen parte del proyecto.</p>
+              <p>Actualiza la empresa, su representante visible, el participante y el evaluador del proyecto.</p>
             </div>
 
             <button
@@ -197,55 +178,68 @@ function EditarProyecto() {
           ) : (
             <form className="coor-project-form-grid" onSubmit={handleSubmit}>
               <div className="coor-project-form-fields">
-                <label>
-                  <span>Empresa</span>
-                  <select
-                    value={form.companyId}
-                    onChange={(event) => setForm((current) => ({ ...current, companyId: event.target.value }))}
-                    required
-                  >
-                    <option value="">Selecciona una empresa</option>
-                    {companies.map((company) => (
-                      <option key={company.id} value={company.id}>
-                        {company.nombre}
-                      </option>
-                    ))}
-                  </select>
+                <SearchableSelect
+                  label="Empresa"
+                  placeholder="Busca y selecciona una empresa"
+                  options={companies.map((company) => ({
+                    value: String(company.id),
+                    label: company.nombre,
+                    description: company.representante?.name
+                      ? `Representante: ${company.representante.name}`
+                      : company.sector,
+                  }))}
+                  value={form.companyId}
+                  onChange={(value) => setForm((current) => ({ ...current, companyId: value }))}
+                  emptyMessage="No hay empresas disponibles."
+                  required
+                  variant="line"
+                />
+
+                <label className={selectedCompany?.representante?.name ? 'is-filled' : ''}>
+                  <input
+                    type="text"
+                    value={selectedCompany?.representante?.name ?? ''}
+                    readOnly
+                    placeholder=" "
+                  />
+                  <span>Representante</span>
                 </label>
 
-                <label>
-                  <span>Titulo</span>
+                <label className={form.titulo ? 'is-filled' : ''}>
                   <input
                     type="text"
                     value={form.titulo}
                     onChange={(event) => setForm((current) => ({ ...current, titulo: event.target.value }))}
                     required
+                    placeholder=" "
                   />
+                  <span>Titulo</span>
                 </label>
 
-                <label>
-                  <span>Descripcion del problema</span>
+                <label className={form.descripcionProblema ? 'is-filled' : ''}>
                   <textarea
                     value={form.descripcionProblema}
                     onChange={(event) => setForm((current) => ({ ...current, descripcionProblema: event.target.value }))}
                     required
                     rows={4}
+                    placeholder=" "
                   />
+                  <span>Descripcion del problema</span>
                 </label>
 
-                <label>
-                  <span>Resultado esperado</span>
+                <label className={form.resultadoEsperado ? 'is-filled' : ''}>
                   <textarea
                     value={form.resultadoEsperado}
                     onChange={(event) => setForm((current) => ({ ...current, resultadoEsperado: event.target.value }))}
                     required
                     rows={4}
+                    placeholder=" "
                   />
+                  <span>Resultado esperado</span>
                 </label>
 
                 <div className="coor-project-form-row">
-                  <label>
-                    <span>Estado</span>
+                  <label className="is-filled select-field">
                     <select
                       value={form.estado}
                       onChange={(event) => setForm((current) => ({ ...current, estado: event.target.value }))}
@@ -257,61 +251,90 @@ function EditarProyecto() {
                         </option>
                       ))}
                     </select>
+                    <span>Estado</span>
                   </label>
 
-                  <label>
-                    <span>Fecha inicio</span>
+                  <label className={form.fechaInicio ? 'is-filled date-field' : 'date-field'}>
                     <input
                       type="date"
                       value={form.fechaInicio}
                       onChange={(event) => setForm((current) => ({ ...current, fechaInicio: event.target.value }))}
                     />
+                    <span>Fecha inicio</span>
                   </label>
 
-                  <label>
-                    <span>Fecha fin</span>
+                  <label className={form.fechaFin ? 'is-filled date-field' : 'date-field'}>
                     <input
                       type="date"
                       value={form.fechaFin}
                       onChange={(event) => setForm((current) => ({ ...current, fechaFin: event.target.value }))}
                     />
+                    <span>Fecha fin</span>
                   </label>
                 </div>
+
+                <SearchableSelect
+                  label="Participante"
+                  placeholder="Busca y selecciona un participante"
+                  options={participantes.map((user) => ({
+                    value: String(user.id),
+                    label: user.name,
+                    description: user.email,
+                  }))}
+                  value={form.participanteId}
+                  onChange={(value) => setForm((current) => ({ ...current, participanteId: value }))}
+                  emptyMessage="No hay participantes disponibles."
+                  required
+                  variant="line"
+                />
+
+                <SearchableSelect
+                  label="Evaluador"
+                  placeholder="Busca y selecciona un evaluador"
+                  options={evaluadores.map((user) => ({
+                    value: String(user.id),
+                    label: user.name,
+                    description: user.email,
+                  }))}
+                  value={form.evaluadorId}
+                  onChange={(value) => setForm((current) => ({ ...current, evaluadorId: value }))}
+                  emptyMessage="No hay evaluadores disponibles."
+                  required
+                  variant="line"
+                />
               </div>
 
               <aside className="coor-project-assignment-card">
                 <div className="coor-project-assignment-head">
                   <div>
-                    <h2>Usuarios asignados</h2>
-                    <p>Actualiza las personas vinculadas a este proyecto.</p>
+                    <h2>Resumen del proyecto</h2>
+                    <p>Confirma las personas responsables antes de guardar los cambios.</p>
                   </div>
-
-                  <strong>{form.userIds.length} seleccionados</strong>
                 </div>
 
-                <input
-                  type="search"
-                  className="coor-project-user-search"
-                  placeholder="Buscar usuario por nombre, correo o rol"
-                  value={userSearch}
-                  onChange={(event) => setUserSearch(event.target.value)}
-                />
+                <div className="coor-project-summary-list">
+                  <div className="coor-project-summary-item">
+                    <span>Empresa</span>
+                    <strong>{selectedCompany?.nombre ?? 'Sin seleccionar'}</strong>
+                  </div>
 
-                <div className="coor-project-user-list">
-                  {filteredUsers.map((user) => (
-                    <label key={user.id} className="coor-project-user-option">
-                      <input
-                        type="checkbox"
-                        checked={form.userIds.includes(user.id)}
-                        onChange={() => handleToggleUser(user.id)}
-                      />
-                      <div>
-                        <strong>{user.name}</strong>
-                        <span>{user.email}</span>
-                        <small>{user.role}</small>
-                      </div>
-                    </label>
-                  ))}
+                  <div className="coor-project-summary-item">
+                    <span>Representante</span>
+                    <strong>{selectedCompany?.representante?.name ?? 'Sin seleccionar empresa'}</strong>
+                    <small>{selectedCompany?.representante?.email ?? ''}</small>
+                  </div>
+
+                  <div className="coor-project-summary-item">
+                    <span>Participante</span>
+                    <strong>{selectedParticipante?.name ?? 'Sin seleccionar'}</strong>
+                    <small>{selectedParticipante?.email ?? ''}</small>
+                  </div>
+
+                  <div className="coor-project-summary-item">
+                    <span>Evaluador</span>
+                    <strong>{selectedEvaluador?.name ?? 'Sin seleccionar'}</strong>
+                    <small>{selectedEvaluador?.email ?? ''}</small>
+                  </div>
                 </div>
               </aside>
 

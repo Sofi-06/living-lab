@@ -20,8 +20,8 @@ export class UsersController {
   }
 
   @Get()
-  getUsers(@Query('search') search?: string) {
-    return this.usersService.getUsers(search);
+  getUsers(@Query('search') search?: string, @Query('role') role?: string) {
+    return this.usersService.getUsers(search, role);
   }
 
   @Get(':id')

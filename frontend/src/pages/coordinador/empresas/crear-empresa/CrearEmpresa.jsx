@@ -1,35 +1,61 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import DashboardNavbar from '../../../../components/navbar/DashboardNavbar'
+import DashboardNavbar, { COORDINADOR_LINKS } from '../../../../components/navbar/DashboardNavbar'
+import SearchableSelect from '../../../../components/searchable-select/SearchableSelect'
 import { createCompany } from '../../../../services/companies'
+import { getUsers } from '../../../../services/users'
 import { clearSessionUser } from '../../../../utils/session'
 import './CrearEmpresa.css'
-
-const NAV_LINKS = [
-  { label: 'Dashboard', path: '/coordinador' },
-  { label: 'Proyectos', path: '/coordinador/proyectos' },
-  { label: 'Empresas', path: '/coordinador/empresas' },
-  { label: 'Usuarios', path: '/coordinador/usuarios' },
-  { label: 'Reportes', path: '/coordinador' },
-]
 
 function CrearEmpresa() {
   const navigate = useNavigate()
   const [form, setForm] = useState({
     nombre: '',
     sector: '',
-    contacto: '',
     email: '',
     telefono: '',
+    representanteId: '',
   })
+  const [representantes, setRepresentantes] = useState([])
+  const [loadingOptions, setLoadingOptions] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
-
   function handleLogout() {
     clearSessionUser()
     navigate('/login', { replace: true })
   }
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadRepresentantes() {
+      setLoadingOptions(true)
+
+      try {
+        const payload = await getUsers('', { role: 'REPRESENTANTE' })
+
+        if (!cancelled) {
+          setRepresentantes(payload?.users ?? [])
+        }
+      } catch (loadError) {
+        if (!cancelled) {
+          setRepresentantes([])
+          setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar la lista de representantes')
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingOptions(false)
+        }
+      }
+    }
+
+    loadRepresentantes()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     if (message) {
@@ -52,15 +78,11 @@ function CrearEmpresa() {
     setMessage('')
 
     try {
-      const payload = await createCompany(form)
-      setMessage(`Empresa ${payload.company.nombre} creada correctamente.`)
-      setForm({
-        nombre: '',
-        sector: '',
-        contacto: '',
-        email: '',
-        telefono: '',
+      await createCompany({
+        ...form,
+        representanteId: Number(form.representanteId),
       })
+      navigate('/coordinador/empresas', { replace: true })
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : 'No se pudo crear la empresa')
     } finally {
@@ -70,7 +92,7 @@ function CrearEmpresa() {
 
   return (
     <div className="coor-create-company-page">
-      <DashboardNavbar links={NAV_LINKS} onLogout={handleLogout} activeIndex={2} />
+      <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={2} />
 
       <main className="coor-create-company-main">
         <section className="coor-create-company-card">
@@ -90,59 +112,65 @@ function CrearEmpresa() {
           {error ? <div className="coor-create-company-alert error">{error}</div> : null}
 
           <form className="coor-create-company-form" onSubmit={handleSubmit}>
-            <label>
-              <input
-                type="text"
-                value={form.nombre}
-                onChange={(event) => setForm((current) => ({ ...current, nombre: event.target.value }))}
+            <div className="coor-create-company-form-fields">
+              <label>
+                <input
+                  type="text"
+                  value={form.nombre}
+                  onChange={(event) => setForm((current) => ({ ...current, nombre: event.target.value }))}
+                  required
+                  placeholder=" "
+                />
+                <span>Nombre</span>
+              </label>
+
+              <label>
+                <input
+                  type="text"
+                  value={form.sector}
+                  onChange={(event) => setForm((current) => ({ ...current, sector: event.target.value }))}
+                  required
+                  placeholder=" "
+                />
+                <span>Sector</span>
+              </label>
+
+              <SearchableSelect
+                label="Representante de la empresa"
+                placeholder="Busca y selecciona un representante"
+                options={representantes.map((user) => ({
+                  value: String(user.id),
+                  label: user.name,
+                  description: user.email,
+                }))}
+                value={form.representanteId}
+                onChange={(value) => setForm((current) => ({ ...current, representanteId: value }))}
+                emptyMessage="No hay representantes disponibles."
+                disabled={loadingOptions}
                 required
-                placeholder=" "
+                variant="line"
               />
-              <span>Nombre</span>
-            </label>
 
-            <label>
-              <input
-                type="text"
-                value={form.sector}
-                onChange={(event) => setForm((current) => ({ ...current, sector: event.target.value }))}
-                required
-                placeholder=" "
-              />
-              <span>Sector</span>
-            </label>
+              <label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+                  placeholder=" "
+                />
+                <span>Correo (Opcional)</span>
+              </label>
 
-            <label>
-              <input
-                type="text"
-                value={form.contacto}
-                onChange={(event) => setForm((current) => ({ ...current, contacto: event.target.value }))}
-                required
-                placeholder=" "
-              />
-              <span>Contacto</span>
-            </label>
-
-            <label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
-                placeholder=" "
-              />
-              <span>Correo (Opcional)</span>
-            </label>
-
-            <label>
-              <input
-                type="text"
-                value={form.telefono}
-                onChange={(event) => setForm((current) => ({ ...current, telefono: event.target.value }))}
-                placeholder=" "
-              />
-              <span>Telefono (Opcional)</span>
-            </label>
-
+              <label>
+                <input
+                  type="text"
+                  value={form.telefono}
+                  onChange={(event) => setForm((current) => ({ ...current, telefono: event.target.value }))}
+                  placeholder=" "
+                />
+                <span>Telefono (Opcional)</span>
+              </label>
+            </div>
             <button type="submit" disabled={loading}>
               {loading ? 'Creando...' : 'Crear empresa'}
             </button>

@@ -3,7 +3,17 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, ProjectStatus } from '@prisma/client';
+import {
+  ChecklistResult,
+  EvidenceStatus,
+  PhaseStatus,
+  Prisma,
+  ProjectStatus,
+  SolvedProblemOption,
+  SummaryChecklistResult,
+  SystemRole,
+  YesNoOption,
+} from '@prisma/client';
 import { extname } from 'node:path';
 import { PrismaService } from '../../database/prisma.service';
 
@@ -16,9 +26,27 @@ const DEFAULT_PROJECT_PHASES = [
   'Apropiacion',
 ] as const;
 
+const userSummarySelect = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+} as const;
+
+const companySummarySelect = {
+  id: true,
+  nombre: true,
+  sector: true,
+  representante: {
+    select: userSummarySelect,
+  },
+} as const;
+
 const projectListSelect = {
   id: true,
   companyId: true,
+  participanteId: true,
+  evaluadorId: true,
   titulo: true,
   descripcionProblema: true,
   resultadoEsperado: true,
@@ -26,26 +54,13 @@ const projectListSelect = {
   fechaInicio: true,
   fechaFin: true,
   company: {
-    select: {
-      id: true,
-      nombre: true,
-      sector: true,
-    },
+    select: companySummarySelect,
   },
-  projectUsers: {
-    orderBy: {
-      id: 'asc',
-    },
-    select: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-        },
-      },
-    },
+  participante: {
+    select: userSummarySelect,
+  },
+  evaluador: {
+    select: userSummarySelect,
   },
 } as const;
 
@@ -78,12 +93,7 @@ const projectDetailSelect = {
           observaciones: true,
           fecha: true,
           user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true,
-            },
+            select: userSummarySelect,
           },
         },
       },
@@ -126,6 +136,13 @@ const projectDetailSelect = {
   },
 } as const;
 
+type UserRecord = {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+};
+
 type ProjectWithRelations = Prisma.ProjectGetPayload<{
   select: typeof projectListSelect;
 }>;
@@ -134,16 +151,11 @@ type ProjectDetailWithRelations = Prisma.ProjectGetPayload<{
   select: typeof projectDetailSelect;
 }>;
 
-type ProjectUserRecord = {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-};
-
 type ProjectRecord = {
   id: number;
   companyId: number;
+  participanteId: number;
+  evaluadorId: number;
   titulo: string;
   descripcionProblema: string;
   resultadoEsperado: string;
@@ -154,15 +166,25 @@ type ProjectRecord = {
     id: number;
     nombre: string;
     sector: string;
+    representante: UserRecord;
   };
-  users: ProjectUserRecord[];
+  participante: UserRecord;
+  evaluador: UserRecord;
+  users: UserRecord[];
 };
 
 type ProjectPhaseRecord = {
   id: number;
+  orden: number;
   nombre: string;
   estado: string;
   observaciones: string | null;
+  isCurrent: boolean;
+  isLocked: boolean;
+  isCompleted: boolean;
+  isAvailable: boolean;
+  evidenceCount: number;
+  checklistCount: number;
 };
 
 type ProjectEvidenceRecord = {
@@ -174,7 +196,7 @@ type ProjectEvidenceRecord = {
   estado: string;
   observaciones: string | null;
   fecha: Date;
-  user: ProjectUserRecord;
+  user: UserRecord;
 };
 
 type ProjectChecklistRecord = {
@@ -196,8 +218,24 @@ type BusinessValidationRecord = {
 } | null;
 
 type ProjectDetailRecord = ProjectRecord & {
+  currentPhase: ProjectPhaseRecord | null;
+  progress: {
+    totalPhases: number;
+    completedPhases: number;
+    percentage: number;
+  };
   phases: ProjectPhaseRecord[];
   evidences: ProjectEvidenceRecord[];
+  phaseChecklist: {
+    phaseId: number;
+    fase: string;
+    items: {
+      id: number;
+      item: string;
+      resultado: string;
+      observacion: string | null;
+    }[];
+  }[];
   checklist: ProjectChecklistRecord[];
   businessValidation: BusinessValidationRecord;
 };
@@ -228,6 +266,14 @@ export class ProjectsService {
       body.companyId,
       'La empresa es obligatoria',
     );
+    const participanteId = this.parseEntityId(
+      body.participanteId,
+      'El participante es obligatorio',
+    );
+    const evaluadorId = this.parseEntityId(
+      body.evaluadorId,
+      'El evaluador es obligatorio',
+    );
     const titulo = this.parseRequiredText(
       body.titulo,
       'El titulo es obligatorio',
@@ -240,48 +286,47 @@ export class ProjectsService {
       body.resultadoEsperado,
       'El resultado esperado es obligatorio',
     );
-    const estado = this.parseProjectStatus(body.estado);
     const fechaInicio = this.parseOptionalDate(
       body.fechaInicio,
       'La fecha de inicio',
     );
     const fechaFin = this.parseOptionalDate(body.fechaFin, 'La fecha de fin');
-    const userIds = this.parseUserIds(body.userIds);
 
     this.validateDateRange(fechaInicio, fechaFin);
     await this.ensureCompanyExists(companyId);
-    await this.ensureUsersExist(userIds);
+    await this.ensureUserWithRole(
+      participanteId,
+      SystemRole.PARTICIPANTE,
+      'Participante no encontrado',
+      'El usuario seleccionado no tiene rol PARTICIPANTE',
+    );
+    await this.ensureUserWithRole(
+      evaluadorId,
+      SystemRole.EVALUADOR,
+      'Evaluador no encontrado',
+      'El usuario seleccionado no tiene rol EVALUADOR',
+    );
 
-    const project = await this.prisma.$transaction(async (tx) => {
-      const createdProject = await tx.project.create({
-        data: {
-          companyId,
-          titulo,
-          descripcionProblema,
-          resultadoEsperado,
-          estado,
-          fechaInicio,
-          fechaFin,
+    const project = await this.prisma.project.create({
+      data: {
+        company: {
+          connect: { id: companyId },
         },
-        select: { id: true },
-      });
-
-      await tx.projectUser.createMany({
-        data: userIds.map((userId) => ({
-          projectId: createdProject.id,
-          userId,
-        })),
-      });
-
-      return tx.project.findUnique({
-        where: { id: createdProject.id },
-        select: projectListSelect,
-      });
+        participante: {
+          connect: { id: participanteId },
+        },
+        evaluador: {
+          connect: { id: evaluadorId },
+        },
+        titulo,
+        descripcionProblema,
+        resultadoEsperado,
+        estado: ProjectStatus.PENDING,
+        fechaInicio,
+        fechaFin,
+      },
+      select: projectListSelect,
     });
-
-    if (!project) {
-      throw new NotFoundException('Proyecto no encontrado');
-    }
 
     return { project: this.mapProject(project) };
   }
@@ -298,40 +343,45 @@ export class ProjectsService {
       filters.push({
         OR: [
           { titulo: { contains: search } },
-          {
-            descripcionProblema: {
-              contains: search,
-            },
-          },
-          {
-            resultadoEsperado: {
-              contains: search,
-            },
-          },
+          { descripcionProblema: { contains: search } },
+          { resultadoEsperado: { contains: search } },
           {
             company: {
               is: {
-                nombre: { contains: search },
+                OR: [
+                  { nombre: { contains: search } },
+                  { sector: { contains: search } },
+                  {
+                    representante: {
+                      is: {
+                        OR: [
+                          { name: { contains: search } },
+                          { email: { contains: search } },
+                        ],
+                      },
+                    },
+                  },
+                ],
               },
             },
           },
           {
-            projectUsers: {
-              some: {
-                user: {
-                  OR: [
-                    {
-                      name: {
-                        contains: search,
-                      },
-                    },
-                    {
-                      email: {
-                        contains: search,
-                      },
-                    },
-                  ],
-                },
+            participante: {
+              is: {
+                OR: [
+                  { name: { contains: search } },
+                  { email: { contains: search } },
+                ],
+              },
+            },
+          },
+          {
+            evaluador: {
+              is: {
+                OR: [
+                  { name: { contains: search } },
+                  { email: { contains: search } },
+                ],
               },
             },
           },
@@ -342,11 +392,7 @@ export class ProjectsService {
 
     if (userId) {
       filters.push({
-        projectUsers: {
-          some: {
-            userId,
-          },
-        },
+        OR: [{ participanteId: userId }, { evaluadorId: userId }],
       });
     }
 
@@ -415,6 +461,13 @@ export class ProjectsService {
       },
       select: {
         id: true,
+        estado: true,
+        project: {
+          select: {
+            participanteId: true,
+            estado: true,
+          },
+        },
         phase: {
           select: {
             nombre: true,
@@ -425,6 +478,57 @@ export class ProjectsService {
 
     if (!projectPhase) {
       throw new NotFoundException('La fase del proyecto no existe');
+    }
+
+    if (projectPhase.project.participanteId !== userId) {
+      throw new BadRequestException(
+        'Solo el participante asignado puede registrar evidencias',
+      );
+    }
+
+    if (projectPhase.project.estado === ProjectStatus.COMPLETED) {
+      throw new BadRequestException(
+        'El proyecto ya fue completado y no admite nuevas evidencias',
+      );
+    }
+
+    if (projectPhase.project.estado === ProjectStatus.CANCELLED) {
+      throw new BadRequestException(
+        'El proyecto fue cancelado y no admite nuevas evidencias',
+      );
+    }
+
+    const orderedProjectPhases = await this.prisma.projectPhase.findMany({
+      where: { projectId },
+      select: {
+        id: true,
+        estado: true,
+        phase: {
+          select: {
+            nombre: true,
+          },
+        },
+      },
+    });
+
+    const activePhase = this.getActiveProjectPhase(orderedProjectPhases);
+
+    if (!activePhase) {
+      throw new BadRequestException(
+        'El proyecto ya completo todas sus fases',
+      );
+    }
+
+    if (activePhase.id !== projectPhaseId) {
+      throw new BadRequestException(
+        `Solo puedes registrar evidencias en la fase actual: ${activePhase.phase.nombre}`,
+      );
+    }
+
+    if (projectPhase.estado === PhaseStatus.IN_REVIEW) {
+      throw new BadRequestException(
+        'La fase actual esta siendo revisada por el evaluador',
+      );
     }
 
     const evidence = await this.prisma.evidence.create({
@@ -444,15 +548,32 @@ export class ProjectsService {
         observaciones: true,
         fecha: true,
         user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-          },
+          select: userSummarySelect,
         },
       },
     });
+
+    const projectUpdates: Prisma.ProjectUpdateInput = {};
+
+    if (projectPhase.estado === PhaseStatus.PENDING) {
+      await this.prisma.projectPhase.update({
+        where: { id: projectPhaseId },
+        data: {
+          estado: PhaseStatus.IN_PROGRESS,
+        },
+      });
+    }
+
+    if (projectPhase.project.estado === ProjectStatus.PENDING) {
+      projectUpdates.estado = ProjectStatus.IN_PROGRESS;
+    }
+
+    if (Object.keys(projectUpdates).length > 0) {
+      await this.prisma.project.update({
+        where: { id: projectId },
+        data: projectUpdates,
+      });
+    }
 
     return {
       evidence: {
@@ -464,12 +585,7 @@ export class ProjectsService {
         estado: evidence.estado,
         observaciones: evidence.observaciones,
         fecha: evidence.fecha,
-        user: {
-          id: evidence.user.id,
-          name: evidence.user.name,
-          email: evidence.user.email,
-          role: evidence.user.role,
-        },
+        user: this.mapUser(evidence.user),
       },
     };
   }
@@ -483,7 +599,6 @@ export class ProjectsService {
       where: { id: projectId },
       select: {
         id: true,
-        companyId: true,
         fechaInicio: true,
         fechaFin: true,
       },
@@ -494,17 +609,50 @@ export class ProjectsService {
     }
 
     const data: Prisma.ProjectUpdateInput = {};
-    let companyId: number | undefined;
-    let userIds: number[] | undefined;
     let nextFechaInicio = existingProject.fechaInicio;
     let nextFechaFin = existingProject.fechaFin;
 
     if (body.companyId !== undefined) {
-      companyId = this.parseEntityId(
+      const companyId = this.parseEntityId(
         body.companyId,
         'La empresa es obligatoria',
       );
-      data.company = { connect: { id: companyId } };
+      await this.ensureCompanyExists(companyId);
+      data.company = {
+        connect: { id: companyId },
+      };
+    }
+
+    if (body.participanteId !== undefined) {
+      const participanteId = this.parseEntityId(
+        body.participanteId,
+        'El participante es obligatorio',
+      );
+      await this.ensureUserWithRole(
+        participanteId,
+        SystemRole.PARTICIPANTE,
+        'Participante no encontrado',
+        'El usuario seleccionado no tiene rol PARTICIPANTE',
+      );
+      data.participante = {
+        connect: { id: participanteId },
+      };
+    }
+
+    if (body.evaluadorId !== undefined) {
+      const evaluadorId = this.parseEntityId(
+        body.evaluadorId,
+        'El evaluador es obligatorio',
+      );
+      await this.ensureUserWithRole(
+        evaluadorId,
+        SystemRole.EVALUADOR,
+        'Evaluador no encontrado',
+        'El usuario seleccionado no tiene rol EVALUADOR',
+      );
+      data.evaluador = {
+        connect: { id: evaluadorId },
+      };
     }
 
     if (typeof body.titulo === 'string') {
@@ -545,46 +693,153 @@ export class ProjectsService {
       data.fechaFin = nextFechaFin;
     }
 
-    if (body.userIds !== undefined) {
-      userIds = this.parseUserIds(body.userIds);
-    }
-
-    if (Object.keys(data).length === 0 && userIds === undefined) {
+    if (Object.keys(data).length === 0) {
       throw new BadRequestException('No hay datos para actualizar');
     }
 
     this.validateDateRange(nextFechaInicio, nextFechaFin);
 
-    if (companyId !== undefined) {
-      await this.ensureCompanyExists(companyId);
-    }
+    const project = await this.prisma.project.update({
+      where: { id: projectId },
+      data,
+      select: projectListSelect,
+    });
 
-    if (userIds !== undefined) {
-      await this.ensureUsersExist(userIds);
-    }
+    return { project: this.mapProject(project) };
+  }
+
+  async updateProjectEvaluation(
+    rawId: string,
+    body: Record<string, unknown>,
+  ): Promise<ProjectDetailResponse> {
+    const projectId = this.parseProjectId(rawId);
+    await this.ensureDefaultProjectPhases(projectId);
+
+    const projectPhaseId = this.parseEntityId(
+      body.projectPhaseId,
+      'La fase del proyecto es obligatoria',
+    );
+    const approved = this.parseApprovalDecision(body.approved);
+    const observaciones =
+      typeof body.observaciones === 'string'
+        ? this.parseOptionalText(body.observaciones)
+        : null;
+    const checklist = this.parsePhaseReviewChecklist(body.phaseChecklist);
 
     const project = await this.prisma.$transaction(async (tx) => {
-      await tx.project.update({
-        where: { id: projectId },
-        data,
+      const projectPhases = await tx.projectPhase.findMany({
+        where: { projectId },
+        select: {
+          id: true,
+          estado: true,
+          evidences: {
+            select: {
+              id: true,
+              estado: true,
+            },
+          },
+          phase: {
+            select: {
+              nombre: true,
+            },
+          },
+        },
       });
 
-      if (userIds !== undefined) {
-        await tx.projectUser.deleteMany({
-          where: { projectId },
-        });
+      const activePhase = this.getActiveProjectPhase(projectPhases);
 
-        await tx.projectUser.createMany({
-          data: userIds.map((userId) => ({
-            projectId,
-            userId,
-          })),
+      if (!activePhase) {
+        throw new BadRequestException(
+          'El proyecto ya completo todas sus fases',
+        );
+      }
+
+      if (activePhase.id !== projectPhaseId) {
+        throw new BadRequestException(
+          `Solo puedes evaluar la fase actual: ${activePhase.phase.nombre}`,
+        );
+      }
+
+      if (activePhase.evidences.length === 0) {
+        throw new BadRequestException(
+          'No puedes evaluar una fase que aun no tiene evidencias registradas',
+        );
+      }
+
+      await tx.phaseChecklist.deleteMany({
+        where: { projectPhaseId },
+      });
+
+      await tx.phaseChecklist.createMany({
+        data: checklist.map((item) => ({
+          projectPhaseId,
+          item: item.item,
+          resultado: item.resultado,
+          observacion: item.observacion,
+        })),
+      });
+
+      await tx.projectPhase.update({
+        where: { id: projectPhaseId },
+        data: {
+          estado: approved ? PhaseStatus.COMPLETED : PhaseStatus.IN_PROGRESS,
+          observaciones,
+        },
+      });
+
+      const evidenceStatus = approved
+        ? EvidenceStatus.APPROVED
+        : EvidenceStatus.REJECTED;
+
+      await tx.evidence.updateMany({
+        where: {
+          projectPhaseId,
+          estado: {
+            in: [EvidenceStatus.PENDING, EvidenceStatus.IN_REVIEW],
+          },
+        },
+        data: {
+          estado: evidenceStatus,
+          observaciones,
+        },
+      });
+
+      const sortedProjectPhases = this.sortProjectPhases(projectPhases);
+      const currentPhaseIndex = sortedProjectPhases.findIndex(
+        (phase) => phase.id === projectPhaseId,
+      );
+      const nextPhase = sortedProjectPhases
+        .slice(currentPhaseIndex + 1)
+        .find((phase) => phase.estado !== PhaseStatus.COMPLETED);
+      const completedPhases = sortedProjectPhases.filter((phase) =>
+        phase.id === projectPhaseId
+          ? approved
+          : phase.estado === PhaseStatus.COMPLETED,
+      ).length;
+      const isProjectCompleted =
+        approved && completedPhases >= DEFAULT_PROJECT_PHASES.length;
+
+      await tx.project.update({
+        where: { id: projectId },
+        data: {
+          estado: isProjectCompleted
+            ? ProjectStatus.COMPLETED
+            : ProjectStatus.IN_PROGRESS,
+        },
+      });
+
+      if (approved && nextPhase && nextPhase.estado === PhaseStatus.IN_REVIEW) {
+        await tx.projectPhase.update({
+          where: { id: nextPhase.id },
+          data: {
+            estado: PhaseStatus.PENDING,
+          },
         });
       }
 
       return tx.project.findUnique({
         where: { id: projectId },
-        select: projectListSelect,
+        select: projectDetailSelect,
       });
     });
 
@@ -592,7 +847,7 @@ export class ProjectsService {
       throw new NotFoundException('Proyecto no encontrado');
     }
 
-    return { project: this.mapProject(project) };
+    return { project: this.mapProjectDetail(project) };
   }
 
   async deleteProject(rawId: string) {
@@ -601,7 +856,6 @@ export class ProjectsService {
       where: { id: projectId },
       select: {
         id: true,
-        titulo: true,
         projectPhases: {
           select: { id: true },
           take: 1,
@@ -631,14 +885,8 @@ export class ProjectsService {
       );
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.projectUser.deleteMany({
-        where: { projectId },
-      });
-
-      await tx.project.delete({
-        where: { id: projectId },
-      });
+    await this.prisma.project.delete({
+      where: { id: projectId },
     });
 
     return { message: 'Proyecto eliminado correctamente' };
@@ -735,27 +983,6 @@ export class ProjectsService {
     return date;
   }
 
-  private parseUserIds(rawValue: unknown) {
-    if (!Array.isArray(rawValue)) {
-      throw new BadRequestException(
-        'Debes asignar al menos un usuario al proyecto',
-      );
-    }
-
-    const userIds = [...new Set(rawValue.map(Number))];
-
-    if (
-      userIds.length === 0 ||
-      userIds.some((userId) => !Number.isInteger(userId) || userId <= 0)
-    ) {
-      throw new BadRequestException(
-        'Debes asignar al menos un usuario al proyecto',
-      );
-    }
-
-    return userIds;
-  }
-
   private async ensureCompanyExists(companyId: number) {
     const company = await this.prisma.company.findUnique({
       where: { id: companyId },
@@ -815,11 +1042,12 @@ export class ProjectsService {
       },
       select: {
         id: true,
+        nombre: true,
       },
     });
 
     await this.prisma.projectPhase.createMany({
-      data: phases.map((phase) => ({
+      data: this.sortPhasesByDefaultOrder(phases).map((phase) => ({
         projectId,
         phaseId: phase.id,
       })),
@@ -835,6 +1063,29 @@ export class ProjectsService {
 
     if (users.length !== userIds.length) {
       throw new NotFoundException('Uno o mas usuarios no existen');
+    }
+  }
+
+  private async ensureUserWithRole(
+    userId: number,
+    role: SystemRole,
+    notFoundMessage: string,
+    invalidRoleMessage: string,
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        role: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException(notFoundMessage);
+    }
+
+    if (user.role !== role) {
+      throw new BadRequestException(invalidRoleMessage);
     }
   }
 
@@ -862,13 +1113,88 @@ export class ProjectsService {
   }
 
   private normalizeText(value: string) {
-    return value.trim().replaceAll(/\s+/g, ' ');
+    return value.trim().replace(/\s+/g, ' ');
+  }
+
+  private normalizePhaseName(value: string) {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
+  }
+
+  private getPhaseOrder(value: string) {
+    const phaseIndex = DEFAULT_PROJECT_PHASES.findIndex(
+      (phaseName) =>
+        this.normalizePhaseName(phaseName) === this.normalizePhaseName(value),
+    );
+
+    return phaseIndex === -1 ? Number.MAX_SAFE_INTEGER : phaseIndex;
+  }
+
+  private sortPhasesByDefaultOrder<T extends { nombre: string }>(phases: T[]) {
+    return [...phases].sort(
+      (left, right) =>
+        this.getPhaseOrder(left.nombre) - this.getPhaseOrder(right.nombre),
+    );
+  }
+
+  private sortProjectPhases<
+    T extends {
+      phase: {
+        nombre: string;
+      };
+    },
+  >(projectPhases: T[]) {
+    return [...projectPhases].sort(
+      (left, right) =>
+        this.getPhaseOrder(left.phase.nombre) -
+        this.getPhaseOrder(right.phase.nombre),
+    );
+  }
+
+  private getActiveProjectPhase<
+    T extends {
+      estado: PhaseStatus | string;
+      phase: {
+        nombre: string;
+      };
+    },
+  >(projectPhases: T[]) {
+    return this.sortProjectPhases(projectPhases).find(
+      (phase) => phase.estado !== PhaseStatus.COMPLETED,
+    );
+  }
+
+  private buildPhaseProgress(
+    phases: Array<{
+      estado: string;
+    }>,
+  ) {
+    const totalPhases = DEFAULT_PROJECT_PHASES.length;
+    const completedPhases = phases.filter(
+      (phase) => phase.estado === PhaseStatus.COMPLETED,
+    ).length;
+    const percentage = Number(
+      ((completedPhases / totalPhases) * 100).toFixed(1),
+    );
+
+    return {
+      totalPhases,
+      completedPhases,
+      percentage,
+    };
   }
 
   private buildEvidenceFileUrl(projectId: number, filename: string) {
     const safeFilename = filename.replace(/\\/g, '/');
 
-    if (!safeFilename || safeFilename.includes('..') || extname(safeFilename) === '') {
+    if (
+      !safeFilename ||
+      safeFilename.includes('..') ||
+      extname(safeFilename) === ''
+    ) {
       throw new BadRequestException('Nombre de archivo invalido');
     }
 
@@ -876,9 +1202,14 @@ export class ProjectsService {
   }
 
   private mapProject(project: ProjectWithRelations): ProjectRecord {
+    const participante = this.mapUser(project.participante);
+    const evaluador = this.mapUser(project.evaluador);
+
     return {
       id: project.id,
       companyId: project.companyId,
+      participanteId: project.participanteId,
+      evaluadorId: project.evaluadorId,
       titulo: project.titulo,
       descripcionProblema: project.descripcionProblema,
       resultadoEsperado: project.resultadoEsperado,
@@ -889,13 +1220,11 @@ export class ProjectsService {
         id: project.company.id,
         nombre: project.company.nombre,
         sector: project.company.sector,
+        representante: this.mapUser(project.company.representante),
       },
-      users: project.projectUsers.map((projectUser) => ({
-        id: projectUser.user.id,
-        name: projectUser.user.name,
-        email: projectUser.user.email,
-        role: projectUser.user.role,
-      })),
+      participante,
+      evaluador,
+      users: this.buildProjectUsers(participante, evaluador),
     };
   }
 
@@ -903,16 +1232,49 @@ export class ProjectsService {
     project: ProjectDetailWithRelations,
   ): ProjectDetailRecord {
     const baseProject = this.mapProject(project);
+    const orderedProjectPhases = this.sortProjectPhases(project.projectPhases);
+    const currentProjectPhase = orderedProjectPhases.find(
+      (projectPhase) => projectPhase.estado !== PhaseStatus.COMPLETED,
+    );
+    const progress = this.buildPhaseProgress(orderedProjectPhases);
 
     return {
       ...baseProject,
-      phases: project.projectPhases.map((projectPhase) => ({
-        id: projectPhase.id,
-        nombre: projectPhase.phase.nombre,
-        estado: projectPhase.estado,
-        observaciones: projectPhase.observaciones,
-      })),
-      evidences: project.projectPhases.flatMap((projectPhase) =>
+      currentPhase: currentProjectPhase
+        ? {
+            id: currentProjectPhase.id,
+            orden: this.getPhaseOrder(currentProjectPhase.phase.nombre) + 1,
+            nombre: currentProjectPhase.phase.nombre,
+            estado: currentProjectPhase.estado,
+            observaciones: currentProjectPhase.observaciones,
+            isCurrent: true,
+            isLocked: false,
+            isCompleted: currentProjectPhase.estado === PhaseStatus.COMPLETED,
+            isAvailable: true,
+            evidenceCount: currentProjectPhase.evidences.length,
+            checklistCount: currentProjectPhase.checklist.length,
+          }
+        : null,
+      progress,
+      phases: orderedProjectPhases.map((projectPhase, index) => {
+        const isCompleted = projectPhase.estado === PhaseStatus.COMPLETED;
+        const isCurrent = currentProjectPhase?.id === projectPhase.id;
+
+        return {
+          id: projectPhase.id,
+          orden: index + 1,
+          nombre: projectPhase.phase.nombre,
+          estado: projectPhase.estado,
+          observaciones: projectPhase.observaciones,
+          isCurrent,
+          isLocked: !isCompleted && !isCurrent,
+          isCompleted,
+          isAvailable: isCompleted || isCurrent,
+          evidenceCount: projectPhase.evidences.length,
+          checklistCount: projectPhase.checklist.length,
+        };
+      }),
+      evidences: orderedProjectPhases.flatMap((projectPhase) =>
         projectPhase.evidences.map((evidence) => ({
           id: evidence.id,
           fase: projectPhase.phase.nombre,
@@ -922,20 +1284,48 @@ export class ProjectsService {
           estado: evidence.estado,
           observaciones: evidence.observaciones,
           fecha: evidence.fecha,
-          user: {
-            id: evidence.user.id,
-            name: evidence.user.name,
-            email: evidence.user.email,
-            role: evidence.user.role,
-          },
+          user: this.mapUser(evidence.user),
         })),
       ),
+      phaseChecklist: orderedProjectPhases.map((projectPhase) => ({
+        phaseId: projectPhase.id,
+        fase: projectPhase.phase.nombre,
+        items: projectPhase.checklist.map((item) => ({
+          id: item.id,
+          item: item.item,
+          resultado: item.resultado,
+          observacion: item.observacion,
+        })),
+      })),
       checklist: project.summaryChecklist.map((item) =>
         this.mapChecklistItem(item),
       ),
       businessValidation: this.mapBusinessValidation(
         project.businessValidation,
       ),
+    };
+  }
+
+  private buildProjectUsers(
+    participante: UserRecord,
+    evaluador: UserRecord,
+  ): UserRecord[] {
+    const users = new Map<number, UserRecord>();
+
+    users.set(participante.id, participante);
+    users.set(evaluador.id, evaluador);
+
+    return [...users.values()];
+  }
+
+  private mapUser(
+    user: Prisma.UserGetPayload<{ select: typeof userSummarySelect }>,
+  ): UserRecord {
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
     };
   }
 
@@ -967,5 +1357,241 @@ export class ProjectsService {
       nombreFirmante: validation.nombreFirmante,
       cargo: validation.cargo,
     };
+  }
+
+  private parseDetailedChecklist(rawValue: unknown) {
+    if (!Array.isArray(rawValue)) {
+      throw new BadRequestException(
+        'El checklist detallado por fase es obligatorio',
+      );
+    }
+
+    return rawValue.map((phaseEntry) => {
+      if (!phaseEntry || typeof phaseEntry !== 'object') {
+        throw new BadRequestException(
+          'Formato invalido en checklist detallado',
+        );
+      }
+
+      const payload = phaseEntry as Record<string, unknown>;
+      const fase = this.parseRequiredText(
+        payload.fase,
+        'La fase del checklist es obligatoria',
+      );
+
+      if (!Array.isArray(payload.items) || payload.items.length === 0) {
+        throw new BadRequestException(
+          `La fase ${fase} debe contener items de evaluacion`,
+        );
+      }
+
+      return {
+        fase,
+        items: payload.items.map((itemEntry) => {
+          if (!itemEntry || typeof itemEntry !== 'object') {
+            throw new BadRequestException(
+              `Formato invalido en los items de la fase ${fase}`,
+            );
+          }
+
+          const itemPayload = itemEntry as Record<string, unknown>;
+
+          return {
+            item: this.parseRequiredText(
+              itemPayload.item,
+              'El item del checklist es obligatorio',
+            ),
+            resultado: this.parseChecklistResult(itemPayload.resultado),
+            observacion:
+              typeof itemPayload.observacion === 'string'
+                ? this.parseOptionalText(itemPayload.observacion)
+                : null,
+          };
+        }),
+      };
+    });
+  }
+
+  private parseApprovalDecision(rawValue: unknown) {
+    if (typeof rawValue === 'boolean') {
+      return rawValue;
+    }
+
+    if (typeof rawValue === 'string') {
+      const normalizedValue = rawValue.trim().toLowerCase();
+
+      if (normalizedValue === 'true') {
+        return true;
+      }
+
+      if (normalizedValue === 'false') {
+        return false;
+      }
+    }
+
+    throw new BadRequestException(
+      'Debes indicar si la fase fue aprobada o rechazada',
+    );
+  }
+
+  private parsePhaseReviewChecklist(rawValue: unknown) {
+    if (!Array.isArray(rawValue) || rawValue.length === 0) {
+      throw new BadRequestException(
+        'El checklist de evaluacion de la fase es obligatorio',
+      );
+    }
+
+    return rawValue.map((itemEntry) => {
+      if (!itemEntry || typeof itemEntry !== 'object') {
+        throw new BadRequestException(
+          'Formato invalido en checklist de evaluacion',
+        );
+      }
+
+      const payload = itemEntry as Record<string, unknown>;
+
+      return {
+        item: this.parseRequiredText(
+          payload.item,
+          'El item del checklist es obligatorio',
+        ),
+        resultado: this.parseChecklistResult(payload.resultado),
+        observacion:
+          typeof payload.observacion === 'string'
+            ? this.parseOptionalText(payload.observacion)
+            : null,
+      };
+    });
+  }
+
+  private parseSummaryChecklist(rawValue: unknown) {
+    if (!Array.isArray(rawValue)) {
+      throw new BadRequestException('El checklist resumido es obligatorio');
+    }
+
+    return rawValue.map((entry) => {
+      if (!entry || typeof entry !== 'object') {
+        throw new BadRequestException('Formato invalido en checklist resumido');
+      }
+
+      const payload = entry as Record<string, unknown>;
+
+      return {
+        fase: this.parseRequiredText(
+          payload.fase,
+          'La fase del checklist resumido es obligatoria',
+        ),
+        criterio: this.parseRequiredText(
+          payload.criterio,
+          'El criterio del checklist resumido es obligatorio',
+        ),
+        resultado: this.parseSummaryChecklistResult(payload.resultado),
+        observacion:
+          typeof payload.observacion === 'string'
+            ? this.parseOptionalText(payload.observacion)
+            : null,
+      };
+    });
+  }
+
+  private parseBusinessValidation(rawValue: unknown) {
+    if (!rawValue || typeof rawValue !== 'object') {
+      throw new BadRequestException('La validacion empresarial es obligatoria');
+    }
+
+    const payload = rawValue as Record<string, unknown>;
+
+    return {
+      resolvioProblema: this.parseSolvedProblemOption(payload.resolvioProblema),
+      esAplicable: this.parseYesNoOption(payload.esAplicable),
+      generaValor: this.parseYesNoOption(payload.generaValor),
+      deseaImplementarla: this.parseYesNoOption(payload.deseaImplementarla),
+      comentarios:
+        typeof payload.comentarios === 'string'
+          ? this.parseOptionalText(payload.comentarios)
+          : null,
+      nombreFirmante: this.parseRequiredText(
+        payload.nombreFirmante,
+        'El nombre del firmante es obligatorio',
+      ),
+      cargo: this.parseRequiredText(payload.cargo, 'El cargo es obligatorio'),
+    };
+  }
+
+  private parseChecklistResult(rawValue: unknown): ChecklistResult {
+    if (typeof rawValue !== 'string') {
+      throw new BadRequestException('Resultado de checklist invalido');
+    }
+
+    const value = rawValue.trim().toUpperCase();
+
+    switch (value) {
+      case ChecklistResult.CUMPLE:
+      case ChecklistResult.NO_CUMPLE:
+      case ChecklistResult.NO_APLICA:
+        return value;
+      default:
+        throw new BadRequestException('Resultado de checklist invalido');
+    }
+  }
+
+  private parseSummaryChecklistResult(
+    rawValue: unknown,
+  ): SummaryChecklistResult {
+    if (typeof rawValue !== 'string') {
+      throw new BadRequestException(
+        'Resultado del checklist resumido invalido',
+      );
+    }
+
+    const value = rawValue.trim().toUpperCase();
+
+    switch (value) {
+      case SummaryChecklistResult.CUMPLE:
+      case SummaryChecklistResult.NO_CUMPLE:
+      case SummaryChecklistResult.PARCIAL:
+        return value;
+      default:
+        throw new BadRequestException(
+          'Resultado del checklist resumido invalido',
+        );
+    }
+  }
+
+  private parseYesNoOption(rawValue: unknown): YesNoOption {
+    if (typeof rawValue !== 'string') {
+      throw new BadRequestException('Opcion de validacion invalida');
+    }
+
+    const value = rawValue.trim().toUpperCase();
+
+    switch (value) {
+      case YesNoOption.SI:
+      case YesNoOption.NO:
+        return value;
+      default:
+        throw new BadRequestException('Opcion de validacion invalida');
+    }
+  }
+
+  private parseSolvedProblemOption(rawValue: unknown): SolvedProblemOption {
+    if (typeof rawValue !== 'string') {
+      throw new BadRequestException(
+        'La respuesta de resolucion del problema es invalida',
+      );
+    }
+
+    const value = rawValue.trim().toUpperCase();
+
+    switch (value) {
+      case SolvedProblemOption.SI:
+      case SolvedProblemOption.PARCIAL:
+      case SolvedProblemOption.NO:
+        return value;
+      default:
+        throw new BadRequestException(
+          'La respuesta de resolucion del problema es invalida',
+        );
+    }
   }
 }

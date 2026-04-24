@@ -119,10 +119,12 @@ export class DashboardService {
       typeof rawRole === 'string' ? rawRole.trim().toUpperCase() : '';
 
     switch (role) {
-      case SystemRole.DOCENTE:
-        return SystemRole.DOCENTE;
+      case SystemRole.PARTICIPANTE:
+        return SystemRole.PARTICIPANTE;
       case SystemRole.EVALUADOR:
         return SystemRole.EVALUADOR;
+      case SystemRole.REPRESENTANTE:
+        return SystemRole.REPRESENTANTE;
       case SystemRole.COORDINADOR:
       default:
         return SystemRole.COORDINADOR;
@@ -132,7 +134,7 @@ export class DashboardService {
   private async buildSummary(role: SystemRole, userId?: number) {
     const projectScope = this.getProjectScope(role, userId);
 
-    if (role === SystemRole.DOCENTE) {
+    if (role === SystemRole.PARTICIPANTE) {
       const whereAssigned = projectScope;
 
       const [coursesAssigned, teamsInFollowUp, feedbackSent] =
@@ -153,7 +155,7 @@ export class DashboardService {
                   observaciones: { not: null },
                 }
               : {
-                  user: { role: SystemRole.DOCENTE },
+                  user: { role: SystemRole.PARTICIPANTE },
                   observaciones: { not: null },
                 },
           }),
@@ -297,25 +299,59 @@ export class DashboardService {
       return undefined;
     }
 
-    if (Number.isFinite(userId) && userId) {
+    if (role === SystemRole.PARTICIPANTE) {
+      if (Number.isFinite(userId) && userId) {
+        return { participanteId: userId };
+      }
+
       return {
-        projectUsers: {
-          some: {
-            userId,
+        participante: {
+          is: {
+            role: SystemRole.PARTICIPANTE,
           },
         },
       };
     }
 
-    return {
-      projectUsers: {
-        some: {
-          user: {
-            role,
+    if (role === SystemRole.EVALUADOR) {
+      if (Number.isFinite(userId) && userId) {
+        return { evaluadorId: userId };
+      }
+
+      return {
+        evaluador: {
+          is: {
+            role: SystemRole.EVALUADOR,
           },
         },
-      },
-    };
+      };
+    }
+
+    if (role === SystemRole.REPRESENTANTE) {
+      if (Number.isFinite(userId) && userId) {
+        return {
+          company: {
+            is: {
+              representanteId: userId,
+            },
+          },
+        };
+      }
+
+      return {
+        company: {
+          is: {
+            representante: {
+              is: {
+                role: SystemRole.REPRESENTANTE,
+              },
+            },
+          },
+        },
+      };
+    }
+
+    return undefined;
   }
 
   private formatDate(value: Date): string {

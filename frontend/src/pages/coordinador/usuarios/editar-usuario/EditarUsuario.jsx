@@ -1,23 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import DashboardNavbar from '../../../../components/navbar/DashboardNavbar'
+import DashboardNavbar, { COORDINADOR_LINKS } from '../../../../components/navbar/DashboardNavbar'
 import { getUser, updateUser } from '../../../../services/users'
 import { clearSessionUser } from '../../../../utils/session'
 import './EditarUsuario.css'
 
-const NAV_LINKS = [
-  { label: 'Dashboard', path: '/coordinador' },
-  { label: 'Proyectos', path: '/coordinador/proyectos' },
-  { label: 'Empresas', path: '/coordinador/empresas' },
-  { label: 'Usuarios', path: '/coordinador/usuarios' },
-  { label: 'Reportes', path: '/coordinador' },
-]
-
 const ROLE_OPTIONS = [
   { value: 'COORDINADOR', label: 'Coordinador' },
-  { value: 'DOCENTE', label: 'Docente' },
+  { value: 'PARTICIPANTE', label: 'Participante' },
   { value: 'EVALUADOR', label: 'Evaluador' },
-  { value: 'ESTUDIANTE', label: 'Estudiante' },
+  { value: 'REPRESENTANTE', label: 'Representante' },
 ]
 
 function EditarUsuario() {
@@ -26,7 +18,7 @@ function EditarUsuario() {
   const [form, setForm] = useState({
     name: '',
     email: '',
-    role: 'DOCENTE',
+    role: 'PARTICIPANTE',
     password: '',
   })
   const [loading, setLoading] = useState(true)
@@ -51,7 +43,7 @@ function EditarUsuario() {
           setForm({
             name: payload.user.name ?? '',
             email: payload.user.email ?? '',
-            role: payload.user.role ?? 'DOCENTE',
+            role: payload.user.role ?? 'PARTICIPANTE',
             password: '',
           })
         }
@@ -94,9 +86,8 @@ function EditarUsuario() {
     setMessage('')
 
     try {
-      const payload = await updateUser(id, form)
-      setMessage(`Usuario ${payload.user.name} actualizado correctamente.`)
-      setForm((current) => ({ ...current, password: '' }))
+      await updateUser(id, form)
+      navigate('/coordinador/usuarios', { replace: true })
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : 'No se pudo actualizar el usuario')
     } finally {
@@ -106,7 +97,7 @@ function EditarUsuario() {
 
   return (
     <div className="coor-edit-page">
-      <DashboardNavbar links={NAV_LINKS} onLogout={handleLogout} activeIndex={3} />
+      <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={3} />
 
       <main className="coor-edit-main">
         <section className="coor-edit-card">

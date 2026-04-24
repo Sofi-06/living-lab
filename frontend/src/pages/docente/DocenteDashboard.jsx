@@ -87,7 +87,7 @@ function DocenteDashboard() {
           <article className="doc-block doc-hero-block">
             <div>
               <h1>Bienvenid@, {sessionUser?.name || 'Usuario'}!</h1>
-              <p>Panel de control de Docente · {today}</p>
+              <p>Panel de control de Participante · {today}</p>
             </div>
           </article>
 

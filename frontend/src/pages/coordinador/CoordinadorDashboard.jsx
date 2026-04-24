@@ -1,18 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import DashboardNavbar from '../../components/navbar/DashboardNavbar'
+import DashboardNavbar, { COORDINADOR_LINKS } from '../../components/navbar/DashboardNavbar'
 import DashboardFooter from '../../components/footer/DashboardFooter'
 import './CoordinadorDashboard.css'
 import { clearSessionUser, getSessionUser } from '../../utils/session'
 import { getDashboardMetrics } from '../../services/dashboard'
-
-const NAV_LINKS = [
-  { label: 'Dashboard', path: '/coordinador' },
-  { label: 'Proyectos', path: '/coordinador/proyectos' },
-  { label: 'Empresas', path: '/coordinador/empresas' },
-  { label: 'Usuarios', path: '/coordinador/usuarios' },
-  { label: 'Reportes', path: '/coordinador' },
-]
 
 const KPI_TEMPLATES = [
   { label: 'Proyectos activos', key: 'projectsActive', tone: 'active' },
@@ -86,7 +78,7 @@ function CoordinadorDashboard() {
 
   return (
     <div className="coor-page">
-      <DashboardNavbar links={NAV_LINKS} onLogout={handleLogout} activeIndex={0} />
+      <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={0} />
 
       <main className="coor-main">
         <section className="coor-grid">

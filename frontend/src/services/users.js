@@ -18,11 +18,15 @@ async function requestJson(path, options = {}) {
   return payload
 }
 
-export function getUsers(search = '') {
+export function getUsers(search = '', options = {}) {
   const query = new URLSearchParams()
 
   if (typeof search === 'string' && search.trim()) {
     query.set('search', search.trim())
+  }
+
+  if (typeof options.role === 'string' && options.role.trim()) {
+    query.set('role', options.role.trim())
   }
 
   const suffix = query.toString() ? `?${query.toString()}` : ''

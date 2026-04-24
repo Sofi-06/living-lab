@@ -2,6 +2,16 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import DashboardNavbar from '../../../../components/navbar/DashboardNavbar'
 import { createProjectEvidence, getProject } from '../../../../services/projects'
+import {
+  EVIDENCE_STATUS_LABELS,
+  PHASE_STATUS_LABELS,
+  ensureProjectPhases,
+  getCurrentProjectPhase,
+  getPhaseFlowLabel,
+  getPhaseFlowTone,
+  getProjectProgress,
+  normalizeText,
+} from '../../../../utils/projectPhases'
 import { clearSessionUser, getSessionUser } from '../../../../utils/session'
 import '../../../coordinador/proyectos/detalle-proyecto/DetalleProyecto.css'
 import './DetalleDocenteProyecto.css'
@@ -20,33 +30,10 @@ const STATUS_LABELS = {
   CANCELLED: 'Cancelado',
 }
 
-const PHASE_STATUS_LABELS = {
-  PENDING: 'Pendiente',
-  IN_PROGRESS: 'En progreso',
-  IN_REVIEW: 'En revision',
-  COMPLETED: 'Completada',
-}
-
-const EVIDENCE_STATUS_LABELS = {
-  PENDING: 'Pendiente',
-  IN_REVIEW: 'En revision',
-  APPROVED: 'Aprobada',
-  REJECTED: 'Rechazada',
-}
-
 const TAB_OPTIONS = [
   { id: 'informacion', label: 'Informacion' },
   { id: 'fases', label: 'Fases' },
   { id: 'evidencias', label: 'Evidencias' },
-]
-
-const DEFAULT_PHASES = [
-  'Co-creacion',
-  'Accion',
-  'Medicion',
-  'Iteracion',
-  'Narrativa',
-  'Apropiacion',
 ]
 
 const EMPTY_EVIDENCE_FORM = {
@@ -68,10 +55,6 @@ function formatDate(value) {
     month: '2-digit',
     year: 'numeric',
   }).format(date)
-}
-
-function normalizeText(value) {
-  return typeof value === 'string' ? value.trim().toLowerCase() : ''
 }
 
 function resolveEvidenceUrl(value) {
@@ -109,7 +92,7 @@ function DetalleDocenteProyecto() {
       try {
         const payload = await getProject(id)
         const nextProject = payload?.project ?? null
-        const isAssigned = (nextProject?.users ?? []).some((user) => user.id === sessionUser?.id)
+        const isAssigned = nextProject?.participante?.id === sessionUser?.id
 
         if (!cancelled) {
           if (!isAssigned) {
@@ -146,19 +129,14 @@ function DetalleDocenteProyecto() {
   }, [saveMessage])
 
   const phases = useMemo(() => {
-    const currentPhases = project?.phases ?? []
-    const indexedPhases = new Map(currentPhases.map((phase) => [normalizeText(phase.nombre), phase]))
+    return ensureProjectPhases(project)
+  }, [project])
 
-    return DEFAULT_PHASES.map((phaseName) => {
-      const foundPhase = indexedPhases.get(normalizeText(phaseName))
+  const currentPhase = useMemo(() => getCurrentProjectPhase(project, phases), [project, phases])
+  const progress = useMemo(() => getProjectProgress(project, phases), [project, phases])
 
-      return foundPhase ?? {
-        id: phaseName,
-        nombre: phaseName,
-        estado: 'PENDING',
-        observaciones: null,
-      }
-    })
+  const phaseChecklistMap = useMemo(() => {
+    return new Map((project?.phaseChecklist ?? []).map((phaseEntry) => [normalizeText(phaseEntry.fase), phaseEntry]))
   }, [project])
 
   function handleEvidenceFieldChange(event) {
@@ -170,26 +148,23 @@ function DetalleDocenteProyecto() {
   async function handleEvidenceSubmit(event) {
     event.preventDefault()
 
-    if (!id || !sessionUser?.id) return
+    if (!id || !sessionUser?.id || !currentPhase?.id) return
 
     setSavingEvidence(true)
     setSaveMessage('')
     setError('')
 
     try {
-      const payload = await createProjectEvidence(id, {
+      await createProjectEvidence(id, {
         ...evidenceForm,
+        projectPhaseId: currentPhase.id,
         userId: sessionUser.id,
       })
+      const refreshedPayload = await getProject(id)
+      const refreshedProject = refreshedPayload?.project ?? null
+      const isAssigned = refreshedProject?.participante?.id === sessionUser?.id
 
-      setProject((current) => {
-        if (!current) return current
-
-        return {
-          ...current,
-          evidences: [payload.evidence, ...(current.evidences ?? [])],
-        }
-      })
+      setProject(isAssigned ? refreshedProject : null)
       setEvidenceForm(EMPTY_EVIDENCE_FORM)
       setSaveMessage('Evidencia registrada correctamente.')
       setActiveTab('evidencias')
@@ -198,6 +173,54 @@ function DetalleDocenteProyecto() {
     } finally {
       setSavingEvidence(false)
     }
+  }
+
+  function renderProgressOverview() {
+    return (
+      <section className="coor-project-detail-progress-grid">
+        <article className="coor-project-detail-progress-card">
+          <span className="coor-project-detail-mini-label">Progreso general</span>
+          <div className="coor-project-detail-progress-head">
+            <div>
+              <h3>{currentPhase ? `Fase actual: ${currentPhase.nombre}` : 'Proyecto finalizado'}</h3>
+              <p>
+                {progress.completedPhases} de {progress.totalPhases} fases completadas en la ruta del proyecto.
+              </p>
+            </div>
+            <div className="coor-project-detail-progress-meter">
+              <strong className="coor-project-detail-progress-value">{progress.percentage}%</strong>
+              <span className="coor-project-detail-progress-label">Completado</span>
+            </div>
+          </div>
+
+          <div className="coor-project-detail-progress-bar" aria-hidden="true">
+            <div
+              className="coor-project-detail-progress-fill"
+              style={{ width: `${Math.min(progress.percentage, 100)}%` }}
+            />
+          </div>
+
+          <div className="coor-project-detail-progress-meta">
+            <div className="coor-project-detail-progress-meta-item">
+              <span>Fase actual</span>
+              <strong>{currentPhase?.nombre ?? 'Proyecto finalizado'}</strong>
+            </div>
+            <div className="coor-project-detail-progress-meta-item">
+              <span>Estado actual</span>
+              <strong>{currentPhase ? PHASE_STATUS_LABELS[currentPhase.estado] ?? currentPhase.estado : 'Completado'}</strong>
+            </div>
+            <div className="coor-project-detail-progress-meta-item">
+              <span>Fases completadas</span>
+              <strong>{progress.completedPhases}</strong>
+            </div>
+            <div className="coor-project-detail-progress-meta-item">
+              <span>Fases bloqueadas</span>
+              <strong>{phases.filter((phase) => phase.isLocked).length}</strong>
+            </div>
+          </div>
+        </article>
+      </section>
+    )
   }
 
   function renderInformationTab() {
@@ -236,6 +259,18 @@ function DetalleDocenteProyecto() {
             <p>{project?.resultadoEsperado || '-'}</p>
           </article>
         </div>
+
+        <article className="coor-project-detail-copy-card">
+          <span className="coor-project-detail-label">Equipo del proyecto</span>
+          <div className="coor-project-detail-users">
+            <span className="coor-project-detail-chip">
+              Participante: {project?.participante?.name ?? '-'}
+            </span>
+            <span className="coor-project-detail-chip">
+              Evaluador: {project?.evaluador?.name ?? '-'}
+            </span>
+          </div>
+        </article>
       </section>
     )
   }
@@ -247,26 +282,95 @@ function DetalleDocenteProyecto() {
           <table className="coor-project-detail-table">
             <thead>
               <tr>
+                <th>Orden</th>
                 <th>Fase</th>
+                <th>Flujo</th>
                 <th>Estado</th>
+                <th>Evidencias</th>
                 <th>Observaciones</th>
               </tr>
             </thead>
             <tbody>
               {phases.map((phase) => (
                 <tr key={phase.id}>
+                  <td>F{phase.orden}</td>
                   <td>{phase.nombre}</td>
+                  <td>
+                    <span className={`coor-project-detail-flow-badge ${getPhaseFlowTone(phase)}`}>
+                      {getPhaseFlowLabel(phase)}
+                    </span>
+                  </td>
                   <td>
                     <span className={`coor-project-detail-badge ${normalizeText(phase.estado)}`}>
                       {PHASE_STATUS_LABELS[phase.estado] ?? phase.estado}
                     </span>
                   </td>
+                  <td>{phase.evidenceCount}</td>
                   <td>{phase.observaciones || '-'}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+
+        <article className="coor-project-detail-evaluation-card">
+          <h3>Retroalimentacion del evaluador</h3>
+          <p>Aqui puedes consultar observaciones y checklist diligenciados para cada fase revisada.</p>
+
+          {phases.some((phase) => {
+            const phaseChecklist = phaseChecklistMap.get(normalizeText(phase.nombre))
+            return Boolean(phase.observaciones) || (phaseChecklist?.items?.length ?? 0) > 0
+          }) ? (
+            <div className="coor-project-detail-evaluation-list">
+              {phases.map((phase) => {
+                const phaseChecklist = phaseChecklistMap.get(normalizeText(phase.nombre))
+                const hasEvaluation = Boolean(phase.observaciones) || (phaseChecklist?.items?.length ?? 0) > 0
+
+                if (!hasEvaluation) return null
+
+                return (
+                  <article key={phase.id} className="coor-project-detail-evaluation-item">
+                    <div className="coor-project-detail-evaluation-item-head">
+                      <strong>{phase.nombre}</strong>
+                      <span className={`coor-project-detail-flow-badge ${getPhaseFlowTone(phase)}`}>
+                        {getPhaseFlowLabel(phase)}
+                      </span>
+                    </div>
+
+                    <p className="coor-project-detail-evaluation-item-copy">
+                      {phase.observaciones || 'Sin observaciones registradas.'}
+                    </p>
+
+                    {(phaseChecklist?.items?.length ?? 0) > 0 ? (
+                      <div className="coor-project-detail-table-wrap">
+                        <table className="coor-project-detail-table">
+                          <thead>
+                            <tr>
+                              <th>Item</th>
+                              <th>Resultado</th>
+                              <th>Observacion</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {phaseChecklist.items.map((item) => (
+                              <tr key={item.id}>
+                                <td>{item.item}</td>
+                                <td>{item.resultado}</td>
+                                <td>{item.observacion || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : null}
+                  </article>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="coor-project-detail-empty">Aun no hay retroalimentacion registrada por fase.</div>
+          )}
+        </article>
       </section>
     )
   }
@@ -279,7 +383,7 @@ function DetalleDocenteProyecto() {
         <article className="coor-project-detail-panel">
           <div className="coor-project-detail-panel-head">
             <h3>Subir evidencia</h3>
-            <p>Registra el enlace del archivo y relaciona la evidencia con una fase del proyecto.</p>
+            <p>Solo puedes registrar evidencia en la fase actual habilitada por el sistema.</p>
           </div>
 
           <form className="doc-evidence-form" onSubmit={handleEvidenceSubmit}>
@@ -287,16 +391,13 @@ function DetalleDocenteProyecto() {
               <span>Fase</span>
               <select
                 name="projectPhaseId"
-                value={evidenceForm.projectPhaseId}
-                onChange={handleEvidenceFieldChange}
+                value={currentPhase?.id ?? ''}
+                disabled
                 required
               >
-                <option value="">Selecciona una fase</option>
-                {(project?.phases ?? []).map((phase) => (
-                  <option key={phase.id} value={phase.id}>
-                    {phase.nombre}
-                  </option>
-                ))}
+                <option value={currentPhase?.id ?? ''}>
+                  {currentPhase?.nombre ?? 'No hay fase disponible'}
+                </option>
               </select>
             </label>
 
@@ -323,22 +424,47 @@ function DetalleDocenteProyecto() {
               />
             </label>
 
+
             <label className="doc-evidence-field doc-evidence-field-full">
               <span>Archivo</span>
-              <input
-                type="file"
-                name="archivo"
-                onChange={handleEvidenceFieldChange}
-                required
-              />
+              <div className="custom-file-input-wrapper">
+                <input
+                  id="custom-evidence-file"
+                  type="file"
+                  name="archivo"
+                  style={{ display: 'none' }}
+                  onChange={handleEvidenceFieldChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className="custom-file-btn"
+                  onClick={() => document.getElementById('custom-evidence-file').click()}
+                >
+                  Seleccionar archivo
+                </button>
+                <span className="custom-file-name">
+                  {evidenceForm.archivo ? evidenceForm.archivo.name : 'Sin archivos seleccionados'}
+                </span>
+              </div>
             </label>
 
             <div className="coor-project-detail-actions-strip">
-              <button type="submit" className="coor-project-detail-primary" disabled={savingEvidence}>
+              <button
+                type="submit"
+                className="coor-project-detail-primary"
+                disabled={savingEvidence || !currentPhase?.id}
+              >
                 {savingEvidence ? 'Guardando...' : 'Registrar evidencia'}
               </button>
             </div>
           </form>
+
+          {currentPhase?.observaciones ? (
+            <div className="doc-evidence-note">
+              <strong>Observaciones del evaluador:</strong> {currentPhase.observaciones}
+            </div>
+          ) : null}
         </article>
 
         <article className="coor-project-detail-panel">
@@ -358,6 +484,7 @@ function DetalleDocenteProyecto() {
                     <th>Titulo</th>
                     <th>Usuario</th>
                     <th>Estado</th>
+                    <th>Observaciones</th>
                     <th>Archivo</th>
                   </tr>
                 </thead>
@@ -372,6 +499,7 @@ function DetalleDocenteProyecto() {
                           {EVIDENCE_STATUS_LABELS[evidence.estado] ?? evidence.estado}
                         </span>
                       </td>
+                      <td>{evidence.observaciones || '-'}</td>
                       <td>
                         <a
                           href={resolveEvidenceUrl(evidence.archivo)}
@@ -425,6 +553,8 @@ function DetalleDocenteProyecto() {
                 <h1>{project?.titulo}</h1>
                 <div className="coor-project-detail-summary">
                   <span>Empresa: {project?.company?.nombre || '-'}</span>
+                  <span>Representante: {project?.company?.representante?.name || '-'}</span>
+                  <span>Fase actual: {currentPhase?.nombre ?? 'Proyecto finalizado'}</span>
                 </div>
               </div>
               <div className="coor-project-detail-hero-actions">
@@ -436,6 +566,10 @@ function DetalleDocenteProyecto() {
                   Volver a proyectos
                 </button>
               </div>
+            </section>
+
+            <section className="coor-project-detail-shell coor-project-detail-shell-summary">
+              {renderProgressOverview()}
             </section>
 
             <section className="coor-project-detail-shell">

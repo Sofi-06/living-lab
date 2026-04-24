@@ -1,24 +1,23 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import DashboardNavbar from '../../../components/navbar/DashboardNavbar'
+import { DeleteIcon, EditIcon } from '../../../components/icons/ActionIcons'
+import DashboardNavbar, { COORDINADOR_LINKS } from '../../../components/navbar/DashboardNavbar'
 import { clearSessionUser } from '../../../utils/session'
 import { deleteUser, getUsers } from '../../../services/users'
 import './Usuario.css'
-
-const NAV_LINKS = [
-  { label: 'Dashboard', path: '/coordinador' },
-  { label: 'Proyectos', path: '/coordinador/proyectos' },
-  { label: 'Empresas', path: '/coordinador/empresas' },
-  { label: 'Usuarios', path: '/coordinador/usuarios' },
-  { label: 'Reportes', path: '/coordinador' },
-]
-
 const ROLE_OPTIONS = [
   { value: 'COORDINADOR', label: 'Coordinador' },
-  { value: 'DOCENTE', label: 'Docente' },
+  { value: 'PARTICIPANTE', label: 'Participante' },
   { value: 'EVALUADOR', label: 'Evaluador' },
-  { value: 'ESTUDIANTE', label: 'Estudiante' },
+  { value: 'REPRESENTANTE', label: 'Representante' },
 ]
+
+const ROLE_LABELS = {
+  COORDINADOR: 'Coordinador',
+  PARTICIPANTE: 'Participante',
+  EVALUADOR: 'Evaluador',
+  REPRESENTANTE: 'Representante',
+}
 
 function formatDate(value) {
   if (!value) return 'Sin fecha'
@@ -130,15 +129,12 @@ function Usuario() {
     }
   }
 
-
-
   return (
     <div className="coor-users-page">
-      <DashboardNavbar links={NAV_LINKS} onLogout={handleLogout} activeIndex={3} />
-
+      <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={3} />
       <main className="coor-users-main">
-        <section className="coor-users-hero" style={{ position: 'relative' }}>
-          <div>
+        <section className="coor-users-hero">
+          <div className="coor-users-hero-copy">
             <p className="coor-users-eyebrow">Administracion</p>
             <h1>Usuarios del sistema</h1>
             <p>
@@ -148,7 +144,6 @@ function Usuario() {
           <button
             type="button"
             className="coor-users-create-btn"
-            style={{ position: 'absolute', right: 32, bottom: 32 }}
             onClick={() => navigate('/coordinador/usuarios/crear-usuario')}
           >
             Ir a crear usuario
@@ -204,17 +199,29 @@ function Usuario() {
                       <td>{user.email}</td>
                       <td>
                         <span className={`coor-users-role ${normalizeText(user.role)}`}>
-                          {user.role}
+                          {ROLE_LABELS[user.role] ?? user.role}
                         </span>
                       </td>
                       <td>{formatDate(user.createdAt)}</td>
                       <td>
                         <div className="coor-users-actions">
-                          <button type="button" onClick={() => handleEditClick(user)}>
-                            Editar
+                          <button
+                            type="button"
+                            className="icon-only"
+                            onClick={() => handleEditClick(user)}
+                            aria-label={`Editar usuario ${user.name}`}
+                            title="Editar"
+                          >
+                            <EditIcon />
                           </button>
-                          <button type="button" className="danger" onClick={() => handleDelete(user)}>
-                            Eliminar
+                          <button
+                            type="button"
+                            className="danger icon-only"
+                            onClick={() => handleDelete(user)}
+                            aria-label={`Eliminar usuario ${user.name}`}
+                            title="Eliminar"
+                          >
+                            <DeleteIcon />
                           </button>
                         </div>
                       </td>

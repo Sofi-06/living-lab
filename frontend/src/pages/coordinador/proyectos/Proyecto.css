@@ -211,15 +211,16 @@
 }
 
 .coor-project-users {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  display: grid;
+  gap: 6px;
   min-width: 140px;
+  align-items: start;
 }
 
 .coor-project-user-chip {
   display: inline-flex;
   align-items: center;
+  width: fit-content;
   border-radius: 999px;
   padding: 4px 8px;
   background: #eef3ff;
@@ -231,6 +232,23 @@
 .coor-project-actions {
   display: flex;
   gap: 6px;
+}
+
+.coor-project-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.coor-project-action svg {
+  width: 14px;
+  height: 14px;
+}
+
+.coor-project-action.icon-only {
+  justify-content: center;
+  min-width: 42px;
+  padding: 8px 10px;
 }
 
 .coor-project-action.secondary {

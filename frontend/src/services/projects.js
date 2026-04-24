@@ -58,6 +58,13 @@ export function updateProject(projectId, data) {
   })
 }
 
+export function updateProjectEvaluation(projectId, data) {
+  return requestJson(`/projects/${projectId}/evaluation`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}
+
 export function createProjectEvidence(projectId, data) {
   const formData = new FormData()
 

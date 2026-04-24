@@ -64,19 +64,32 @@ export class UsersService {
     }
   }
 
-  async getUsers(rawSearch?: string) {
+  async getUsers(rawSearch?: string, rawRole?: string) {
     const search = typeof rawSearch === 'string' ? rawSearch.trim() : '';
-    const roleFilter = this.normalizeRoleFilter(search);
+    const roleFilter = this.parseOptionalRole(rawRole);
+    const filters: Prisma.UserWhereInput[] = [];
+    const searchFilters: Prisma.UserWhereInput[] = [
+      { name: { contains: search } },
+      { email: { contains: search } },
+    ];
 
-    const where = search
-      ? {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' as const } },
-            { email: { contains: search, mode: 'insensitive' as const } },
-            ...(roleFilter ? [{ role: roleFilter }] : []),
-          ],
-        }
-      : undefined;
+    const roleFromSearch = this.normalizeRoleFilter(search);
+
+    if (roleFromSearch) {
+      searchFilters.push({ role: roleFromSearch });
+    }
+
+    if (search) {
+      filters.push({
+        OR: searchFilters,
+      });
+    }
+
+    if (roleFilter) {
+      filters.push({ role: roleFilter });
+    }
+
+    const where = filters.length > 0 ? { AND: filters } : undefined;
 
     const users = await this.prisma.user.findMany({
       where,
@@ -227,13 +240,21 @@ export class UsersService {
 
     switch (role) {
       case SystemRole.COORDINADOR:
-      case SystemRole.DOCENTE:
+      case SystemRole.PARTICIPANTE:
       case SystemRole.EVALUADOR:
-      case SystemRole.ESTUDIANTE:
+      case SystemRole.REPRESENTANTE:
         return role;
       default:
         throw new BadRequestException('Rol invalido');
     }
+  }
+
+  private parseOptionalRole(rawRole?: string) {
+    if (typeof rawRole !== 'string' || !rawRole.trim()) {
+      return null;
+    }
+
+    return this.parseRole(rawRole);
   }
 
   private normalizeRoleFilter(rawSearch: string) {
@@ -241,9 +262,9 @@ export class UsersService {
 
     if (
       normalized === SystemRole.COORDINADOR ||
-      normalized === SystemRole.DOCENTE ||
+      normalized === SystemRole.PARTICIPANTE ||
       normalized === SystemRole.EVALUADOR ||
-      normalized === SystemRole.ESTUDIANTE
+      normalized === SystemRole.REPRESENTANTE
     ) {
       return normalized as SystemRole;
     }

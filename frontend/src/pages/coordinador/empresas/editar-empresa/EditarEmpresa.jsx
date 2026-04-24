@@ -1,17 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import DashboardNavbar from '../../../../components/navbar/DashboardNavbar'
+import DashboardNavbar, { COORDINADOR_LINKS } from '../../../../components/navbar/DashboardNavbar'
+import SearchableSelect from '../../../../components/searchable-select/SearchableSelect'
 import { getCompany, updateCompany } from '../../../../services/companies'
+import { getUsers } from '../../../../services/users'
 import { clearSessionUser } from '../../../../utils/session'
 import './EditarEmpresa.css'
-
-const NAV_LINKS = [
-  { label: 'Dashboard', path: '/coordinador' },
-  { label: 'Proyectos', path: '/coordinador/proyectos' },
-  { label: 'Empresas', path: '/coordinador/empresas' },
-  { label: 'Usuarios', path: '/coordinador/usuarios' },
-  { label: 'Reportes', path: '/coordinador' },
-]
 
 function EditarEmpresa() {
   const navigate = useNavigate()
@@ -19,10 +13,12 @@ function EditarEmpresa() {
   const [form, setForm] = useState({
     nombre: '',
     sector: '',
-    contacto: '',
     email: '',
     telefono: '',
+    representanteId: '',
   })
+  const [representantes, setRepresentantes] = useState([])
+  const [loadingOptions, setLoadingOptions] = useState(true)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -41,24 +37,30 @@ function EditarEmpresa() {
       setLoading(true)
 
       try {
-        const payload = await getCompany(id)
+        const [companyPayload, usersPayload] = await Promise.all([
+          getCompany(id),
+          getUsers('', { role: 'REPRESENTANTE' }),
+        ])
 
-        if (!cancelled && payload?.company) {
+        if (!cancelled && companyPayload?.company) {
+          setRepresentantes(usersPayload?.users ?? [])
           setForm({
-            nombre: payload.company.nombre ?? '',
-            sector: payload.company.sector ?? '',
-            contacto: payload.company.contacto ?? '',
-            email: payload.company.email ?? '',
-            telefono: payload.company.telefono ?? '',
+            nombre: companyPayload.company.nombre ?? '',
+            sector: companyPayload.company.sector ?? '',
+            email: companyPayload.company.email ?? '',
+            telefono: companyPayload.company.telefono ?? '',
+            representanteId: String(companyPayload.company.representanteId ?? ''),
           })
         }
       } catch (loadError) {
         if (!cancelled) {
+          setRepresentantes([])
           setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar la empresa')
         }
       } finally {
         if (!cancelled) {
           setLoading(false)
+          setLoadingOptions(false)
         }
       }
     }
@@ -93,8 +95,11 @@ function EditarEmpresa() {
     setMessage('')
 
     try {
-      const payload = await updateCompany(id, form)
-      setMessage(`Empresa ${payload.company.nombre} actualizada correctamente.`)
+      await updateCompany(id, {
+        ...form,
+        representanteId: Number(form.representanteId),
+      })
+      navigate('/coordinador/empresas', { replace: true })
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : 'No se pudo actualizar la empresa')
     } finally {
@@ -104,7 +109,7 @@ function EditarEmpresa() {
 
   return (
     <div className="coor-edit-company-page">
-      <DashboardNavbar links={NAV_LINKS} onLogout={handleLogout} activeIndex={2} />
+      <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={2} />
 
       <main className="coor-edit-company-main">
         <section className="coor-edit-company-card">
@@ -149,16 +154,21 @@ function EditarEmpresa() {
                 <span>Sector</span>
               </label>
 
-              <label>
-                <input
-                  type="text"
-                  value={form.contacto}
-                  onChange={(event) => setForm((current) => ({ ...current, contacto: event.target.value }))}
-                  required
-                  placeholder=" "
-                />
-                <span>Contacto</span>
-              </label>
+              <SearchableSelect
+                label="Representante de la empresa"
+                placeholder="Busca y selecciona un representante"
+                options={representantes.map((user) => ({
+                  value: String(user.id),
+                  label: user.name,
+                  description: user.email,
+                }))}
+                value={form.representanteId}
+                onChange={(value) => setForm((current) => ({ ...current, representanteId: value }))}
+                emptyMessage="No hay representantes disponibles."
+                disabled={loadingOptions}
+                required
+                variant="line"
+              />
 
               <label>
                 <input

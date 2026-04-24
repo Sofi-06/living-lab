@@ -1,17 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import DashboardNavbar from '../../../components/navbar/DashboardNavbar'
+import { DeleteIcon, EditIcon } from '../../../components/icons/ActionIcons'
+import DashboardNavbar, { COORDINADOR_LINKS } from '../../../components/navbar/DashboardNavbar'
 import { deleteCompany, getCompanies } from '../../../services/companies'
 import { clearSessionUser } from '../../../utils/session'
 import './Empresa.css'
-
-const NAV_LINKS = [
-	{ label: 'Dashboard', path: '/coordinador' },
-	{ label: 'Proyectos', path: '/coordinador/proyectos' },
-	{ label: 'Empresas', path: '/coordinador/empresas' },
-	{ label: 'Usuarios', path: '/coordinador/usuarios' },
-	{ label: 'Reportes', path: '/coordinador' },
-]
 
 function normalizeText(value) {
 	return typeof value === 'string' ? value.trim().toLowerCase() : ''
@@ -79,14 +72,14 @@ function Empresa() {
 		return companies.filter((company) => {
 			const nombre = normalizeText(company.nombre)
 			const sector = normalizeText(company.sector)
-			const contacto = normalizeText(company.contacto)
+			const representante = normalizeText(company.representante?.name)
 			const email = normalizeText(company.email)
 			const telefono = normalizeText(company.telefono)
 
 			return (
 				nombre.includes(term) ||
 				sector.includes(term) ||
-				contacto.includes(term) ||
+				representante.includes(term) ||
 				email.includes(term) ||
 				telefono.includes(term)
 			)
@@ -131,7 +124,7 @@ function Empresa() {
 						<th>ID</th>
 						<th>Nombre</th>
 						<th>Sector</th>
-						<th>Contacto</th>
+						<th>Representante</th>
 						<th>Email</th>
 						<th>Telefono</th>
 						<th>Acciones</th>
@@ -143,16 +136,28 @@ function Empresa() {
 							<td>{company.id}</td>
 							<td>{company.nombre}</td>
 							<td>{company.sector}</td>
-							<td>{company.contacto}</td>
+							<td>{company.representante?.name || '-'}</td>
 							<td>{company.email || '-'}</td>
 							<td>{company.telefono || '-'}</td>
 							<td>
 								<div className="coor-company-actions">
-									<button type="button" onClick={() => handleEditClick(company)}>
-										Editar
+									<button
+										type="button"
+										className="icon-only"
+										onClick={() => handleEditClick(company)}
+										aria-label={`Editar empresa ${company.nombre}`}
+										title="Editar"
+									>
+										<EditIcon />
 									</button>
-									<button type="button" className="danger" onClick={() => handleDelete(company)}>
-										Eliminar
+									<button
+										type="button"
+										className="danger icon-only"
+										onClick={() => handleDelete(company)}
+										aria-label={`Eliminar empresa ${company.nombre}`}
+										title="Eliminar"
+									>
+										<DeleteIcon />
 									</button>
 								</div>
 							</td>
@@ -165,11 +170,10 @@ function Empresa() {
 
 	return (
 		<div className="coor-company-page">
-			<DashboardNavbar links={NAV_LINKS} onLogout={handleLogout} activeIndex={2} />
-
+			<DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={2} />
 			<main className="coor-company-main">
-				<section className="coor-company-hero" style={{ position: 'relative' }}>
-					<div>
+				<section className="coor-company-hero">
+					<div className="coor-company-hero-copy">
 						<p className="coor-company-eyebrow">Administracion</p>
 						<h1>Empresas aliadas</h1>
 						<p>Consulta y administra la informacion de las empresas vinculadas a LivingLab.</p>
@@ -177,7 +181,6 @@ function Empresa() {
 					<button
 						type="button"
 						className="coor-company-create-btn"
-						style={{ position: 'absolute', right: 32, bottom: 32 }}
 						onClick={() => navigate('/coordinador/empresas/crear-empresa')}
 					>
 						Ir a crear empresa
@@ -188,14 +191,14 @@ function Empresa() {
 					<div className="coor-company-toolbar">
 						<div>
 							<h2>Listado de empresas</h2>
-							<p>Filtra por nombre, sector, contacto o correo.</p>
+							<p>Filtra por nombre, sector, representante o correo.</p>
 						</div>
 
 						<label className="coor-company-search">
 							<span>Buscar</span>
 							<input
 								type="search"
-								placeholder="Nombre, sector, contacto o telefono"
+								placeholder="Nombre, sector, representante o telefono"
 								value={searchValue}
 								onChange={(event) => setSearchValue(event.target.value)}
 							/>

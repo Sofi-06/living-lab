@@ -1,19 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import DashboardNavbar from '../../../../components/navbar/DashboardNavbar'
+import DashboardNavbar, { COORDINADOR_LINKS } from '../../../../components/navbar/DashboardNavbar'
 import { getProject } from '../../../../services/projects'
+import {
+  EVIDENCE_STATUS_LABELS,
+  PHASE_STATUS_LABELS,
+  ensureProjectPhases,
+  getCurrentProjectPhase,
+  getPhaseFlowLabel,
+  getPhaseFlowTone,
+  getProjectProgress,
+  normalizeText,
+} from '../../../../utils/projectPhases'
 import { clearSessionUser } from '../../../../utils/session'
 import './DetalleProyecto.css'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
-
-const NAV_LINKS = [
-  { label: 'Dashboard', path: '/coordinador' },
-  { label: 'Proyectos', path: '/coordinador/proyectos' },
-  { label: 'Empresas', path: '/coordinador/empresas' },
-  { label: 'Usuarios', path: '/coordinador/usuarios' },
-  { label: 'Reportes', path: '/coordinador' },
-]
 
 const STATUS_LABELS = {
   PENDING: 'Pendiente',
@@ -22,40 +24,11 @@ const STATUS_LABELS = {
   CANCELLED: 'Cancelado',
 }
 
-const PHASE_STATUS_LABELS = {
-  PENDING: 'Pendiente',
-  IN_PROGRESS: 'En progreso',
-  IN_REVIEW: 'En revision',
-  COMPLETED: 'Completada',
-}
-
-const EVIDENCE_STATUS_LABELS = {
-  PENDING: 'Pendiente',
-  IN_REVIEW: 'En revision',
-  APPROVED: 'Aprobada',
-  REJECTED: 'Rechazada',
-}
-
-const CHECKLIST_RESULT_LABELS = {
-  CUMPLE: 'Cumple',
-  NO_CUMPLE: 'No cumple',
-  PARCIAL: 'Parcial',
-}
-
 const TAB_OPTIONS = [
   { id: 'informacion', label: 'Informacion' },
   { id: 'fases', label: 'Fases' },
   { id: 'evidencias', label: 'Evidencias' },
   { id: 'evaluacion', label: 'Evaluacion' },
-]
-
-const DEFAULT_PHASES = [
-  'Co-creacion',
-  'Accion',
-  'Medicion',
-  'Iteracion',
-  'Narrativa',
-  'Apropiacion',
 ]
 
 function formatDate(value) {
@@ -72,23 +45,10 @@ function formatDate(value) {
   }).format(date)
 }
 
-function normalizeText(value) {
-  return typeof value === 'string' ? value.trim().toLowerCase() : ''
-}
-
 function resolveEvidenceUrl(value) {
   if (typeof value !== 'string' || !value.trim()) return '#'
   if (value.startsWith('http://') || value.startsWith('https://')) return value
   return `${API_BASE_URL}${value}`
-}
-
-function DetailValue({ label, value }) {
-  return (
-    <div className="coor-project-detail-meta-item">
-      <span>{label}</span>
-      <strong>{value || '-'}</strong>
-    </div>
-  )
 }
 
 function DetalleProyecto() {
@@ -139,20 +99,70 @@ function DetalleProyecto() {
   }, [id])
 
   const phases = useMemo(() => {
-    const currentPhases = project?.phases ?? []
-    const indexedPhases = new Map(currentPhases.map((phase) => [normalizeText(phase.nombre), phase]))
-
-    return DEFAULT_PHASES.map((phaseName) => {
-      const foundPhase = indexedPhases.get(normalizeText(phaseName))
-
-      return foundPhase ?? {
-        id: phaseName,
-        nombre: phaseName,
-        estado: 'PENDING',
-        observaciones: null,
-      }
-    })
+    return ensureProjectPhases(project)
   }, [project])
+
+  const currentPhase = useMemo(() => getCurrentProjectPhase(project, phases), [project, phases])
+  const progress = useMemo(() => getProjectProgress(project, phases), [project, phases])
+
+  const phaseChecklistMap = useMemo(() => {
+    return new Map((project?.phaseChecklist ?? []).map((phaseEntry) => [normalizeText(phaseEntry.fase), phaseEntry]))
+  }, [project])
+
+  const evaluatedPhases = useMemo(() => {
+    return phases.filter((phase) => {
+      const phaseChecklist = phaseChecklistMap.get(normalizeText(phase.nombre))
+      return Boolean(phase.observaciones) || (phaseChecklist?.items?.length ?? 0) > 0
+    })
+  }, [phaseChecklistMap, phases])
+
+  function renderProgressOverview() {
+    return (
+      <section className="coor-project-detail-progress-grid">
+        <article className="coor-project-detail-progress-card">
+          <span className="coor-project-detail-mini-label">Progreso general</span>
+          <div className="coor-project-detail-progress-head">
+            <div>
+              <h3>{currentPhase ? `Fase actual: ${currentPhase.nombre}` : 'Proyecto finalizado'}</h3>
+              <p>
+                {progress.completedPhases} de {progress.totalPhases} fases completadas en la ruta del proyecto.
+              </p>
+            </div>
+            <div className="coor-project-detail-progress-meter">
+              <strong className="coor-project-detail-progress-value">{progress.percentage}%</strong>
+              <span className="coor-project-detail-progress-label">Completado</span>
+            </div>
+          </div>
+
+          <div className="coor-project-detail-progress-bar" aria-hidden="true">
+            <div
+              className="coor-project-detail-progress-fill"
+              style={{ width: `${Math.min(progress.percentage, 100)}%` }}
+            />
+          </div>
+
+          <div className="coor-project-detail-progress-meta">
+            <div className="coor-project-detail-progress-meta-item">
+              <span>Fase actual</span>
+              <strong>{currentPhase?.nombre ?? 'Proyecto finalizado'}</strong>
+            </div>
+            <div className="coor-project-detail-progress-meta-item">
+              <span>Estado actual</span>
+              <strong>{currentPhase ? PHASE_STATUS_LABELS[currentPhase.estado] ?? currentPhase.estado : 'Completado'}</strong>
+            </div>
+            <div className="coor-project-detail-progress-meta-item">
+              <span>Fases completadas</span>
+              <strong>{progress.completedPhases}</strong>
+            </div>
+            <div className="coor-project-detail-progress-meta-item">
+              <span>Fases bloqueadas</span>
+              <strong>{phases.filter((phase) => phase.isLocked).length}</strong>
+            </div>
+          </div>
+        </article>
+      </section>
+    )
+  }
 
   function renderInformationTab() {
     return (
@@ -192,13 +202,14 @@ function DetalleProyecto() {
         </div>
 
         <article className="coor-project-detail-copy-card">
-          <span className="coor-project-detail-label">Usuarios asignados</span>
+          <span className="coor-project-detail-label">Responsables</span>
           <div className="coor-project-detail-users">
-            {(project?.users ?? []).map((user) => (
-              <span key={user.id} className="coor-project-detail-chip">
-                {user.name}
-              </span>
-            ))}
+            <span className="coor-project-detail-chip">
+              Participante: {project?.participante?.name ?? '-'}
+            </span>
+            <span className="coor-project-detail-chip">
+              Evaluador: {project?.evaluador?.name ?? '-'}
+            </span>
           </div>
         </article>
       </section>
@@ -212,20 +223,30 @@ function DetalleProyecto() {
           <table className="coor-project-detail-table">
             <thead>
               <tr>
+                <th>Orden</th>
                 <th>Fase</th>
+                <th>Flujo</th>
                 <th>Estado</th>
+                <th>Evidencias</th>
                 <th>Observaciones</th>
               </tr>
             </thead>
             <tbody>
               {phases.map((phase) => (
                 <tr key={phase.id}>
+                  <td>F{phase.orden}</td>
                   <td>{phase.nombre}</td>
+                  <td>
+                    <span className={`coor-project-detail-flow-badge ${getPhaseFlowTone(phase)}`}>
+                      {getPhaseFlowLabel(phase)}
+                    </span>
+                  </td>
                   <td>
                     <span className={`coor-project-detail-badge ${normalizeText(phase.estado)}`}>
                       {PHASE_STATUS_LABELS[phase.estado] ?? phase.estado}
                     </span>
                   </td>
+                  <td>{phase.evidenceCount}</td>
                   <td>{phase.observaciones || '-'}</td>
                 </tr>
               ))}
@@ -297,65 +318,57 @@ function DetalleProyecto() {
   }
 
   function renderEvaluationTab() {
-    const checklist = project?.checklist ?? []
-    const validation = project?.businessValidation
-
     return (
       <section className="coor-project-detail-section">
-        <article className="coor-project-detail-panel">
-          <div className="coor-project-detail-panel-head">
-            <h3>Checklist por fase</h3>
-            <p>Vista resumida de criterios y resultados del proyecto.</p>
-          </div>
+        <article className="coor-project-detail-evaluation-card">
+          <h3>Evaluaciones por fase</h3>
+          <p>Consulta observaciones y checklist diligenciados por el evaluador en cada fase del proyecto.</p>
 
-          {checklist.length === 0 ? (
-            <div className="coor-project-detail-empty">Aun no hay checklist registrado.</div>
+          {evaluatedPhases.length === 0 ? (
+            <div className="coor-project-detail-empty">Aun no hay evaluaciones registradas por fase.</div>
           ) : (
-            <div className="coor-project-detail-table-wrap">
-              <table className="coor-project-detail-table">
-                <thead>
-                  <tr>
-                    <th>Fase</th>
-                    <th>Criterio</th>
-                    <th>Resultado</th>
-                    <th>Observacion</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {checklist.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.fase}</td>
-                      <td>{item.criterio}</td>
-                      <td>{CHECKLIST_RESULT_LABELS[item.resultado] ?? item.resultado}</td>
-                      <td>{item.observacion || '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </article>
+            <div className="coor-project-detail-evaluation-list">
+              {evaluatedPhases.map((phase) => {
+                const phaseChecklist = phaseChecklistMap.get(normalizeText(phase.nombre))
 
-        <article className="coor-project-detail-panel">
-          <div className="coor-project-detail-panel-head">
-            <h3>Validacion empresarial</h3>
-            <p>Resumen de cierre y percepcion de la empresa.</p>
-          </div>
+                return (
+                  <article key={phase.id} className="coor-project-detail-evaluation-item">
+                    <div className="coor-project-detail-evaluation-item-head">
+                      <strong>{phase.nombre}</strong>
+                      <span className={`coor-project-detail-flow-badge ${getPhaseFlowTone(phase)}`}>
+                        {getPhaseFlowLabel(phase)}
+                      </span>
+                    </div>
 
-          {!validation ? (
-            <div className="coor-project-detail-empty">Aun no hay validacion empresarial registrada.</div>
-          ) : (
-            <div className="coor-project-detail-validation-grid">
-              <DetailValue label="Resolvio problema" value={validation.resolvioProblema} />
-              <DetailValue label="Es aplicable" value={validation.esAplicable} />
-              <DetailValue label="Genera valor" value={validation.generaValor} />
-              <DetailValue label="Desea implementarla" value={validation.deseaImplementarla} />
-              <DetailValue label="Firmante" value={validation.nombreFirmante} />
-              <DetailValue label="Cargo" value={validation.cargo} />
-              <div className="coor-project-detail-meta-item full">
-                <span>Comentarios</span>
-                <strong>{validation.comentarios || '-'}</strong>
-              </div>
+                    <p className="coor-project-detail-evaluation-item-copy">
+                      {phase.observaciones || 'Sin observaciones registradas.'}
+                    </p>
+
+                    {(phaseChecklist?.items?.length ?? 0) > 0 ? (
+                      <div className="coor-project-detail-table-wrap">
+                        <table className="coor-project-detail-table">
+                          <thead>
+                            <tr>
+                              <th>Item</th>
+                              <th>Resultado</th>
+                              <th>Observacion</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {phaseChecklist.items.map((item) => (
+                              <tr key={item.id}>
+                                <td>{item.item}</td>
+                                <td>{item.resultado}</td>
+                                <td>{item.observacion || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : null}
+                  </article>
+                )
+              })}
             </div>
           )}
         </article>
@@ -378,7 +391,7 @@ function DetalleProyecto() {
 
   return (
     <div className="coor-project-detail-page">
-      <DashboardNavbar links={NAV_LINKS} onLogout={handleLogout} activeIndex={1} />
+      <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={1} />
 
       <main className="coor-project-detail-main">
         {loading ? (
@@ -397,6 +410,7 @@ function DetalleProyecto() {
                 <h1>{project?.titulo}</h1>
                 <div className="coor-project-detail-summary">
                   <span>Empresa: {project?.company?.nombre || '-'}</span>
+                  <span>Representante: {project?.company?.representante?.name || '-'}</span>
                 </div>
               </div>
               <div className="coor-project-detail-hero-actions">
@@ -408,6 +422,10 @@ function DetalleProyecto() {
                   Volver a proyectos
                 </button>
               </div>
+            </section>
+
+            <section className="coor-project-detail-shell coor-project-detail-shell-summary">
+              {renderProgressOverview()}
             </section>
 
             <section className="coor-project-detail-shell">

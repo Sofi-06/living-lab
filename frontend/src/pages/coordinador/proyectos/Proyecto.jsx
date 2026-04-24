@@ -1,17 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import DashboardNavbar from '../../../components/navbar/DashboardNavbar'
+import { EditIcon, ViewIcon } from '../../../components/icons/ActionIcons'
+import DashboardNavbar, { COORDINADOR_LINKS } from '../../../components/navbar/DashboardNavbar'
 import { getProjects } from '../../../services/projects'
 import { clearSessionUser } from '../../../utils/session'
 import './Proyecto.css'
-
-const NAV_LINKS = [
-  { label: 'Dashboard', path: '/coordinador' },
-  { label: 'Proyectos', path: '/coordinador/proyectos' },
-  { label: 'Empresas', path: '/coordinador/empresas' },
-  { label: 'Usuarios', path: '/coordinador/usuarios' },
-  { label: 'Reportes', path: '/coordinador' },
-]
 
 const STATUS_LABELS = {
   PENDING: 'Pendiente',
@@ -97,9 +90,16 @@ function Proyecto() {
       const descripcion = normalizeText(project.descripcionProblema)
       const resultado = normalizeText(project.resultadoEsperado)
       const estado = normalizeText(project.estado)
-      const users = project.users
-        ?.map((user) => `${normalizeText(user.name)} ${normalizeText(user.email)} ${normalizeText(user.role)}`)
-        .join(' ') ?? ''
+      const assignments = [
+        project.company?.representante?.name,
+        project.company?.representante?.email,
+        project.participante?.name,
+        project.participante?.email,
+        project.evaluador?.name,
+        project.evaluador?.email,
+      ]
+        .map(normalizeText)
+        .join(' ')
 
       return (
         company.includes(term) ||
@@ -107,7 +107,7 @@ function Proyecto() {
         descripcion.includes(term) ||
         resultado.includes(term) ||
         estado.includes(term) ||
-        users.includes(term)
+        assignments.includes(term)
       )
     })
   }, [projects, searchValue])
@@ -119,7 +119,7 @@ function Proyecto() {
 
   return (
     <div className="coor-project-page">
-      <DashboardNavbar links={NAV_LINKS} onLogout={handleLogout} activeIndex={1} />
+      <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={1} />
 
       <main className="coor-project-main">
         <section className="coor-project-hero">
@@ -142,14 +142,14 @@ function Proyecto() {
           <div className="coor-project-toolbar">
             <div>
               <h2>Listado de proyectos</h2>
-              <p>Filtra por titulo, empresa, estado o integrantes.</p>
+              <p>Filtra por titulo, empresa, estado o responsables del proyecto.</p>
             </div>
 
             <label className="coor-project-search">
               <span>Buscar</span>
               <input
                 type="search"
-                placeholder="Titulo, empresa, estado o usuario"
+                placeholder="Titulo, empresa, estado o responsable"
                 value={searchValue}
                 onChange={(event) => setSearchValue(event.target.value)}
               />
@@ -175,7 +175,7 @@ function Proyecto() {
                     <th>Estado</th>
                     <th>Fecha inicio</th>
                     <th>Fecha fin</th>
-                    <th>Usuarios</th>
+                    <th>Asignaciones</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
@@ -201,27 +201,28 @@ function Proyecto() {
                       <td>{formatDate(project.fechaFin)}</td>
                       <td>
                         <div className="coor-project-users">
-                          {(project.users ?? []).map((user) => (
-                            <span key={user.id} className="coor-project-user-chip">
-                              {user.name}
-                            </span>
-                          ))}
+                          <span className="coor-project-user-chip">Rep: {project.company?.representante?.name ?? '-'}</span>
+                          <span className="coor-project-user-chip">Par: {project.participante?.name ?? '-'}</span>
+                          <span className="coor-project-user-chip">Eval: {project.evaluador?.name ?? '-'}</span>
                         </div>
                       </td>
                       <td>
                         <div className="coor-project-actions">
                           <button
                             type="button"
-                            className="coor-project-action"
+                            className="coor-project-action icon-only"
                             onClick={() => navigate(`/coordinador/proyectos/editar-proyecto/${project.id}`)}
+                            aria-label={`Editar proyecto ${project.titulo}`}
+                            title="Editar"
                           >
-                            Editar
+                            <EditIcon />
                           </button>
                           <button
                             type="button"
                             className="coor-project-action secondary"
                             onClick={() => navigate(`/coordinador/proyectos/${project.id}`)}
                           >
+                            <ViewIcon />
                             Ver detalles
                           </button>
                         </div>

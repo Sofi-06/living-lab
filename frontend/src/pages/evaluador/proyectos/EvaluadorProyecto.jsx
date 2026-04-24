@@ -5,9 +5,9 @@ import { getProjects } from '../../../services/projects'
 import { clearSessionUser, getSessionUser } from '../../../utils/session'
 import '../../coordinador/proyectos/Proyecto.css'
 
-const NAV_LINKS = [
-  { label: 'Dashboard', path: '/docente' },
-  { label: 'Proyectos', path: '/docente/proyectos' },
+const EVALUADOR_NAV_LINKS = [
+  { label: 'Dashboard', path: '/evaluador' },
+  { label: 'Proyectos', path: '/evaluador/proyectos' },
 ]
 
 const STATUS_LABELS = {
@@ -37,7 +37,7 @@ function formatDate(value) {
   }).format(date)
 }
 
-function DocenteProyecto() {
+function EvaluadorProyecto() {
   const navigate = useNavigate()
   const sessionUser = getSessionUser()
   const [projects, setProjects] = useState([])
@@ -95,13 +95,17 @@ function DocenteProyecto() {
       const problem = normalizeText(project.descripcionProblema)
       const result = normalizeText(project.resultadoEsperado)
       const status = normalizeText(project.estado)
+      const users = project.users
+        ?.map((user) => `${normalizeText(user.name)} ${normalizeText(user.email)} ${normalizeText(user.role)}`)
+        .join(' ') ?? ''
 
       return (
         company.includes(term) ||
         title.includes(term) ||
         problem.includes(term) ||
         result.includes(term) ||
-        status.includes(term)
+        status.includes(term) ||
+        users.includes(term)
       )
     })
   }, [projects, searchValue])
@@ -113,29 +117,29 @@ function DocenteProyecto() {
 
   return (
     <div className="coor-project-page">
-      <DashboardNavbar links={NAV_LINKS} onLogout={handleLogout} activeIndex={1} />
+      <DashboardNavbar links={EVALUADOR_NAV_LINKS} onLogout={handleLogout} activeIndex={1} />
 
       <main className="coor-project-main">
         <section className="coor-project-hero">
           <div>
-            <p className="coor-project-eyebrow">Participante</p>
-            <h1>Proyectos asignados</h1>
-            <p>Consulta tus proyectos, revisa las fases y registra evidencias del trabajo realizado.</p>
+            <p className="coor-project-eyebrow">Evaluador</p>
+            <h1>Proyectos por evaluar</h1>
+            <p>Revisa evidencias, diligencia checklist por fase y valida el cierre empresarial.</p>
           </div>
         </section>
 
         <section className="coor-project-card">
           <div className="coor-project-toolbar">
             <div>
-              <h2>Tus proyectos</h2>
-              <p>Busca por titulo, empresa, problema o estado.</p>
+              <h2>Proyectos asignados</h2>
+              <p>Busca por titulo, empresa, estado o integrantes del proyecto.</p>
             </div>
 
             <label className="coor-project-search">
               <span>Buscar</span>
               <input
                 type="search"
-                placeholder="Titulo, empresa o estado"
+                placeholder="Titulo, empresa, estado o usuario"
                 value={searchValue}
                 onChange={(event) => setSearchValue(event.target.value)}
               />
@@ -150,7 +154,7 @@ function DocenteProyecto() {
             ) : filteredProjects.length === 0 ? (
               <div className="coor-project-empty">
                 {projects.length === 0
-                  ? 'Todavia no tienes proyectos asignados.'
+                  ? 'Todavia no tienes proyectos asignados para evaluar.'
                   : 'No se encontraron proyectos con ese criterio.'}
               </div>
             ) : (
@@ -161,10 +165,9 @@ function DocenteProyecto() {
                     <th>Empresa</th>
                     <th>Titulo</th>
                     <th>Descripcion del problema</th>
-                    <th>Resultado esperado</th>
                     <th>Estado</th>
-                    <th>Fecha inicio</th>
                     <th>Fecha fin</th>
+                    <th>Usuarios</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
@@ -180,22 +183,29 @@ function DocenteProyecto() {
                       </td>
                       <td>{project.titulo}</td>
                       <td>{project.descripcionProblema}</td>
-                      <td>{project.resultadoEsperado}</td>
                       <td>
                         <span className={`coor-project-status ${normalizeText(project.estado)}`}>
                           {STATUS_LABELS[project.estado] ?? project.estado}
                         </span>
                       </td>
-                      <td>{formatDate(project.fechaInicio)}</td>
                       <td>{formatDate(project.fechaFin)}</td>
+                      <td>
+                        <div className="coor-project-users">
+                          {(project.users ?? []).map((user) => (
+                            <span key={user.id} className="coor-project-user-chip">
+                              {user.name}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
                       <td>
                         <div className="coor-project-actions">
                           <button
                             type="button"
                             className="coor-project-action secondary"
-                            onClick={() => navigate(`/docente/proyectos/${project.id}`)}
+                            onClick={() => navigate(`/evaluador/proyectos/${project.id}`)}
                           >
-                            Ver proyecto
+                            Evaluar
                           </button>
                         </div>
                       </td>
@@ -211,4 +221,4 @@ function DocenteProyecto() {
   )
 }
 
-export default DocenteProyecto
+export default EvaluadorProyecto

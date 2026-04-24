@@ -14,9 +14,9 @@
 
 .coor-users-main {
   min-width: 0;
-  padding: 10px 10px 10px 0;
+  padding: 8px 10px 8px 0;
   display: grid;
-  gap: 16px;
+  gap: 10px;
 }
 
 .coor-users-hero,
@@ -29,20 +29,24 @@
 }
 
 .coor-users-hero {
-  padding: 22px;
-  display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.9fr);
-  gap: 18px;
+  padding: 14px 18px;
+  display: flex;
   align-items: end;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .coor-users-eyebrow {
-  margin: 0 0 8px;
+  margin: 0 0 4px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   color: #4460ba;
+}
+
+.coor-users-hero-copy {
+  max-width: 780px;
 }
 
 .coor-users-hero h1,
@@ -52,76 +56,37 @@
 }
 
 .coor-users-hero h1 {
-  font-size: clamp(2rem, 3vw, 3.1rem);
+  font-size: 32px;
+  line-height: 1.05;
   color: #22305a;
 }
 
 .coor-users-hero p {
-  margin: 10px 0 0;
+  margin: 6px 0 0;
   color: #5f6f92;
-  font-size: 15px;
-}
-
-.coor-users-summary {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.coor-users-summary div {
-  border: 1px solid #e4e7f0;
-  border-radius: 16px;
-  background: #f8f9fc;
-  padding: 14px;
-}
-
-.coor-users-summary strong {
-  display: block;
-  font-size: 1.6rem;
-  color: #26479c;
-}
-
-.coor-users-summary span {
-  color: #6b768f;
   font-size: 13px;
-}
-
-.coor-users-create {
-  border: 1px solid #dce4f9;
-  border-radius: 18px;
-  padding: 14px;
-  background: #f6f9ff;
-}
-
-.coor-users-create h2 {
-  margin: 0;
-  color: #25448f;
-  font-size: 1.2rem;
-}
-
-.coor-users-create p {
-  margin: 10px 0 0;
-  color: #5f6f92;
+  line-height: 1.3;
 }
 
 .coor-users-create-btn {
-  margin-top: 14px;
   border: none;
   border-radius: 12px;
-  background: #2d4ca3;
-  color: #ffffff;
+  background: linear-gradient(90deg, #4460ba 60%, #7a95e5 100%);
+  color: #fff;
   font: inherit;
   font-weight: 800;
-  padding: 11px 14px;
+  padding: 8px 14px;
   cursor: pointer;
+  white-space: nowrap;
+  font-size: 14px;
 }
 
 .coor-users-create-btn:hover {
-  background: #203b85;
+  background: linear-gradient(90deg, #3b56ab 60%, #6f8add 100%);
 }
 
 .coor-users-card {
-  padding: 18px;
+  padding: 14px 16px;
 }
 
 .coor-users-toolbar {
@@ -239,9 +204,9 @@
   color: #294fb7;
 }
 
-.coor-users-role.docente {
-  background: #edf8ff;
-  color: #1f719e;
+.coor-users-role.participante {
+  background: #eef8f1;
+  color: #2f7a45;
 }
 
 .coor-users-role.evaluador {
@@ -249,9 +214,9 @@
   color: #b45a1f;
 }
 
-.coor-users-role.estudiante {
-  background: #f0f8ef;
-  color: #2f7a45;
+.coor-users-role.representante {
+  background: #f3efff;
+  color: #6b3fb1;
 }
 
 .coor-users-actions {
@@ -273,8 +238,22 @@
 
 .coor-users-actions button,
 .coor-users-form-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   background: #e9efff;
   color: #2d4ca3;
+}
+
+.coor-users-actions button svg {
+  width: 14px;
+  height: 14px;
+}
+
+.coor-users-actions button.icon-only {
+  justify-content: center;
+  min-width: 42px;
+  padding: 10px;
 }
 
 .coor-users-actions button.danger {
@@ -355,7 +334,8 @@
   }
 
   .coor-users-hero {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .coor-users-toolbar {

@@ -8,7 +8,7 @@ import { getSessionUser, saveSessionUser } from '../../utils/session'
 
 const ROLE_PATHS = {
   COORDINADOR: '/coordinador',
-  DOCENTE: '/docente',
+  PARTICIPANTE: '/docente',
   EVALUADOR: '/evaluador',
 }
 

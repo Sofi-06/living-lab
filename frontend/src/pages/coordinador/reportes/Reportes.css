@@ -1,0 +1,390 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap');
+
+.coor-report-page {
+  min-height: 100vh;
+  background: radial-gradient(circle at 12% 14%, #dce8ff 0, transparent 32%),
+    radial-gradient(circle at 88% 10%, #d7f0f7 0, transparent 24%), #f2f4f8;
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 8px;
+  padding: 6px;
+  color: #1f2538;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+}
+
+.coor-report-main {
+  min-width: 0;
+  padding: 8px 10px 18px 0;
+  display: grid;
+  gap: 12px;
+}
+
+.coor-report-hero,
+.coor-report-card,
+.coor-report-table-card {
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid #e4e7f0;
+  box-shadow: 0 9px 28px rgba(46, 58, 91, 0.05);
+}
+
+.coor-report-hero {
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.coor-report-eyebrow {
+  margin: 0 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 11px;
+  font-weight: 800;
+  color: #4460ba;
+}
+
+.coor-report-hero h1,
+.coor-report-card-head h2,
+.coor-report-table-head h2 {
+  margin: 0;
+  color: #22305a;
+}
+
+.coor-report-hero h1 {
+  font-size: 34px;
+  line-height: 1.05;
+}
+
+.coor-report-hero p,
+.coor-report-card-head p,
+.coor-report-table-head p {
+  margin: 6px 0 0;
+  color: #5f6f92;
+  font-size: 13px;
+}
+
+.coor-report-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: #eef4ff;
+  color: #3150a1;
+  font-weight: 800;
+}
+
+.coor-report-hero-badge svg {
+  font-size: 20px;
+}
+
+.coor-report-card,
+.coor-report-table-card {
+  padding: 16px 18px;
+}
+
+.coor-report-card-head,
+.coor-report-table-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.coor-report-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(88px, 1fr));
+  gap: 8px;
+}
+
+.coor-report-metrics article {
+  border-radius: 16px;
+  background: #f7f9fe;
+  border: 1px solid #e7ebf5;
+  padding: 10px 12px;
+  display: grid;
+  gap: 2px;
+}
+
+.coor-report-metrics strong {
+  font-size: 22px;
+  color: #27458f;
+}
+
+.coor-report-metrics span {
+  font-size: 12px;
+  color: #6a7694;
+}
+
+.coor-report-alert {
+  margin-top: 12px;
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.coor-report-alert.error {
+  background: #fff0f0;
+  color: #b23b3b;
+  border: 1px solid #f1c9c9;
+}
+
+.coor-report-filter-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.coor-report-filter-card {
+  border-radius: 18px;
+  border: 1px solid #e4e7f0;
+  background: linear-gradient(180deg, #ffffff 0%, #fafcff 100%);
+  padding: 18px;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.coor-report-filter-card h3 {
+  margin: 0;
+  color: #21315d;
+  font-size: 20px;
+}
+
+.coor-report-filter-card p {
+  margin: 0;
+  color: #5f6f92;
+  font-size: 13px;
+  line-height: 1.35;
+  min-height: 36px;
+}
+
+.coor-report-filter-card label {
+  display: grid;
+  gap: 6px;
+}
+
+.coor-report-filter-card label span {
+  color: #2f3f66;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.coor-report-filter-card select,
+.coor-report-filter-card input {
+  width: 100%;
+  border: 1px solid #d9dfef;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+  outline: none;
+  background: #f9fbff;
+  color: #304165;
+}
+
+.coor-report-filter-card select:focus,
+.coor-report-filter-card input:focus {
+  border-color: #4460ba;
+}
+
+.coor-report-filter-card-wide {
+  grid-column: span 2;
+}
+
+.coor-report-date-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.coor-report-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+}
+
+.coor-report-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.coor-report-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.coor-report-btn.primary {
+  background: linear-gradient(90deg, #4460ba 60%, #7a95e5 100%);
+  color: #fff;
+}
+
+.coor-report-btn.ghost {
+  background: #eef1f8;
+  color: #304165;
+}
+
+.coor-report-table-wrap {
+  margin-top: 14px;
+  overflow: auto;
+}
+
+.coor-report-table {
+  width: 100%;
+  min-width: 1120px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.coor-report-table th,
+.coor-report-table td {
+  padding: 10px;
+  border-bottom: 1px solid #ebeff7;
+  text-align: left;
+  vertical-align: top;
+}
+
+.coor-report-table th {
+  color: #304165;
+  font-size: 12px;
+  background: #fff;
+  position: sticky;
+  top: 0;
+}
+
+.coor-report-project-cell {
+  display: grid;
+  gap: 4px;
+}
+
+.coor-report-project-cell span {
+  color: #7482a4;
+  font-size: 11px;
+}
+
+.coor-report-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.coor-report-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #eef3ff;
+  color: #3150a1;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.coor-report-chip.user {
+  background: #edf8f1;
+  color: #267a4b;
+}
+
+.coor-report-chip.muted {
+  background: #f1f3f8;
+  color: #68758f;
+}
+
+.coor-report-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.coor-report-status.pending {
+  background: #fff7dc;
+  color: #8e6a05;
+}
+
+.coor-report-status.in_progress {
+  background: #e7f0ff;
+  color: #2758b7;
+}
+
+.coor-report-status.completed {
+  background: #e8f8ef;
+  color: #1b7d47;
+}
+
+.coor-report-status.cancelled {
+  background: #fff0f0;
+  color: #b23b3b;
+}
+
+.coor-report-link-btn {
+  border: none;
+  border-radius: 10px;
+  background: #eef1f8;
+  color: #304165;
+  font: inherit;
+  font-weight: 800;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.coor-report-empty {
+  padding: 22px 12px;
+  color: #5f6f92;
+  text-align: center;
+  font-size: 13px;
+}
+
+@media (max-width: 1100px) {
+  .coor-report-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .coor-report-filter-card-wide {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 980px) {
+  .coor-report-page {
+    grid-template-columns: 1fr;
+    padding: 0;
+  }
+
+  .coor-report-main {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 720px) {
+  .coor-report-hero,
+  .coor-report-card-head,
+  .coor-report-table-head,
+  .coor-report-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .coor-report-filter-grid,
+  .coor-report-date-grid,
+  .coor-report-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .coor-report-filter-card-wide {
+    grid-column: span 1;
+  }
+}

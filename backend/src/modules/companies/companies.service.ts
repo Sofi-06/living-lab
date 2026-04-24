@@ -3,16 +3,22 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, SystemRole } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 
 type CompanyRecord = {
   id: number;
   nombre: string;
   sector: string;
-  contacto: string;
   email: string | null;
   telefono: string | null;
+  representanteId: number;
+  representante: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+  };
 };
 
 type CompanyResponse = {
@@ -32,32 +38,29 @@ export class CompaniesService {
       body.sector,
       'El sector es obligatorio',
     );
-    const contacto = this.parseRequiredText(
-      body.contacto,
-      'El contacto es obligatorio',
+    const representanteId = this.parseEntityId(
+      body.representanteId,
+      'El representante es obligatorio',
     );
     const email = this.parseOptionalText(body.email)?.toLowerCase() ?? null;
     const telefono = this.parseOptionalText(body.telefono) ?? null;
+
+    await this.ensureRepresentativeExists(representanteId);
 
     const company = await this.prisma.company.create({
       data: {
         nombre,
         sector,
-        contacto,
         email,
         telefono,
+        representante: {
+          connect: { id: representanteId },
+        },
       },
-      select: {
-        id: true,
-        nombre: true,
-        sector: true,
-        contacto: true,
-        email: true,
-        telefono: true,
-      },
+      select: companySelect,
     });
 
-    return { company };
+    return { company: this.mapCompany(company) };
   }
 
   async getCompanies(rawSearch?: string) {
@@ -66,11 +69,28 @@ export class CompaniesService {
     const where = search
       ? {
           OR: [
-            { nombre: { contains: search, mode: 'insensitive' as const } },
-            { sector: { contains: search, mode: 'insensitive' as const } },
-            { contacto: { contains: search, mode: 'insensitive' as const } },
-            { email: { contains: search, mode: 'insensitive' as const } },
-            { telefono: { contains: search, mode: 'insensitive' as const } },
+            { nombre: { contains: search } },
+            { sector: { contains: search } },
+            { email: { contains: search } },
+            { telefono: { contains: search } },
+            {
+              representante: {
+                is: {
+                  OR: [
+                    {
+                      name: {
+                        contains: search,
+                      },
+                    },
+                    {
+                      email: {
+                        contains: search,
+                      },
+                    },
+                  ],
+                },
+              },
+            },
           ],
         }
       : undefined;
@@ -78,17 +98,10 @@ export class CompaniesService {
     const companies = await this.prisma.company.findMany({
       where,
       orderBy: { id: 'asc' },
-      select: {
-        id: true,
-        nombre: true,
-        sector: true,
-        contacto: true,
-        email: true,
-        telefono: true,
-      },
+      select: companySelect,
     });
 
-    return { companies };
+    return { companies: companies.map((company) => this.mapCompany(company)) };
   }
 
   async getCompany(rawId: string) {
@@ -96,21 +109,14 @@ export class CompaniesService {
 
     const company = await this.prisma.company.findUnique({
       where: { id: companyId },
-      select: {
-        id: true,
-        nombre: true,
-        sector: true,
-        contacto: true,
-        email: true,
-        telefono: true,
-      },
+      select: companySelect,
     });
 
     if (!company) {
       throw new NotFoundException('Empresa no encontrada');
     }
 
-    return { company };
+    return { company: this.mapCompany(company) };
   }
 
   async updateCompany(
@@ -146,12 +152,15 @@ export class CompaniesService {
       data.sector = sector;
     }
 
-    if (typeof body.contacto === 'string') {
-      const contacto = this.normalizeText(body.contacto);
-      if (!contacto) {
-        throw new BadRequestException('El contacto es obligatorio');
-      }
-      data.contacto = contacto;
+    if (body.representanteId !== undefined) {
+      const representanteId = this.parseEntityId(
+        body.representanteId,
+        'El representante es obligatorio',
+      );
+      await this.ensureRepresentativeExists(representanteId);
+      data.representante = {
+        connect: { id: representanteId },
+      };
     }
 
     if (body.email === null || typeof body.email === 'string') {
@@ -169,17 +178,10 @@ export class CompaniesService {
     const company = await this.prisma.company.update({
       where: { id: companyId },
       data,
-      select: {
-        id: true,
-        nombre: true,
-        sector: true,
-        contacto: true,
-        email: true,
-        telefono: true,
-      },
+      select: companySelect,
     });
 
-    return { company };
+    return { company: this.mapCompany(company) };
   }
 
   async deleteCompany(rawId: string) {
@@ -221,6 +223,16 @@ export class CompaniesService {
     return companyId;
   }
 
+  private parseEntityId(rawValue: unknown, message: string) {
+    const entityId = Number(rawValue);
+
+    if (!Number.isInteger(entityId) || entityId <= 0) {
+      throw new BadRequestException(message);
+    }
+
+    return entityId;
+  }
+
   private parseRequiredText(rawValue: unknown, message: string) {
     if (typeof rawValue !== 'string') {
       throw new BadRequestException(message);
@@ -248,4 +260,60 @@ export class CompaniesService {
   private normalizeText(value: string) {
     return value.trim().replace(/\s+/g, ' ');
   }
+
+  private async ensureRepresentativeExists(representanteId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: representanteId },
+      select: {
+        id: true,
+        role: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Representante no encontrado');
+    }
+
+    if (user.role !== SystemRole.REPRESENTANTE) {
+      throw new BadRequestException(
+        'El usuario seleccionado no tiene rol REPRESENTANTE',
+      );
+    }
+  }
+
+  private mapCompany(
+    company: Prisma.CompanyGetPayload<{ select: typeof companySelect }>,
+  ): CompanyRecord {
+    return {
+      id: company.id,
+      nombre: company.nombre,
+      sector: company.sector,
+      email: company.email,
+      telefono: company.telefono,
+      representanteId: company.representanteId,
+      representante: {
+        id: company.representante.id,
+        name: company.representante.name,
+        email: company.representante.email,
+        role: company.representante.role,
+      },
+    };
+  }
 }
+
+const companySelect = {
+  id: true,
+  nombre: true,
+  sector: true,
+  email: true,
+  telefono: true,
+  representanteId: true,
+  representante: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+    },
+  },
+} as const;
