@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import DashboardNavbar, { COORDINADOR_LINKS } from '../../../../components/navbar/DashboardNavbar'
+import DashboardNavbar from '../../../../components/navbar/DashboardNavbar'
+import { COORDINADOR_LINKS } from '../../../../components/navbar/dashboardLinks'
 import SearchableSelect from '../../../../components/searchable-select/SearchableSelect'
 import { createCompany } from '../../../../services/companies'
 import { getUsers } from '../../../../services/users'
+import { getFirstValidationError, validateCompanyForm } from '../../../../utils/formValidation'
 import { clearSessionUser } from '../../../../utils/session'
 import './CrearEmpresa.css'
 
@@ -73,6 +75,14 @@ function CrearEmpresa() {
 
   async function handleSubmit(event) {
     event.preventDefault()
+    const validationErrors = validateCompanyForm(form)
+
+    if (Object.keys(validationErrors).length > 0) {
+      setError(getFirstValidationError(validationErrors))
+      setMessage('')
+      return
+    }
+
     setLoading(true)
     setError('')
     setMessage('')
@@ -111,7 +121,7 @@ function CrearEmpresa() {
           {message ? <div className="coor-create-company-alert success">{message}</div> : null}
           {error ? <div className="coor-create-company-alert error">{error}</div> : null}
 
-          <form className="coor-create-company-form" onSubmit={handleSubmit}>
+          <form className="coor-create-company-form" onSubmit={handleSubmit} noValidate>
             <div className="coor-create-company-form-fields">
               <label>
                 <input
@@ -156,6 +166,7 @@ function CrearEmpresa() {
                   type="email"
                   value={form.email}
                   onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+                  autoComplete="email"
                   placeholder=" "
                 />
                 <span>Correo (Opcional)</span>
@@ -165,7 +176,12 @@ function CrearEmpresa() {
                 <input
                   type="text"
                   value={form.telefono}
-                  onChange={(event) => setForm((current) => ({ ...current, telefono: event.target.value }))}
+                  inputMode="numeric"
+                  maxLength={15}
+                  onChange={(event) => {
+                    const value = event.target.value.replace(/[^0-9]/g, '')
+                    setForm((current) => ({ ...current, telefono: value }))
+                  }}
                   placeholder=" "
                 />
                 <span>Telefono (Opcional)</span>

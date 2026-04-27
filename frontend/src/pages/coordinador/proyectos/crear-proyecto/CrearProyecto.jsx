@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import DashboardNavbar, { COORDINADOR_LINKS } from '../../../../components/navbar/DashboardNavbar'
+import DashboardNavbar from '../../../../components/navbar/DashboardNavbar'
+import { COORDINADOR_LINKS } from '../../../../components/navbar/dashboardLinks'
 import SearchableSelect from '../../../../components/searchable-select/SearchableSelect'
 import { getCompanies } from '../../../../services/companies'
 import { createProject } from '../../../../services/projects'
 import { getUsers } from '../../../../services/users'
+import { getFirstValidationError, validateProjectForm } from '../../../../utils/formValidation'
 import { clearSessionUser } from '../../../../utils/session'
 import './CrearProyecto.css'
 
@@ -93,8 +95,31 @@ function CrearProyecto() {
     return () => clearTimeout(timeout)
   }, [error])
 
+  function handleFechaInicioChange(value) {
+    setForm((current) => ({
+      ...current,
+      fechaInicio: value,
+      fechaFin: current.fechaFin && value && current.fechaFin < value ? '' : current.fechaFin,
+    }))
+  }
+
+  function handleFechaFinChange(value) {
+    setForm((current) => ({
+      ...current,
+      fechaFin: value,
+    }))
+  }
+
   async function handleSubmit(event) {
     event.preventDefault()
+    const validationErrors = validateProjectForm(form)
+
+    if (Object.keys(validationErrors).length > 0) {
+      setError(getFirstValidationError(validationErrors))
+      setMessage('')
+      return
+    }
+
     setSaving(true)
     setError('')
     setMessage('')
@@ -142,7 +167,7 @@ function CrearProyecto() {
           {loading ? (
             <div className="coor-project-form-loading">Cargando formulario...</div>
           ) : (
-            <form className="coor-project-form-grid" onSubmit={handleSubmit}>
+            <form className="coor-project-form-grid" onSubmit={handleSubmit} noValidate>
               <div className="coor-project-form-fields">
                 <SearchableSelect
                   label="Empresa"
@@ -209,7 +234,8 @@ function CrearProyecto() {
                     <input
                       type="date"
                       value={form.fechaInicio}
-                      onChange={(event) => setForm((current) => ({ ...current, fechaInicio: event.target.value }))}
+                      max={form.fechaFin || undefined}
+                      onChange={(event) => handleFechaInicioChange(event.target.value)}
                     />
                     <span>Fecha inicio</span>
                   </label>
@@ -218,7 +244,8 @@ function CrearProyecto() {
                     <input
                       type="date"
                       value={form.fechaFin}
-                      onChange={(event) => setForm((current) => ({ ...current, fechaFin: event.target.value }))}
+                      min={form.fechaInicio || undefined}
+                      onChange={(event) => handleFechaFinChange(event.target.value)}
                     />
                     <span>Fecha fin</span>
                   </label>

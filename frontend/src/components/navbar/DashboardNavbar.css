@@ -194,6 +194,9 @@
   font-family: inherit;
   overflow: hidden;
   transition: background 180ms ease;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .navbar-logout:hover {

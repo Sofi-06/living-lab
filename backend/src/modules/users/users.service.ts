@@ -8,6 +8,8 @@ import { Prisma, SystemRole } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 
 const PASSWORD_SALT_ROUNDS = 10;
+const MIN_PASSWORD_LENGTH = 4;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type UserRecord = {
   id: number;
@@ -30,8 +32,8 @@ export class UsersService {
     const email = this.parseRequiredText(
       body.email,
       'El correo es obligatorio',
-    ).toLowerCase();
-    const password = this.parseRequiredText(
+    );
+    const password = this.parsePassword(
       body.password,
       'La contrasena es obligatoria',
     );
@@ -143,7 +145,7 @@ export class UsersService {
     const data: Prisma.UserUpdateInput = {};
 
     if (typeof body.name === 'string') {
-      const name = body.name.trim();
+      const name = this.normalizeText(body.name);
       if (!name) {
         throw new BadRequestException('El nombre es obligatorio');
       }
@@ -151,11 +153,7 @@ export class UsersService {
     }
 
     if (typeof body.email === 'string') {
-      const email = body.email.trim().toLowerCase();
-      if (!email) {
-        throw new BadRequestException('El correo es obligatorio');
-      }
-      data.email = email;
+      data.email = this.parseEmail(body.email, 'El correo es obligatorio');
     }
 
     if (typeof body.role === 'string') {
@@ -165,7 +163,10 @@ export class UsersService {
     if (typeof body.password === 'string') {
       const password = body.password.trim();
       if (password) {
-        data.password = await hash(password, PASSWORD_SALT_ROUNDS);
+        data.password = await hash(
+          this.parsePassword(password, 'La contrasena es obligatoria'),
+          PASSWORD_SALT_ROUNDS,
+        );
       }
     }
 
@@ -226,13 +227,46 @@ export class UsersService {
       throw new BadRequestException(message);
     }
 
-    const value = rawValue.trim();
+    const value = this.normalizeText(rawValue);
 
     if (!value) {
       throw new BadRequestException(message);
     }
 
     return value;
+  }
+
+  private parseEmail(rawValue: unknown, requiredMessage: string) {
+    const email = this.parseRequiredText(
+      rawValue,
+      requiredMessage,
+    ).toLowerCase();
+
+    if (!EMAIL_REGEX.test(email)) {
+      throw new BadRequestException('El correo es invalido');
+    }
+
+    return email;
+  }
+
+  private parsePassword(rawValue: unknown, message: string) {
+    if (typeof rawValue !== 'string') {
+      throw new BadRequestException(message);
+    }
+
+    const password = rawValue.trim();
+
+    if (!password) {
+      throw new BadRequestException(message);
+    }
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      throw new BadRequestException(
+        `La contrasena debe tener minimo ${MIN_PASSWORD_LENGTH} caracteres`,
+      );
+    }
+
+    return password;
   }
 
   private parseRole(rawRole: string): SystemRole {
@@ -276,6 +310,10 @@ export class UsersService {
     if (this.isKnownPrismaError(error, 'P2002')) {
       throw new BadRequestException('El correo ya esta registrado');
     }
+  }
+
+  private normalizeText(value: string) {
+    return value.trim().replace(/\s+/g, ' ');
   }
 
   private isKnownPrismaError(error: unknown, code: string) {

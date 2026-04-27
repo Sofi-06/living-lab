@@ -143,6 +143,12 @@
   color: #1b7d47;
 }
 
+.eval-detail-feedback.info {
+  background: #eef5ff;
+  border: 1px solid #cddcf8;
+  color: #2d5aac;
+}
+
 @media (max-width: 980px) {
   .eval-detail-summary-grid,
   .eval-detail-decision-grid,

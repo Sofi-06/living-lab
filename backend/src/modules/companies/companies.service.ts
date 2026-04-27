@@ -6,6 +6,9 @@ import {
 import { Prisma, SystemRole } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_REGEX = /^\d{7,15}$/;
+
 type CompanyRecord = {
   id: number;
   nombre: string;
@@ -42,8 +45,11 @@ export class CompaniesService {
       body.representanteId,
       'El representante es obligatorio',
     );
-    const email = this.parseOptionalText(body.email)?.toLowerCase() ?? null;
-    const telefono = this.parseOptionalText(body.telefono) ?? null;
+    const email =
+      this.parseOptionalEmail(body.email, 'Correo de empresa invalido') ?? null;
+    const telefono =
+      this.parseOptionalPhone(body.telefono, 'Telefono de empresa invalido') ??
+      null;
 
     await this.ensureRepresentativeExists(representanteId);
 
@@ -164,11 +170,17 @@ export class CompaniesService {
     }
 
     if (body.email === null || typeof body.email === 'string') {
-      data.email = this.parseOptionalText(body.email)?.toLowerCase() ?? null;
+      data.email =
+        this.parseOptionalEmail(body.email, 'Correo de empresa invalido') ??
+        null;
     }
 
     if (body.telefono === null || typeof body.telefono === 'string') {
-      data.telefono = this.parseOptionalText(body.telefono) ?? null;
+      data.telefono =
+        this.parseOptionalPhone(
+          body.telefono,
+          'Telefono de empresa invalido',
+        ) ?? null;
     }
 
     if (Object.keys(data).length === 0) {
@@ -255,6 +267,34 @@ export class CompaniesService {
 
     const value = this.normalizeText(rawValue);
     return value || null;
+  }
+
+  private parseOptionalEmail(rawValue: unknown, message: string) {
+    const email = this.parseOptionalText(rawValue);
+
+    if (!email) {
+      return null;
+    }
+
+    if (!EMAIL_REGEX.test(email)) {
+      throw new BadRequestException(message);
+    }
+
+    return email.toLowerCase();
+  }
+
+  private parseOptionalPhone(rawValue: unknown, message: string) {
+    const phone = this.parseOptionalText(rawValue);
+
+    if (!phone) {
+      return null;
+    }
+
+    if (!PHONE_REGEX.test(phone)) {
+      throw new BadRequestException(message);
+    }
+
+    return phone;
   }
 
   private normalizeText(value: string) {

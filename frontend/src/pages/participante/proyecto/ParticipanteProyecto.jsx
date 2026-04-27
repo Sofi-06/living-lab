@@ -6,8 +6,8 @@ import { clearSessionUser, getSessionUser } from '../../../utils/session'
 import '../../coordinador/proyectos/Proyecto.css'
 
 const NAV_LINKS = [
-  { label: 'Dashboard', path: '/docente' },
-  { label: 'Proyectos', path: '/docente/proyectos' },
+  { label: 'Dashboard', path: '/participante' },
+  { label: 'Proyectos', path: '/participante/proyectos' },
 ]
 
 const STATUS_LABELS = {
@@ -37,7 +37,7 @@ function formatDate(value) {
   }).format(date)
 }
 
-function DocenteProyecto() {
+function ParticipanteProyecto() {
   const navigate = useNavigate()
   const sessionUser = getSessionUser()
   const [projects, setProjects] = useState([])
@@ -193,7 +193,7 @@ function DocenteProyecto() {
                           <button
                             type="button"
                             className="coor-project-action secondary"
-                            onClick={() => navigate(`/docente/proyectos/${project.id}`)}
+                            onClick={() => navigate(`/participante/proyectos/${project.id}`)}
                           >
                             Ver proyecto
                           </button>
@@ -211,4 +211,4 @@ function DocenteProyecto() {
   )
 }
 
-export default DocenteProyecto
+export default ParticipanteProyecto

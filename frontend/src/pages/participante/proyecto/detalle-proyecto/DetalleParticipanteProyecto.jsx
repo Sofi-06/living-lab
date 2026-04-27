@@ -12,15 +12,16 @@ import {
   getProjectProgress,
   normalizeText,
 } from '../../../../utils/projectPhases'
+import { getFirstValidationError, validateEvidenceForm } from '../../../../utils/formValidation'
 import { clearSessionUser, getSessionUser } from '../../../../utils/session'
 import '../../../coordinador/proyectos/detalle-proyecto/DetalleProyecto.css'
-import './DetalleDocenteProyecto.css'
+import './DetalleParticipanteProyecto.css'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 
 const NAV_LINKS = [
-  { label: 'Dashboard', path: '/docente' },
-  { label: 'Proyectos', path: '/docente/proyectos' },
+  { label: 'Dashboard', path: '/participante' },
+  { label: 'Proyectos', path: '/participante/proyectos' },
 ]
 
 const STATUS_LABELS = {
@@ -34,6 +35,7 @@ const TAB_OPTIONS = [
   { id: 'informacion', label: 'Informacion' },
   { id: 'fases', label: 'Fases' },
   { id: 'evidencias', label: 'Evidencias' },
+  { id: 'validacion', label: 'Validacion empresarial' },
 ]
 
 const EMPTY_EVIDENCE_FORM = {
@@ -63,7 +65,7 @@ function resolveEvidenceUrl(value) {
   return `${API_BASE_URL}${value}`
 }
 
-function DetalleDocenteProyecto() {
+function DetalleParticipanteProyecto() {
   const navigate = useNavigate()
   const { id } = useParams()
   const sessionUser = getSessionUser()
@@ -128,16 +130,15 @@ function DetalleDocenteProyecto() {
     return () => clearTimeout(timeout)
   }, [saveMessage])
 
-  const phases = useMemo(() => {
-    return ensureProjectPhases(project)
-  }, [project])
-
+  const phases = useMemo(() => ensureProjectPhases(project), [project])
   const currentPhase = useMemo(() => getCurrentProjectPhase(project, phases), [project, phases])
   const progress = useMemo(() => getProjectProgress(project, phases), [project, phases])
+  const isProjectExpired = Boolean(project?.fechaFin && new Date() > new Date(project.fechaFin))
 
-  const phaseChecklistMap = useMemo(() => {
-    return new Map((project?.phaseChecklist ?? []).map((phaseEntry) => [normalizeText(phaseEntry.fase), phaseEntry]))
-  }, [project])
+  const phaseChecklistMap = useMemo(
+    () => new Map((project?.phaseChecklist ?? []).map((phaseEntry) => [normalizeText(phaseEntry.fase), phaseEntry])),
+    [project],
+  )
 
   function handleEvidenceFieldChange(event) {
     const { name, value, files } = event.target
@@ -149,6 +150,17 @@ function DetalleDocenteProyecto() {
     event.preventDefault()
 
     if (!id || !sessionUser?.id || !currentPhase?.id) return
+
+    const validationErrors = validateEvidenceForm(evidenceForm, {
+      currentPhaseId: currentPhase.id,
+      isProjectExpired,
+    })
+
+    if (Object.keys(validationErrors).length > 0) {
+      setError(getFirstValidationError(validationErrors))
+      setSaveMessage('')
+      return
+    }
 
     setSavingEvidence(true)
     setSaveMessage('')
@@ -263,12 +275,8 @@ function DetalleDocenteProyecto() {
         <article className="coor-project-detail-copy-card">
           <span className="coor-project-detail-label">Equipo del proyecto</span>
           <div className="coor-project-detail-users">
-            <span className="coor-project-detail-chip">
-              Participante: {project?.participante?.name ?? '-'}
-            </span>
-            <span className="coor-project-detail-chip">
-              Evaluador: {project?.evaluador?.name ?? '-'}
-            </span>
+            <span className="coor-project-detail-chip">Participante: {project?.participante?.name ?? '-'}</span>
+            <span className="coor-project-detail-chip">Evaluador: {project?.evaluador?.name ?? '-'}</span>
           </div>
         </article>
       </section>
@@ -386,18 +394,17 @@ function DetalleDocenteProyecto() {
             <p>Solo puedes registrar evidencia en la fase actual habilitada por el sistema.</p>
           </div>
 
-          <form className="doc-evidence-form" onSubmit={handleEvidenceSubmit}>
+          {isProjectExpired ? (
+            <div className="coor-project-detail-alert error">
+              <strong>Proyecto vencido:</strong> La fecha de finalización del proyecto ({formatDate(project?.fechaFin)}) ya ha pasado. No es posible registrar nuevas evidencias.
+            </div>
+          ) : null}
+
+          <form className="doc-evidence-form" onSubmit={handleEvidenceSubmit} noValidate style={isProjectExpired ? { opacity: 0.6, pointerEvents: 'none' } : {}}>
             <label className="doc-evidence-field">
               <span>Fase</span>
-              <select
-                name="projectPhaseId"
-                value={currentPhase?.id ?? ''}
-                disabled
-                required
-              >
-                <option value={currentPhase?.id ?? ''}>
-                  {currentPhase?.nombre ?? 'No hay fase disponible'}
-                </option>
+              <select name="projectPhaseId" value={currentPhase?.id ?? ''} disabled required>
+                <option value={currentPhase?.id ?? ''}>{currentPhase?.nombre ?? 'No hay fase disponible'}</option>
               </select>
             </label>
 
@@ -410,6 +417,7 @@ function DetalleDocenteProyecto() {
                 onChange={handleEvidenceFieldChange}
                 placeholder="Ej. Informe de avance"
                 required
+                disabled={isProjectExpired}
               />
             </label>
 
@@ -421,9 +429,9 @@ function DetalleDocenteProyecto() {
                 onChange={handleEvidenceFieldChange}
                 placeholder="Describe brevemente la evidencia"
                 rows="3"
+                disabled={isProjectExpired}
               />
             </label>
-
 
             <label className="doc-evidence-field doc-evidence-field-full">
               <span>Archivo</span>
@@ -435,11 +443,13 @@ function DetalleDocenteProyecto() {
                   style={{ display: 'none' }}
                   onChange={handleEvidenceFieldChange}
                   required
+                  disabled={isProjectExpired}
                 />
                 <button
                   type="button"
                   className="custom-file-btn"
                   onClick={() => document.getElementById('custom-evidence-file').click()}
+                  disabled={isProjectExpired}
                 >
                   Seleccionar archivo
                 </button>
@@ -450,11 +460,7 @@ function DetalleDocenteProyecto() {
             </label>
 
             <div className="coor-project-detail-actions-strip">
-              <button
-                type="submit"
-                className="coor-project-detail-primary"
-                disabled={savingEvidence || !currentPhase?.id}
-              >
+              <button type="submit" className="coor-project-detail-primary" disabled={savingEvidence || !currentPhase?.id || isProjectExpired}>
                 {savingEvidence ? 'Guardando...' : 'Registrar evidencia'}
               </button>
             </div>
@@ -501,12 +507,7 @@ function DetalleDocenteProyecto() {
                       </td>
                       <td>{evidence.observaciones || '-'}</td>
                       <td>
-                        <a
-                          href={resolveEvidenceUrl(evidence.archivo)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="coor-project-detail-link"
-                        >
+                        <a href={resolveEvidenceUrl(evidence.archivo)} target="_blank" rel="noreferrer" className="coor-project-detail-link">
                           Ver archivo
                         </a>
                       </td>
@@ -521,12 +522,74 @@ function DetalleDocenteProyecto() {
     )
   }
 
+  function renderBusinessValidationTab() {
+    const validation = project?.businessValidation
+
+    if (!validation) {
+      return (
+        <section className="coor-project-detail-section">
+          <div className="coor-project-detail-empty">
+            La validacion empresarial aun no ha sido registrada por el representante de la empresa.
+          </div>
+        </section>
+      )
+    }
+
+    return (
+      <section className="coor-project-detail-section">
+        <article className="coor-project-detail-panel">
+          <div className="coor-project-detail-panel-head">
+            <h3>Validacion empresarial final</h3>
+            <p>Consulta en modo lectura el concepto final emitido por la empresa sobre el proyecto.</p>
+          </div>
+
+          <div className="coor-project-detail-validation-grid">
+            <div className="coor-project-detail-meta-item">
+              <span>Resolvio el problema</span>
+              <strong>{validation.resolvioProblema}</strong>
+            </div>
+            <div className="coor-project-detail-meta-item">
+              <span>La solucion es aplicable</span>
+              <strong>{validation.esAplicable}</strong>
+            </div>
+            <div className="coor-project-detail-meta-item">
+              <span>Genero valor</span>
+              <strong>{validation.generaValor}</strong>
+            </div>
+            <div className="coor-project-detail-meta-item">
+              <span>Desea implementarla</span>
+              <strong>{validation.deseaImplementarla}</strong>
+            </div>
+            <div className="coor-project-detail-meta-item">
+              <span>Nombre del firmante</span>
+              <strong>{validation.nombreFirmante}</strong>
+            </div>
+            <div className="coor-project-detail-meta-item">
+              <span>Cargo</span>
+              <strong>{validation.cargo}</strong>
+            </div>
+            <div className="coor-project-detail-meta-item full">
+              <span>Comentarios</span>
+              <strong>{validation.comentarios || '-'}</strong>
+            </div>
+            <div className="coor-project-detail-meta-item full">
+              <span>Firma de la empresa</span>
+              <strong>{validation.firma || '-'}</strong>
+            </div>
+          </div>
+        </article>
+      </section>
+    )
+  }
+
   function renderTabContent() {
     switch (activeTab) {
       case 'fases':
         return renderPhasesTab()
       case 'evidencias':
         return renderEvidencesTab()
+      case 'validacion':
+        return renderBusinessValidationTab()
       default:
         return renderInformationTab()
     }
@@ -558,11 +621,7 @@ function DetalleDocenteProyecto() {
                 </div>
               </div>
               <div className="coor-project-detail-hero-actions">
-                <button
-                  type="button"
-                  className="coor-project-detail-outline"
-                  onClick={() => navigate('/docente/proyectos')}
-                >
+                <button type="button" className="coor-project-detail-outline" onClick={() => navigate('/participante/proyectos')}>
                   Volver a proyectos
                 </button>
               </div>
@@ -588,9 +647,7 @@ function DetalleDocenteProyecto() {
                 ))}
               </div>
 
-              <div className="coor-project-detail-content">
-                {renderTabContent()}
-              </div>
+              <div className="coor-project-detail-content">{renderTabContent()}</div>
             </section>
           </>
         )}
@@ -599,4 +656,4 @@ function DetalleDocenteProyecto() {
   )
 }
 
-export default DetalleDocenteProyecto
+export default DetalleParticipanteProyecto

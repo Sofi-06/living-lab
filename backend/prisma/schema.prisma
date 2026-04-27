@@ -199,6 +199,7 @@ model BusinessValidation {
   comentarios        String?
   nombreFirmante     String
   cargo              String
+  firma              String
 
   project Project @relation(fields: [projectId], references: [id])
 

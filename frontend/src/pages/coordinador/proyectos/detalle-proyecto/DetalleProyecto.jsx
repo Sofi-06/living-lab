@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import DashboardNavbar, { COORDINADOR_LINKS } from '../../../../components/navbar/DashboardNavbar'
+import DashboardNavbar from '../../../../components/navbar/DashboardNavbar'
+import { COORDINADOR_LINKS } from '../../../../components/navbar/dashboardLinks'
 import { getProject } from '../../../../services/projects'
 import {
   EVIDENCE_STATUS_LABELS,

@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardNavbar from '../../components/navbar/DashboardNavbar'
 import DashboardFooter from '../../components/footer/DashboardFooter'
-import './DocenteDashboard.css'
+import './ParticipanteDashboard.css'
 import { clearSessionUser, getSessionUser } from '../../utils/session'
 import { getDashboardMetrics } from '../../services/dashboard'
 
 const NAV_LINKS = [
-  { label: 'Dashboard', path: '/docente' },
-  { label: 'Proyectos', path: '/docente/proyectos' },
+  { label: 'Dashboard', path: '/participante' },
+  { label: 'Proyectos', path: '/participante/proyectos' },
 ]
 
 const KPI_TEMPLATES = [
@@ -18,7 +18,7 @@ const KPI_TEMPLATES = [
   { label: 'Evaluaciones pendientes', key: 'evaluationsPending', tone: 'warning' },
 ]
 
-function DocenteDashboard() {
+function ParticipanteDashboard() {
   const navigate = useNavigate()
   const sessionUser = getSessionUser()
   const [metrics, setMetrics] = useState(null)
@@ -87,7 +87,7 @@ function DocenteDashboard() {
           <article className="doc-block doc-hero-block">
             <div>
               <h1>Bienvenid@, {sessionUser?.name || 'Usuario'}!</h1>
-              <p>Panel de control de Participante · {today}</p>
+              <p>Panel de control de Participante - {today}</p>
             </div>
           </article>
 
@@ -133,4 +133,4 @@ function DocenteDashboard() {
   )
 }
 
-export default DocenteDashboard
+export default ParticipanteDashboard

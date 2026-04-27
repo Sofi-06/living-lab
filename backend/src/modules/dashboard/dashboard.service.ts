@@ -24,6 +24,8 @@ export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getMetrics(rawRole?: string, userId?: number): Promise<RoleMetrics> {
+    await this.syncExpiredProjects();
+
     const role = this.normalizeRole(rawRole);
     const projectScope = this.getProjectScope(role, userId);
 
@@ -219,6 +221,258 @@ export class DashboardService {
   private async buildRecentActivity(role: SystemRole, userId?: number) {
     const projectScope = this.getProjectScope(role, userId);
 
+    if (role === SystemRole.PARTICIPANTE) {
+      const [latestOwnEvidence, latestFeedback, latestAssignedProject] =
+        await Promise.all([
+          this.prisma.evidence.findFirst({
+            where: userId
+              ? { userId }
+              : { user: { role: SystemRole.PARTICIPANTE } },
+            orderBy: { fecha: 'desc' },
+            select: {
+              titulo: true,
+              fecha: true,
+            },
+          }),
+          this.prisma.evidence.findFirst({
+            where: userId
+              ? {
+                  userId,
+                  observaciones: { not: null },
+                }
+              : {
+                  user: { role: SystemRole.PARTICIPANTE },
+                  observaciones: { not: null },
+                },
+            orderBy: { id: 'desc' },
+            select: {
+              titulo: true,
+              estado: true,
+            },
+          }),
+          this.prisma.project.findFirst({
+            where: projectScope
+              ? {
+                  ...projectScope,
+                  estado: {
+                    in: [ProjectStatus.PENDING, ProjectStatus.IN_PROGRESS],
+                  },
+                }
+              : {
+                  participante: {
+                    is: {
+                      role: SystemRole.PARTICIPANTE,
+                    },
+                  },
+                  estado: {
+                    in: [ProjectStatus.PENDING, ProjectStatus.IN_PROGRESS],
+                  },
+                },
+            orderBy: { id: 'desc' },
+            select: {
+              titulo: true,
+              estado: true,
+            },
+          }),
+        ]);
+
+      const activity: Array<{ label: string; value: string }> = [];
+
+      if (latestOwnEvidence) {
+        activity.push({
+          label: `Tu ultima evidencia: ${latestOwnEvidence.titulo}`,
+          value: this.formatDate(latestOwnEvidence.fecha),
+        });
+      }
+
+      if (latestFeedback) {
+        activity.push({
+          label: `Retroalimentacion en: ${latestFeedback.titulo}`,
+          value: this.mapEvidenceStatusLabel(latestFeedback.estado),
+        });
+      }
+
+      if (latestAssignedProject) {
+        activity.push({
+          label: `Proyecto en seguimiento: ${latestAssignedProject.titulo}`,
+          value: this.mapProjectStatusLabel(latestAssignedProject.estado),
+        });
+      }
+
+      return activity.length > 0
+        ? activity
+        : [{ label: 'Sin actividad registrada todavia', value: '-' }];
+    }
+
+    if (role === SystemRole.EVALUADOR) {
+      const [
+        latestPendingEvidence,
+        latestPendingPhase,
+        latestCompletedProject,
+      ] = await Promise.all([
+        this.prisma.evidence.findFirst({
+          where: {
+            estado: {
+              in: [EvidenceStatus.PENDING, EvidenceStatus.IN_REVIEW],
+            },
+            ...(projectScope
+              ? {
+                  projectPhase: {
+                    project: projectScope,
+                  },
+                }
+              : {}),
+          },
+          orderBy: { fecha: 'desc' },
+          select: {
+            titulo: true,
+            fecha: true,
+            user: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        }),
+        this.prisma.projectPhase.findFirst({
+          where: {
+            estado: {
+              in: [PhaseStatus.PENDING, PhaseStatus.IN_REVIEW],
+            },
+            ...(projectScope ? { project: projectScope } : {}),
+          },
+          orderBy: { id: 'desc' },
+          select: {
+            phase: {
+              select: {
+                nombre: true,
+              },
+            },
+            project: {
+              select: {
+                titulo: true,
+              },
+            },
+          },
+        }),
+        this.prisma.project.findFirst({
+          where: projectScope
+            ? {
+                ...projectScope,
+                estado: ProjectStatus.COMPLETED,
+              }
+            : {
+                evaluador: {
+                  is: {
+                    role: SystemRole.EVALUADOR,
+                  },
+                },
+                estado: ProjectStatus.COMPLETED,
+              },
+          orderBy: { id: 'desc' },
+          select: {
+            titulo: true,
+          },
+        }),
+      ]);
+
+      const activity: Array<{ label: string; value: string }> = [];
+
+      if (latestPendingEvidence) {
+        activity.push({
+          label: `Nueva evidencia por revisar: ${latestPendingEvidence.titulo}`,
+          value: latestPendingEvidence.user.name,
+        });
+      }
+
+      if (latestPendingPhase) {
+        activity.push({
+          label: `Fase pendiente: ${latestPendingPhase.phase.nombre}`,
+          value: latestPendingPhase.project.titulo,
+        });
+      }
+
+      if (latestCompletedProject) {
+        activity.push({
+          label: `Proyecto finalizado: ${latestCompletedProject.titulo}`,
+          value: 'Listo para cierre',
+        });
+      }
+
+      return activity.length > 0
+        ? activity
+        : [{ label: 'Sin actividad registrada todavia', value: '-' }];
+    }
+
+    if (role === SystemRole.REPRESENTANTE) {
+      const [
+        latestPendingValidation,
+        latestValidatedProject,
+        latestCompanyProject,
+      ] = await Promise.all([
+        this.prisma.project.findFirst({
+          where: {
+            ...(projectScope ?? {}),
+            estado: ProjectStatus.COMPLETED,
+            businessValidation: {
+              is: null,
+            },
+          },
+          orderBy: { id: 'desc' },
+          select: {
+            titulo: true,
+          },
+        }),
+        this.prisma.project.findFirst({
+          where: {
+            ...(projectScope ?? {}),
+            businessValidation: {
+              isNot: null,
+            },
+          },
+          orderBy: { id: 'desc' },
+          select: {
+            titulo: true,
+          },
+        }),
+        this.prisma.project.findFirst({
+          where: projectScope ?? undefined,
+          orderBy: { id: 'desc' },
+          select: {
+            titulo: true,
+            estado: true,
+          },
+        }),
+      ]);
+
+      const activity: Array<{ label: string; value: string }> = [];
+
+      if (latestPendingValidation) {
+        activity.push({
+          label: `Validacion pendiente: ${latestPendingValidation.titulo}`,
+          value: 'Requiere tu concepto',
+        });
+      }
+
+      if (latestValidatedProject) {
+        activity.push({
+          label: `Validacion registrada: ${latestValidatedProject.titulo}`,
+          value: 'Concepto empresarial emitido',
+        });
+      }
+
+      if (latestCompanyProject) {
+        activity.push({
+          label: `Proyecto de tu empresa: ${latestCompanyProject.titulo}`,
+          value: this.mapProjectStatusLabel(latestCompanyProject.estado),
+        });
+      }
+
+      return activity.length > 0
+        ? activity
+        : [{ label: 'Sin actividad registrada todavia', value: '-' }];
+    }
+
     const [latestEvidence, latestUser, latestPhaseReview] = await Promise.all([
       this.prisma.evidence.findFirst({
         where: projectScope
@@ -361,5 +615,52 @@ export class DashboardService {
       hour: '2-digit',
       minute: '2-digit',
     }).format(value);
+  }
+
+  private mapProjectStatusLabel(status: string) {
+    switch (status) {
+      case ProjectStatus.PENDING:
+        return 'Pendiente';
+      case ProjectStatus.IN_PROGRESS:
+        return 'En progreso';
+      case ProjectStatus.COMPLETED:
+        return 'Completado';
+      case ProjectStatus.CANCELLED:
+        return 'Cancelado';
+      default:
+        return String(status);
+    }
+  }
+
+  private mapEvidenceStatusLabel(status: string) {
+    switch (status) {
+      case EvidenceStatus.PENDING:
+        return 'Pendiente';
+      case EvidenceStatus.IN_REVIEW:
+        return 'En revision';
+      case EvidenceStatus.APPROVED:
+        return 'Aprobada';
+      case EvidenceStatus.REJECTED:
+        return 'Requiere ajustes';
+      default:
+        return String(status);
+    }
+  }
+
+  private async syncExpiredProjects() {
+    await this.prisma.project.updateMany({
+      where: {
+        fechaFin: {
+          not: null,
+          lt: new Date(),
+        },
+        estado: {
+          in: [ProjectStatus.PENDING, ProjectStatus.IN_PROGRESS],
+        },
+      },
+      data: {
+        estado: ProjectStatus.CANCELLED,
+      },
+    });
   }
 }

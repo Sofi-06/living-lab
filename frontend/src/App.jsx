@@ -11,18 +11,23 @@ import EditarEmpresa from './pages/coordinador/empresas/editar-empresa/EditarEmp
 import Usuario from './pages/coordinador/usuarios/Usuario'
 import CrearUsuario from './pages/coordinador/usuarios/crear-usuario/CrearUsuario'
 import EditarUsuario from './pages/coordinador/usuarios/editar-usuario/EditarUsuario'
-import DocenteDashboard from './pages/docente/DocenteDashboard'
-import DocenteProyecto from './pages/docente/proyecto/DocenteProyecto'
-import DetalleDocenteProyecto from './pages/docente/proyecto/detalle-proyecto/DetalleDocenteProyecto'
+import ParticipanteDashboard from './pages/participante/ParticipanteDashboard'
+import ParticipanteProyecto from './pages/participante/proyecto/ParticipanteProyecto'
+import DetalleParticipanteProyecto from './pages/participante/proyecto/detalle-proyecto/DetalleParticipanteProyecto'
 import EvaluadorDashboard from './pages/evaluador/EvaluadorDashboard'
 import EvaluadorProyecto from './pages/evaluador/proyectos/EvaluadorProyecto'
 import DetalleEvaluadorProyecto from './pages/evaluador/proyectos/detalle-proyecto/DetalleEvaluadorProyecto'
+import RepresentanteDashboard from './pages/representante/RepresentanteDashboard'
+import RepresentanteProyecto from './pages/representante/proyectos/RepresentanteProyecto'
+import DetalleRepresentanteProyecto from './pages/representante/proyectos/detalle-proyecto/DetalleRepresentanteProyecto'
+import Reportes from './pages/coordinador/reportes/Reportes'
 import { getSessionUser } from './utils/session'
 
 const ROLE_PATHS = {
   COORDINADOR: '/coordinador',
-  PARTICIPANTE: '/docente',
+  PARTICIPANTE: '/participante',
   EVALUADOR: '/evaluador',
+  REPRESENTANTE: '/representante',
 }
 
 function normalizeRole(rawRole) {
@@ -100,20 +105,20 @@ function CoordinadorEditUserRoute() {
   return getGuardedElement('COORDINADOR', <EditarUsuario />)
 }
 
-// function CoordinadorReportsRoute() {
-//   return getGuardedElement('COORDINADOR', <Reportes />)
-// }
-
-function DocenteRoute() {
-  return getGuardedElement('PARTICIPANTE', <DocenteDashboard />)
+function CoordinadorReportsRoute() {
+return getGuardedElement('COORDINADOR', <Reportes />)
 }
 
-function DocenteProjectsRoute() {
-  return getGuardedElement('PARTICIPANTE', <DocenteProyecto />)
+function ParticipanteRoute() {
+  return getGuardedElement('PARTICIPANTE', <ParticipanteDashboard />)
 }
 
-function DocenteProjectDetailRoute() {
-  return getGuardedElement('PARTICIPANTE', <DetalleDocenteProyecto />)
+function ParticipanteProjectsRoute() {
+  return getGuardedElement('PARTICIPANTE', <ParticipanteProyecto />)
+}
+
+function ParticipanteProjectDetailRoute() {
+  return getGuardedElement('PARTICIPANTE', <DetalleParticipanteProyecto />)
 }
 
 function EvaluadorRoute() {
@@ -126,6 +131,18 @@ function EvaluadorProjectsRoute() {
 
 function EvaluadorProjectDetailRoute() {
   return getGuardedElement('EVALUADOR', <DetalleEvaluadorProyecto />)
+}
+
+function RepresentanteRoute() {
+  return getGuardedElement('REPRESENTANTE', <RepresentanteDashboard />)
+}
+
+function RepresentanteProjectsRoute() {
+  return getGuardedElement('REPRESENTANTE', <RepresentanteProyecto />)
+}
+
+function RepresentanteProjectDetailRoute() {
+  return getGuardedElement('REPRESENTANTE', <DetalleRepresentanteProyecto />)
 }
 
 function RootRedirect() {
@@ -161,11 +178,11 @@ function App() {
         <Route path="/coordinador/usuarios" element={<CoordinadorUsersRoute />} />
         <Route path="/coordinador/usuarios/crear-usuario" element={<CoordinadorCreateUserRoute />} />
         <Route path="/coordinador/usuarios/editar-usuario/:id" element={<CoordinadorEditUserRoute />} />
-        {/* <Route path="/coordinador/reportes" element={<CoordinadorReportsRoute />} /> */}
+        <Route path="/coordinador/reportes" element={<CoordinadorReportsRoute />} /> 
 
-        <Route path="/docente" element={<DocenteRoute />} />
-        <Route path="/docente/proyectos" element={<DocenteProjectsRoute />} />
-        <Route path="/docente/proyectos/:id" element={<DocenteProjectDetailRoute />} />
+        <Route path="/participante" element={<ParticipanteRoute />} />
+        <Route path="/participante/proyectos" element={<ParticipanteProjectsRoute />} />
+        <Route path="/participante/proyectos/:id" element={<ParticipanteProjectDetailRoute />} />
 
         <Route
           path="/evaluador"
@@ -173,6 +190,10 @@ function App() {
         />
         <Route path="/evaluador/proyectos" element={<EvaluadorProjectsRoute />} />
         <Route path="/evaluador/proyectos/:id" element={<EvaluadorProjectDetailRoute />} />
+
+        <Route path="/representante" element={<RepresentanteRoute />} />
+        <Route path="/representante/proyectos" element={<RepresentanteProjectsRoute />} />
+        <Route path="/representante/proyectos/:id" element={<RepresentanteProjectDetailRoute />} />
 
         <Route path="*" element={<RootRedirect />} />
       </Routes>

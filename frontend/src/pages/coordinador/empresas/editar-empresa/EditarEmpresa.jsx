@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import DashboardNavbar, { COORDINADOR_LINKS } from '../../../../components/navbar/DashboardNavbar'
+import DashboardNavbar from '../../../../components/navbar/DashboardNavbar'
+import { COORDINADOR_LINKS } from '../../../../components/navbar/dashboardLinks'
 import SearchableSelect from '../../../../components/searchable-select/SearchableSelect'
 import { getCompany, updateCompany } from '../../../../services/companies'
 import { getUsers } from '../../../../services/users'
+import { getFirstValidationError, validateCompanyForm } from '../../../../utils/formValidation'
 import { clearSessionUser } from '../../../../utils/session'
 import './EditarEmpresa.css'
 
@@ -90,6 +92,14 @@ function EditarEmpresa() {
     event.preventDefault()
     if (!id) return
 
+    const validationErrors = validateCompanyForm(form)
+
+    if (Object.keys(validationErrors).length > 0) {
+      setError(getFirstValidationError(validationErrors))
+      setMessage('')
+      return
+    }
+
     setSaving(true)
     setError('')
     setMessage('')
@@ -131,7 +141,7 @@ function EditarEmpresa() {
           {loading ? (
             <div style={{ marginTop: '20px' }}>Cargando empresa...</div>
           ) : (
-            <form className="coor-edit-company-form" onSubmit={handleSubmit}>
+            <form className="coor-edit-company-form" onSubmit={handleSubmit} noValidate>
               <label>
                 <input
                   type="text"
@@ -175,6 +185,7 @@ function EditarEmpresa() {
                   type="email"
                   value={form.email}
                   onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+                  autoComplete="email"
                   placeholder=" "
                 />
                 <span>Correo (Opcional)</span>
@@ -184,7 +195,12 @@ function EditarEmpresa() {
                 <input
                   type="text"
                   value={form.telefono}
-                  onChange={(event) => setForm((current) => ({ ...current, telefono: event.target.value }))}
+                  inputMode="numeric"
+                  maxLength={15}
+                  onChange={(event) => {
+                    const value = event.target.value.replace(/[^0-9]/g, '')
+                    setForm((current) => ({ ...current, telefono: value }))
+                  }}
                   placeholder=" "
                 />
                 <span>Telefono (Opcional)</span>

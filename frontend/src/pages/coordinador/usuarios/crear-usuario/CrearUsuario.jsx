@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import DashboardNavbar, { COORDINADOR_LINKS } from '../../../../components/navbar/DashboardNavbar'
+import DashboardNavbar from '../../../../components/navbar/DashboardNavbar'
+import { COORDINADOR_LINKS } from '../../../../components/navbar/dashboardLinks'
 import { createUser } from '../../../../services/users'
+import { getFirstValidationError, validateUserForm } from '../../../../utils/formValidation'
 import { clearSessionUser } from '../../../../utils/session'
 import './CrearUsuario.css'
 const ROLE_OPTIONS = [
@@ -45,6 +47,14 @@ function CrearUsuario() {
 
   async function handleSubmit(event) {
     event.preventDefault()
+    const validationErrors = validateUserForm(form)
+
+    if (Object.keys(validationErrors).length > 0) {
+      setError(getFirstValidationError(validationErrors))
+      setMessage('')
+      return
+    }
+
     setLoading(true)
     setError('')
     setMessage('')
@@ -80,7 +90,7 @@ function CrearUsuario() {
           {message ? <div className="coor-create-alert success">{message}</div> : null}
           {error ? <div className="coor-create-alert error">{error}</div> : null}
 
-          <form className="coor-create-form" onSubmit={handleSubmit}>
+          <form className="coor-create-form" onSubmit={handleSubmit} noValidate>
             <label>
               <input
                 type="text"

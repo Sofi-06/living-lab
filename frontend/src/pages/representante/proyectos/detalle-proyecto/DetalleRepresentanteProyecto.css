@@ -1,0 +1,114 @@
+.rep-detail-feedback {
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.rep-detail-feedback.error {
+  background: #fff0f0;
+  color: #b23b3b;
+  border: 1px solid #f1c9c9;
+}
+
+.rep-detail-feedback.success {
+  background: #eefbf4;
+  color: #1b7d47;
+  border: 1px solid #cde8d9;
+}
+
+.rep-detail-feedback.info {
+  background: #fff8ef;
+  color: #8e6a05;
+  border: 1px solid #f1dfb0;
+}
+
+.rep-detail-feedback.neutral {
+  background: #eef5f2;
+  color: #355f56;
+  border: 1px solid #d7e6e1;
+}
+
+.rep-detail-summary-grid,
+.rep-detail-form-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.rep-detail-summary-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.rep-detail-summary-item {
+  border-radius: 16px;
+  border: 1px solid #e8edf7;
+  background: #fbfcff;
+  padding: 14px;
+}
+
+.rep-detail-summary-item span {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #7482a3;
+}
+
+.rep-detail-summary-item strong {
+  color: #22305a;
+}
+
+.rep-detail-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+.rep-detail-field {
+  display: grid;
+  gap: 8px;
+  color: #304165;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.rep-detail-field input,
+.rep-detail-field select,
+.rep-detail-field textarea {
+  width: 100%;
+  border: 1px solid #d9dfef;
+  border-radius: 12px;
+  padding: 11px 12px;
+  font: inherit;
+  outline: none;
+  background: #f9fbff;
+  color: #22305a;
+  resize: vertical;
+}
+
+.rep-detail-field input:focus,
+.rep-detail-field select:focus,
+.rep-detail-field textarea:focus {
+  border-color: #4460ba;
+}
+
+.rep-detail-field input:disabled,
+.rep-detail-field select:disabled,
+.rep-detail-field textarea:disabled {
+  background: #f1f4f8;
+  color: #6f7f9f;
+  cursor: not-allowed;
+}
+
+.rep-detail-field-full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 980px) {
+  .rep-detail-summary-grid,
+  .rep-detail-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

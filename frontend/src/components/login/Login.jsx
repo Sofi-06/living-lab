@@ -4,12 +4,14 @@ import './Login.css'
 import universityBackdrop from '../../assets/715.jpg'
 import campusLogo from '../../assets/Logo santoto camina-02.png'
 import { loginUser } from '../../services/auth'
+import { validateLoginForm } from '../../utils/formValidation'
 import { getSessionUser, saveSessionUser } from '../../utils/session'
 
 const ROLE_PATHS = {
   COORDINADOR: '/coordinador',
-  PARTICIPANTE: '/docente',
+  PARTICIPANTE: '/participante',
   EVALUADOR: '/evaluador',
+  REPRESENTANTE: '/representante',
 }
 
 function normalizeRole(rawRole) {
@@ -52,27 +54,9 @@ function Login() {
     }))
   }
 
-  function validate() {
-    const nextErrors = {}
-
-    if (!form.email.trim()) {
-      nextErrors.email = 'El correo es obligatorio'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      nextErrors.email = 'Ingresa un correo valido'
-    }
-
-    if (!form.password) {
-      nextErrors.password = 'La contrasena es obligatoria'
-    } else if (form.password.length < 6) {
-      nextErrors.password = 'Minimo 6 caracteres'
-    }
-
-    return nextErrors
-  }
-
   async function handleSubmit(event) {
     event.preventDefault()
-    const nextErrors = validate()
+    const nextErrors = validateLoginForm(form)
     setErrors(nextErrors)
     setStatus({ type: '', message: '' })
 
@@ -159,6 +143,7 @@ function Login() {
                     placeholder="********"
                     value={form.password}
                     onChange={handleChange}
+                    minLength={4}
                     autoComplete="current-password"
                     aria-invalid={Boolean(errors.password)}
                     aria-describedby={errors.password ? 'password-error' : undefined}

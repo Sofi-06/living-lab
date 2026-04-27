@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap');
+
 .coor-create-company-form-fields {
   display: grid;
   gap: 12px;
@@ -49,7 +51,6 @@
   padding: 0 4px;
   border-radius: 4px;
 }
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap');
 
 .coor-create-company-page {
   min-height: 100vh;

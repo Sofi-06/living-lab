@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import DashboardNavbar, { COORDINADOR_LINKS } from '../../components/navbar/DashboardNavbar'
+import DashboardNavbar from '../../components/navbar/DashboardNavbar'
+import { COORDINADOR_LINKS } from '../../components/navbar/dashboardLinks'
 import DashboardFooter from '../../components/footer/DashboardFooter'
 import './CoordinadorDashboard.css'
 import { clearSessionUser, getSessionUser } from '../../utils/session'

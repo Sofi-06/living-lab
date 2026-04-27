@@ -200,6 +200,14 @@ function DetalleEvaluadorProyecto() {
     )
   }, [currentPhase?.nombre, project])
 
+  const reviewableCurrentPhaseEvidences = useMemo(
+    () =>
+      currentPhaseEvidences.filter(
+        (evidence) => evidence.estado === 'PENDING' || evidence.estado === 'IN_REVIEW',
+      ),
+    [currentPhaseEvidences],
+  )
+
   useEffect(() => {
     setReviewChecklist(buildReviewChecklist(project, currentPhase))
     setPhaseObservations(currentPhase?.observaciones ?? '')
@@ -236,8 +244,13 @@ function DetalleEvaluadorProyecto() {
       return false
     }
 
+    if (reviewableCurrentPhaseEvidences.length === 0) {
+      setFormError('Esta fase ya tiene un concepto emitido para las evidencias actuales. Debes esperar una nueva evidencia del participante para volver a revisar.')
+      return false
+    }
+
     if (!reviewDecision) {
-      setFormError('Selecciona si la fase se aprueba o se rechaza.')
+      setFormError('Selecciona si la fase se aprueba o si se solicitan ajustes.')
       return false
     }
 
@@ -249,7 +262,7 @@ function DetalleEvaluadorProyecto() {
     }
 
     if (reviewDecision === 'reject' && !phaseObservations.trim()) {
-      setFormError('Cuando rechazas una fase debes registrar observaciones para el participante.')
+      setFormError('Cuando solicitas ajustes debes registrar observaciones para el participante.')
       return false
     }
 
@@ -286,7 +299,7 @@ function DetalleEvaluadorProyecto() {
       setSaveMessage(
         reviewDecision === 'approve'
           ? 'Fase aprobada correctamente. La siguiente fase quedo desbloqueada.'
-          : 'Fase rechazada. El proyecto permanece en la misma fase.',
+          : 'Se solicitaron ajustes. El proyecto permanece en la misma fase hasta que el participante suba una nueva evidencia.',
       )
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'No se pudo guardar la evaluacion')
@@ -507,45 +520,53 @@ function DetalleEvaluadorProyecto() {
     }
 
     return (
-      <div className="coor-project-detail-table-wrap">
-        <table className="coor-project-detail-table">
-          <thead>
-            <tr>
-              <th>Titulo</th>
-              <th>Descripcion</th>
-              <th>Usuario</th>
-              <th>Estado</th>
-              <th>Observaciones</th>
-              <th>Archivo</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentPhaseEvidences.map((evidence) => (
-              <tr key={evidence.id}>
-                <td>{evidence.titulo}</td>
-                <td>{evidence.descripcion || '-'}</td>
-                <td>{evidence.user?.name ?? '-'}</td>
-                <td>
-                  <span className={`coor-project-detail-badge ${normalizeText(evidence.estado)}`}>
-                    {EVIDENCE_STATUS_LABELS[evidence.estado] ?? evidence.estado}
-                  </span>
-                </td>
-                <td>{evidence.observaciones || '-'}</td>
-                <td>
-                  <a
-                    href={resolveEvidenceUrl(evidence.archivo)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="coor-project-detail-link"
-                  >
-                    Ver archivo
-                  </a>
-                </td>
+      <>
+        {reviewableCurrentPhaseEvidences.length === 0 ? (
+          <div className="eval-detail-feedback info">
+            Ya emitiste un concepto para las evidencias actuales de esta fase. Cuando el participante suba una nueva evidencia, el formulario se habilitara de nuevo.
+          </div>
+        ) : null}
+
+        <div className="coor-project-detail-table-wrap">
+          <table className="coor-project-detail-table">
+            <thead>
+              <tr>
+                <th>Titulo</th>
+                <th>Descripcion</th>
+                <th>Usuario</th>
+                <th>Estado</th>
+                <th>Observaciones</th>
+                <th>Archivo</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {currentPhaseEvidences.map((evidence) => (
+                <tr key={evidence.id}>
+                  <td>{evidence.titulo}</td>
+                  <td>{evidence.descripcion || '-'}</td>
+                  <td>{evidence.user?.name ?? '-'}</td>
+                  <td>
+                    <span className={`coor-project-detail-badge ${normalizeText(evidence.estado)}`}>
+                      {EVIDENCE_STATUS_LABELS[evidence.estado] ?? evidence.estado}
+                    </span>
+                  </td>
+                  <td>{evidence.observaciones || '-'}</td>
+                  <td>
+                    <a
+                      href={resolveEvidenceUrl(evidence.archivo)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="coor-project-detail-link"
+                    >
+                      Ver archivo
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>
     )
   }
 
@@ -579,8 +600,8 @@ function DetalleEvaluadorProyecto() {
               <strong>{PHASE_STATUS_LABELS[currentPhase.estado] ?? currentPhase.estado}</strong>
             </div>
             <div className="eval-detail-summary-item">
-              <span>Evidencias</span>
-              <strong>{currentPhaseEvidences.length}</strong>
+              <span>Evidencias pendientes</span>
+              <strong>{reviewableCurrentPhaseEvidences.length}</strong>
             </div>
           </div>
         </article>
@@ -588,7 +609,7 @@ function DetalleEvaluadorProyecto() {
         <article className="coor-project-detail-panel">
           <div className="coor-project-detail-panel-head">
             <h3>Evidencias de {currentPhase.nombre}</h3>
-            <p>Estas son las evidencias que debes usar para emitir la revision de la fase actual.</p>
+            <p>Solo puedes emitir una nueva revision cuando exista al menos una evidencia pendiente o en revision en esta fase.</p>
           </div>
 
           {renderCurrentPhaseEvidence()}
@@ -646,7 +667,7 @@ function DetalleEvaluadorProyecto() {
         <article className="coor-project-detail-panel">
           <div className="coor-project-detail-panel-head">
             <h3>Decision del evaluador</h3>
-            <p>La aprobacion completa la fase. El rechazo mantiene al proyecto en la misma fase para ajustes.</p>
+            <p>La aprobacion completa la fase. Si la evidencia requiere mejoras, solicita ajustes y espera una nueva entrega del participante.</p>
           </div>
 
           <div className="eval-detail-decision-grid">
@@ -662,7 +683,7 @@ function DetalleEvaluadorProyecto() {
               className={reviewDecision === 'reject' ? 'eval-detail-decision active reject' : 'eval-detail-decision reject'}
               onClick={() => setReviewDecision('reject')}
             >
-              Rechazar fase
+              Solicitar ajustes
             </button>
           </div>
 
@@ -681,7 +702,7 @@ function DetalleEvaluadorProyecto() {
           <button
             type="submit"
             className="coor-project-detail-primary"
-            disabled={savingEvaluation || currentPhaseEvidences.length === 0}
+            disabled={savingEvaluation || currentPhaseEvidences.length === 0 || reviewableCurrentPhaseEvidences.length === 0}
           >
             {savingEvaluation ? 'Guardando...' : 'Guardar revision'}
           </button>

@@ -95,9 +95,7 @@ function EvaluadorProyecto() {
       const problem = normalizeText(project.descripcionProblema)
       const result = normalizeText(project.resultadoEsperado)
       const status = normalizeText(project.estado)
-      const users = project.users
-        ?.map((user) => `${normalizeText(user.name)} ${normalizeText(user.email)} ${normalizeText(user.role)}`)
-        .join(' ') ?? ''
+      const participant = `${normalizeText(project.participante?.name)} ${normalizeText(project.participante?.email)}`
 
       return (
         company.includes(term) ||
@@ -105,7 +103,7 @@ function EvaluadorProyecto() {
         problem.includes(term) ||
         result.includes(term) ||
         status.includes(term) ||
-        users.includes(term)
+        participant.includes(term)
       )
     })
   }, [projects, searchValue])
@@ -132,14 +130,14 @@ function EvaluadorProyecto() {
           <div className="coor-project-toolbar">
             <div>
               <h2>Proyectos asignados</h2>
-              <p>Busca por titulo, empresa, estado o integrantes del proyecto.</p>
+              <p>Busca por titulo, empresa, estado o participante asignado.</p>
             </div>
 
             <label className="coor-project-search">
               <span>Buscar</span>
               <input
                 type="search"
-                placeholder="Titulo, empresa, estado o usuario"
+                placeholder="Titulo, empresa, estado o participante"
                 value={searchValue}
                 onChange={(event) => setSearchValue(event.target.value)}
               />
@@ -167,7 +165,7 @@ function EvaluadorProyecto() {
                     <th>Descripcion del problema</th>
                     <th>Estado</th>
                     <th>Fecha fin</th>
-                    <th>Usuarios</th>
+                    <th>Participante</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
@@ -191,11 +189,9 @@ function EvaluadorProyecto() {
                       <td>{formatDate(project.fechaFin)}</td>
                       <td>
                         <div className="coor-project-users">
-                          {(project.users ?? []).map((user) => (
-                            <span key={user.id} className="coor-project-user-chip">
-                              {user.name}
-                            </span>
-                          ))}
+                          <span className="coor-project-user-chip">
+                            {project.participante?.name ?? 'Sin participante'}
+                          </span>
                         </div>
                       </td>
                       <td>

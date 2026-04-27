@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import DashboardNavbar, { COORDINADOR_LINKS } from '../../../../components/navbar/DashboardNavbar'
+import DashboardNavbar from '../../../../components/navbar/DashboardNavbar'
+import { COORDINADOR_LINKS } from '../../../../components/navbar/dashboardLinks'
 import SearchableSelect from '../../../../components/searchable-select/SearchableSelect'
 import { getCompanies } from '../../../../services/companies'
 import { getProject, updateProject } from '../../../../services/projects'
 import { getUsers } from '../../../../services/users'
+import { getFirstValidationError, validateProjectForm } from '../../../../utils/formValidation'
 import { clearSessionUser } from '../../../../utils/session'
 import './EditarProyecto.css'
 
@@ -17,6 +19,11 @@ const STATUS_OPTIONS = [
 
 function toDateInputValue(value) {
   return typeof value === 'string' && value ? value.slice(0, 10) : ''
+}
+
+function isDateExpired(value) {
+  if (!value) return false
+  return new Date() > new Date(`${value}T23:59:59`)
 }
 
 function EditarProyecto() {
@@ -125,9 +132,36 @@ function EditarProyecto() {
     return () => clearTimeout(timeout)
   }, [error])
 
+  function handleFechaInicioChange(value) {
+    setForm((current) => ({
+      ...current,
+      fechaInicio: value,
+      fechaFin: current.fechaFin && value && current.fechaFin < value ? '' : current.fechaFin,
+    }))
+  }
+
+  function handleFechaFinChange(value) {
+    setForm((current) => ({
+      ...current,
+      fechaFin: value,
+      estado:
+        current.estado === 'CANCELLED' && value && !isDateExpired(value)
+          ? 'IN_PROGRESS'
+          : current.estado,
+    }))
+  }
+
   async function handleSubmit(event) {
     event.preventDefault()
     if (!id) return
+
+    const validationErrors = validateProjectForm(form)
+
+    if (Object.keys(validationErrors).length > 0) {
+      setError(getFirstValidationError(validationErrors))
+      setMessage('')
+      return
+    }
 
     setSaving(true)
     setError('')
@@ -176,7 +210,7 @@ function EditarProyecto() {
           {loading ? (
             <div className="coor-project-form-loading">Cargando proyecto...</div>
           ) : (
-            <form className="coor-project-form-grid" onSubmit={handleSubmit}>
+            <form className="coor-project-form-grid" onSubmit={handleSubmit} noValidate>
               <div className="coor-project-form-fields">
                 <SearchableSelect
                   label="Empresa"
@@ -258,7 +292,8 @@ function EditarProyecto() {
                     <input
                       type="date"
                       value={form.fechaInicio}
-                      onChange={(event) => setForm((current) => ({ ...current, fechaInicio: event.target.value }))}
+                      max={form.fechaFin || undefined}
+                      onChange={(event) => handleFechaInicioChange(event.target.value)}
                     />
                     <span>Fecha inicio</span>
                   </label>
@@ -267,7 +302,8 @@ function EditarProyecto() {
                     <input
                       type="date"
                       value={form.fechaFin}
-                      onChange={(event) => setForm((current) => ({ ...current, fechaFin: event.target.value }))}
+                      min={form.fechaInicio || undefined}
+                      onChange={(event) => handleFechaFinChange(event.target.value)}
                     />
                     <span>Fecha fin</span>
                   </label>

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import DashboardNavbar, { COORDINADOR_LINKS } from '../../../../components/navbar/DashboardNavbar'
+import DashboardNavbar from '../../../../components/navbar/DashboardNavbar'
+import { COORDINADOR_LINKS } from '../../../../components/navbar/dashboardLinks'
 import { getUser, updateUser } from '../../../../services/users'
+import { getFirstValidationError, validateUserForm } from '../../../../utils/formValidation'
 import { clearSessionUser } from '../../../../utils/session'
 import './EditarUsuario.css'
 
@@ -81,6 +83,15 @@ function EditarUsuario() {
   async function handleSubmit(event) {
     event.preventDefault()
     if (!id) return
+
+    const validationErrors = validateUserForm(form, { isEdit: true })
+
+    if (Object.keys(validationErrors).length > 0) {
+      setError(getFirstValidationError(validationErrors))
+      setMessage('')
+      return
+    }
+
     setSaving(true)
     setError('')
     setMessage('')
@@ -119,7 +130,7 @@ function EditarUsuario() {
           {loading ? (
             <div style={{ marginTop: '20px' }}>Cargando usuario...</div>
           ) : (
-            <form className="coor-edit-form" onSubmit={handleSubmit}>
+            <form className="coor-edit-form" onSubmit={handleSubmit} noValidate>
               <label>
                 <input
                   type="text"

@@ -42,6 +42,18 @@ const companySummarySelect = {
   },
 } as const;
 
+const businessValidationSelect = {
+  id: true,
+  resolvioProblema: true,
+  esAplicable: true,
+  generaValor: true,
+  deseaImplementarla: true,
+  comentarios: true,
+  nombreFirmante: true,
+  cargo: true,
+  firma: true,
+} as const;
+
 const projectListSelect = {
   id: true,
   companyId: true,
@@ -61,6 +73,20 @@ const projectListSelect = {
   },
   evaluador: {
     select: userSummarySelect,
+  },
+  projectPhases: {
+    select: {
+      id: true,
+      estado: true,
+      phase: {
+        select: {
+          nombre: true,
+        },
+      },
+    },
+  },
+  businessValidation: {
+    select: businessValidationSelect,
   },
 } as const;
 
@@ -123,16 +149,7 @@ const projectDetailSelect = {
     },
   },
   businessValidation: {
-    select: {
-      id: true,
-      resolvioProblema: true,
-      esAplicable: true,
-      generaValor: true,
-      deseaImplementarla: true,
-      comentarios: true,
-      nombreFirmante: true,
-      cargo: true,
-    },
+    select: businessValidationSelect,
   },
 } as const;
 
@@ -171,6 +188,14 @@ type ProjectRecord = {
   participante: UserRecord;
   evaluador: UserRecord;
   users: UserRecord[];
+  progress: {
+    totalPhases: number;
+    completedPhases: number;
+    percentage: number;
+  };
+  validationReady: boolean;
+  validationCompleted: boolean;
+  businessValidation: BusinessValidationRecord;
 };
 
 type ProjectPhaseRecord = {
@@ -208,6 +233,7 @@ type ProjectChecklistRecord = {
 };
 
 type BusinessValidationRecord = {
+  id: number;
   resolvioProblema: string;
   esAplicable: string;
   generaValor: string;
@@ -215,6 +241,7 @@ type BusinessValidationRecord = {
   comentarios: string | null;
   nombreFirmante: string;
   cargo: string;
+  firma: string;
 } | null;
 
 type ProjectDetailRecord = ProjectRecord & {
@@ -332,62 +359,17 @@ export class ProjectsService {
   }
 
   async getProjects(rawSearch?: string, rawUserId?: string) {
+    await this.syncExpiredProjects();
+
     const search = typeof rawSearch === 'string' ? rawSearch.trim() : '';
     const userId = rawUserId
       ? this.parseEntityId(rawUserId, 'Identificador de usuario invalido')
       : null;
-    const statusFilter = this.normalizeStatusFilter(search);
     const filters: Prisma.ProjectWhereInput[] = [];
+    const searchFilter = this.buildProjectSearchFilter(search);
 
-    if (search) {
-      filters.push({
-        OR: [
-          { titulo: { contains: search } },
-          { descripcionProblema: { contains: search } },
-          { resultadoEsperado: { contains: search } },
-          {
-            company: {
-              is: {
-                OR: [
-                  { nombre: { contains: search } },
-                  { sector: { contains: search } },
-                  {
-                    representante: {
-                      is: {
-                        OR: [
-                          { name: { contains: search } },
-                          { email: { contains: search } },
-                        ],
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-          {
-            participante: {
-              is: {
-                OR: [
-                  { name: { contains: search } },
-                  { email: { contains: search } },
-                ],
-              },
-            },
-          },
-          {
-            evaluador: {
-              is: {
-                OR: [
-                  { name: { contains: search } },
-                  { email: { contains: search } },
-                ],
-              },
-            },
-          },
-          ...(statusFilter ? [{ estado: statusFilter }] : []),
-        ],
-      });
+    if (searchFilter) {
+      filters.push(searchFilter);
     }
 
     if (userId) {
@@ -407,8 +389,54 @@ export class ProjectsService {
     return { projects: projects.map((project) => this.mapProject(project)) };
   }
 
+  async getRepresentativeProjects(
+    rawRepresentanteId: string,
+    rawSearch?: string,
+  ) {
+    await this.syncExpiredProjects();
+
+    const representanteId = this.parseEntityId(
+      rawRepresentanteId,
+      'Identificador de representante invalido',
+    );
+    const search = typeof rawSearch === 'string' ? rawSearch.trim() : '';
+
+    await this.ensureUserWithRole(
+      representanteId,
+      SystemRole.REPRESENTANTE,
+      'Representante no encontrado',
+      'El usuario seleccionado no tiene rol REPRESENTANTE',
+    );
+
+    const filters: Prisma.ProjectWhereInput[] = [
+      {
+        company: {
+          is: {
+            representanteId,
+          },
+        },
+      },
+    ];
+    const searchFilter = this.buildProjectSearchFilter(search);
+
+    if (searchFilter) {
+      filters.push(searchFilter);
+    }
+
+    const projects = await this.prisma.project.findMany({
+      where: {
+        AND: filters,
+      },
+      orderBy: { id: 'asc' },
+      select: projectListSelect,
+    });
+
+    return { projects: projects.map((project) => this.mapProject(project)) };
+  }
+
   async getProject(rawId: string): Promise<ProjectDetailResponse> {
     const projectId = this.parseProjectId(rawId);
+    await this.syncExpiredProjects(projectId);
     await this.ensureDefaultProjectPhases(projectId);
 
     const project = await this.prisma.project.findUnique({
@@ -429,6 +457,7 @@ export class ProjectsService {
     file?: UploadedEvidenceFile,
   ): Promise<ProjectEvidenceResponse> {
     const projectId = this.parseProjectId(rawId);
+    await this.syncExpiredProjects(projectId);
     await this.ensureDefaultProjectPhases(projectId);
 
     const projectPhaseId = this.parseEntityId(
@@ -466,6 +495,7 @@ export class ProjectsService {
           select: {
             participanteId: true,
             estado: true,
+            fechaFin: true,
           },
         },
         phase: {
@@ -478,6 +508,12 @@ export class ProjectsService {
 
     if (!projectPhase) {
       throw new NotFoundException('La fase del proyecto no existe');
+    }
+
+    if (this.hasProjectExpired(projectPhase.project.fechaFin)) {
+      throw new BadRequestException(
+        'La fecha de finalizacion del proyecto ha vencido. El proyecto fue marcado como cancelado. No se pueden registrar mas evidencias.',
+      );
     }
 
     if (projectPhase.project.participanteId !== userId) {
@@ -514,9 +550,7 @@ export class ProjectsService {
     const activePhase = this.getActiveProjectPhase(orderedProjectPhases);
 
     if (!activePhase) {
-      throw new BadRequestException(
-        'El proyecto ya completo todas sus fases',
-      );
+      throw new BadRequestException('El proyecto ya completo todas sus fases');
     }
 
     if (activePhase.id !== projectPhaseId) {
@@ -595,10 +629,12 @@ export class ProjectsService {
     body: Record<string, unknown>,
   ): Promise<ProjectResponse> {
     const projectId = this.parseProjectId(rawId);
+    await this.syncExpiredProjects(projectId);
     const existingProject = await this.prisma.project.findUnique({
       where: { id: projectId },
       select: {
         id: true,
+        estado: true,
         fechaInicio: true,
         fechaFin: true,
       },
@@ -693,19 +729,38 @@ export class ProjectsService {
       data.fechaFin = nextFechaFin;
     }
 
+    if (
+      existingProject.estado === ProjectStatus.CANCELLED &&
+      !this.hasProjectExpired(nextFechaFin) &&
+      (body.estado === undefined || data.estado === ProjectStatus.CANCELLED)
+    ) {
+      data.estado = ProjectStatus.IN_PROGRESS;
+    }
+
     if (Object.keys(data).length === 0) {
       throw new BadRequestException('No hay datos para actualizar');
     }
 
     this.validateDateRange(nextFechaInicio, nextFechaFin);
 
-    const project = await this.prisma.project.update({
+    await this.prisma.project.update({
       where: { id: projectId },
       data,
       select: projectListSelect,
     });
 
-    return { project: this.mapProject(project) };
+    await this.syncExpiredProjects(projectId);
+
+    const refreshedProject = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: projectListSelect,
+    });
+
+    if (!refreshedProject) {
+      throw new NotFoundException('Proyecto no encontrado');
+    }
+
+    return { project: this.mapProject(refreshedProject) };
   }
 
   async updateProjectEvaluation(
@@ -713,7 +768,33 @@ export class ProjectsService {
     body: Record<string, unknown>,
   ): Promise<ProjectDetailResponse> {
     const projectId = this.parseProjectId(rawId);
+    await this.syncExpiredProjects(projectId);
     await this.ensureDefaultProjectPhases(projectId);
+
+    const projectState = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        id: true,
+        estado: true,
+        fechaFin: true,
+      },
+    });
+
+    if (!projectState) {
+      throw new NotFoundException('Proyecto no encontrado');
+    }
+
+    if (projectState.estado === ProjectStatus.CANCELLED) {
+      if (this.hasProjectExpired(projectState.fechaFin)) {
+        throw new BadRequestException(
+          'La fecha de finalizacion del proyecto ha vencido. El proyecto fue marcado como cancelado y no admite evaluaciones.',
+        );
+      }
+
+      throw new BadRequestException(
+        'El proyecto fue cancelado y no admite evaluaciones',
+      );
+    }
 
     const projectPhaseId = this.parseEntityId(
       body.projectPhaseId,
@@ -763,6 +844,18 @@ export class ProjectsService {
       if (activePhase.evidences.length === 0) {
         throw new BadRequestException(
           'No puedes evaluar una fase que aun no tiene evidencias registradas',
+        );
+      }
+
+      const hasReviewableEvidence = activePhase.evidences.some(
+        (evidence) =>
+          evidence.estado === EvidenceStatus.PENDING ||
+          evidence.estado === EvidenceStatus.IN_REVIEW,
+      );
+
+      if (!hasReviewableEvidence) {
+        throw new BadRequestException(
+          'Ya existe un concepto registrado para las evidencias actuales. Debes esperar a que el participante suba una nueva evidencia para volver a evaluar la fase',
         );
       }
 
@@ -836,6 +929,116 @@ export class ProjectsService {
           },
         });
       }
+
+      return tx.project.findUnique({
+        where: { id: projectId },
+        select: projectDetailSelect,
+      });
+    });
+
+    if (!project) {
+      throw new NotFoundException('Proyecto no encontrado');
+    }
+
+    return { project: this.mapProjectDetail(project) };
+  }
+
+  async updateProjectBusinessValidation(
+    rawId: string,
+    body: Record<string, unknown>,
+  ): Promise<ProjectDetailResponse> {
+    const projectId = this.parseProjectId(rawId);
+    await this.syncExpiredProjects(projectId);
+    await this.ensureDefaultProjectPhases(projectId);
+
+    const projectState = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        id: true,
+        estado: true,
+        fechaFin: true,
+      },
+    });
+
+    if (!projectState) {
+      throw new NotFoundException('Proyecto no encontrado');
+    }
+
+    if (projectState.estado === ProjectStatus.CANCELLED) {
+      if (this.hasProjectExpired(projectState.fechaFin)) {
+        throw new BadRequestException(
+          'La fecha de finalizacion del proyecto ha vencido. El proyecto fue marcado como cancelado y no admite validacion empresarial.',
+        );
+      }
+
+      throw new BadRequestException(
+        'El proyecto fue cancelado y no admite validacion empresarial',
+      );
+    }
+
+    const representanteId = this.parseEntityId(
+      body.representanteId,
+      'El representante es obligatorio',
+    );
+    const validation = this.parseBusinessValidation(
+      body.businessValidation ?? body,
+    );
+
+    await this.ensureUserWithRole(
+      representanteId,
+      SystemRole.REPRESENTANTE,
+      'Representante no encontrado',
+      'El usuario seleccionado no tiene rol REPRESENTANTE',
+    );
+
+    const project = await this.prisma.$transaction(async (tx) => {
+      const existingProject = await tx.project.findUnique({
+        where: { id: projectId },
+        select: {
+          id: true,
+          estado: true,
+          company: {
+            select: {
+              representanteId: true,
+            },
+          },
+          projectPhases: {
+            select: {
+              estado: true,
+              phase: {
+                select: {
+                  nombre: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!existingProject) {
+        throw new NotFoundException('Proyecto no encontrado');
+      }
+
+      if (existingProject.company.representanteId !== representanteId) {
+        throw new BadRequestException(
+          'Este proyecto no pertenece a la empresa asociada al representante',
+        );
+      }
+
+      if (!this.isProjectReadyForBusinessValidation(existingProject)) {
+        throw new BadRequestException(
+          'La validacion empresarial solo se habilita cuando el proyecto esta listo para cierre',
+        );
+      }
+
+      await tx.businessValidation.upsert({
+        where: { projectId },
+        create: {
+          projectId,
+          ...validation,
+        },
+        update: validation,
+      });
 
       return tx.project.findUnique({
         where: { id: projectId },
@@ -1097,6 +1300,30 @@ export class ProjectsService {
     }
   }
 
+  private hasProjectExpired(fechaFin: Date | null) {
+    return Boolean(fechaFin && new Date() > fechaFin);
+  }
+
+  private async syncExpiredProjects(projectId?: number) {
+    const where: Prisma.ProjectWhereInput = {
+      fechaFin: {
+        not: null,
+        lt: new Date(),
+      },
+      estado: {
+        in: [ProjectStatus.PENDING, ProjectStatus.IN_PROGRESS],
+      },
+      ...(projectId ? { id: projectId } : {}),
+    };
+
+    await this.prisma.project.updateMany({
+      where,
+      data: {
+        estado: ProjectStatus.CANCELLED,
+      },
+    });
+  }
+
   private normalizeStatusFilter(rawSearch: string) {
     const normalized = rawSearch.trim().toUpperCase();
 
@@ -1110,6 +1337,63 @@ export class ProjectsService {
     }
 
     return null;
+  }
+
+  private buildProjectSearchFilter(search: string) {
+    if (!search) {
+      return null;
+    }
+
+    const statusFilter = this.normalizeStatusFilter(search);
+
+    return {
+      OR: [
+        { titulo: { contains: search } },
+        { descripcionProblema: { contains: search } },
+        { resultadoEsperado: { contains: search } },
+        {
+          company: {
+            is: {
+              OR: [
+                { nombre: { contains: search } },
+                { sector: { contains: search } },
+                {
+                  representante: {
+                    is: {
+                      OR: [
+                        { name: { contains: search } },
+                        { email: { contains: search } },
+                      ],
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        },
+        {
+          participante: {
+            is: {
+              OR: [
+                { name: { contains: search } },
+                { email: { contains: search } },
+              ],
+            },
+          },
+        },
+        {
+          evaluador: {
+            is: {
+              OR: [
+                { name: { contains: search } },
+                { email: { contains: search } },
+              ],
+            },
+          },
+        },
+        ...(statusFilter ? [{ estado: statusFilter }] : []),
+      ],
+    } satisfies Prisma.ProjectWhereInput;
   }
 
   private normalizeText(value: string) {
@@ -1156,7 +1440,7 @@ export class ProjectsService {
 
   private getActiveProjectPhase<
     T extends {
-      estado: PhaseStatus | string;
+      estado: PhaseStatus;
       phase: {
         nombre: string;
       };
@@ -1187,6 +1471,24 @@ export class ProjectsService {
     };
   }
 
+  private isProjectReadyForBusinessValidation(project: {
+    estado: ProjectStatus;
+    projectPhases: Array<{
+      estado: PhaseStatus;
+    }>;
+  }) {
+    if (project.estado === ProjectStatus.CANCELLED) {
+      return false;
+    }
+
+    if (project.estado === ProjectStatus.COMPLETED) {
+      return true;
+    }
+
+    const progress = this.buildPhaseProgress(project.projectPhases);
+    return progress.percentage >= 100;
+  }
+
   private buildEvidenceFileUrl(projectId: number, filename: string) {
     const safeFilename = filename.replace(/\\/g, '/');
 
@@ -1204,6 +1506,11 @@ export class ProjectsService {
   private mapProject(project: ProjectWithRelations): ProjectRecord {
     const participante = this.mapUser(project.participante);
     const evaluador = this.mapUser(project.evaluador);
+    const orderedProjectPhases = this.sortProjectPhases(project.projectPhases);
+    const progress = this.buildPhaseProgress(orderedProjectPhases);
+    const businessValidation = this.mapBusinessValidation(
+      project.businessValidation,
+    );
 
     return {
       id: project.id,
@@ -1225,6 +1532,13 @@ export class ProjectsService {
       participante,
       evaluador,
       users: this.buildProjectUsers(participante, evaluador),
+      progress,
+      validationReady: this.isProjectReadyForBusinessValidation({
+        estado: project.estado,
+        projectPhases: orderedProjectPhases,
+      }),
+      validationCompleted: businessValidation !== null,
+      businessValidation,
     };
   }
 
@@ -1349,6 +1663,7 @@ export class ProjectsService {
     }
 
     return {
+      id: validation.id,
       resolvioProblema: validation.resolvioProblema,
       esAplicable: validation.esAplicable,
       generaValor: validation.generaValor,
@@ -1356,6 +1671,7 @@ export class ProjectsService {
       comentarios: validation.comentarios,
       nombreFirmante: validation.nombreFirmante,
       cargo: validation.cargo,
+      firma: validation.firma,
     };
   }
 
@@ -1515,6 +1831,10 @@ export class ProjectsService {
         'El nombre del firmante es obligatorio',
       ),
       cargo: this.parseRequiredText(payload.cargo, 'El cargo es obligatorio'),
+      firma: this.parseRequiredText(
+        payload.firma,
+        'La firma de la empresa es obligatoria',
+      ),
     };
   }
 

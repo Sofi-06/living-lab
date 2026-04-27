@@ -40,6 +40,17 @@ export function getProjects(search = '', options = {}) {
   return requestJson(`/projects${suffix}`)
 }
 
+export function getRepresentativeProjects(representanteId, search = '') {
+  const query = new URLSearchParams()
+
+  if (typeof search === 'string' && search.trim()) {
+    query.set('search', search.trim())
+  }
+
+  const suffix = query.toString() ? `?${query.toString()}` : ''
+  return requestJson(`/projects/representative/${representanteId}${suffix}`)
+}
+
 export function getProject(projectId) {
   return requestJson(`/projects/${projectId}`)
 }
@@ -60,6 +71,13 @@ export function updateProject(projectId, data) {
 
 export function updateProjectEvaluation(projectId, data) {
   return requestJson(`/projects/${projectId}/evaluation`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}
+
+export function updateProjectBusinessValidation(projectId, data) {
+  return requestJson(`/projects/${projectId}/business-validation`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   })

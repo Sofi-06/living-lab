@@ -100,6 +100,17 @@ export class ProjectsController {
     return this.projectsService.getProjects(search, userId);
   }
 
+  @Get('representative/:representanteId')
+  getRepresentativeProjects(
+    @Param('representanteId') representanteId: string,
+    @Query('search') search?: string,
+  ) {
+    return this.projectsService.getRepresentativeProjects(
+      representanteId,
+      search,
+    );
+  }
+
   @Get(':id')
   getProject(@Param('id') id: string) {
     return this.projectsService.getProject(id);
@@ -119,6 +130,14 @@ export class ProjectsController {
     @Body() body: Record<string, unknown>,
   ) {
     return this.projectsService.updateProjectEvaluation(id, body);
+  }
+
+  @Patch(':id/business-validation')
+  updateProjectBusinessValidation(
+    @Param('id') id: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.projectsService.updateProjectBusinessValidation(id, body);
   }
 
   @Post(':id/evidences')
