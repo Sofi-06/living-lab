@@ -3,9 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { EditIcon, ViewIcon } from '../../../components/icons/ActionIcons'
 import DashboardNavbar from '../../../components/navbar/DashboardNavbar'
 import { COORDINADOR_LINKS } from '../../../components/navbar/dashboardLinks'
+import Pagination from '../../../components/pagination/Pagination'
 import { getProjects } from '../../../services/projects'
 import { clearSessionUser } from '../../../utils/session'
 import './Proyecto.css'
+
+const PAGE_SIZE = 8
 
 const STATUS_LABELS = {
   PENDING: 'Pendiente',
@@ -38,6 +41,7 @@ function Proyecto() {
   const navigate = useNavigate()
   const [projects, setProjects] = useState([])
   const [searchValue, setSearchValue] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -113,16 +117,33 @@ function Proyecto() {
     })
   }, [projects, searchValue])
 
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchValue])
+
+  const totalPages = Math.max(1, Math.ceil(filteredProjects.length / PAGE_SIZE))
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, totalPages])
+
+  const paginatedProjects = useMemo(() => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE
+    return filteredProjects.slice(startIndex, startIndex + PAGE_SIZE)
+  }, [currentPage, filteredProjects])
+
   function handleLogout() {
     clearSessionUser()
     navigate('/login', { replace: true })
   }
 
   return (
-    <div className="coor-project-page">
+    <div className="coor-project-page dashboard-layout-page">
       <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={1} />
 
-      <main className="coor-project-main">
+      <main className="coor-project-main dashboard-layout-main">
         <section className="coor-project-hero">
           <div>
             <p className="coor-project-eyebrow">Administracion</p>
@@ -181,7 +202,7 @@ function Proyecto() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredProjects.map((project) => (
+                  {paginatedProjects.map((project) => (
                     <tr key={project.id}>
                       <td>{project.id}</td>
                       <td>
@@ -224,7 +245,6 @@ function Proyecto() {
                             onClick={() => navigate(`/coordinador/proyectos/${project.id}`)}
                           >
                             <ViewIcon />
-                            Ver detalles
                           </button>
                         </div>
                       </td>
@@ -234,6 +254,14 @@ function Proyecto() {
               </table>
             )}
           </div>
+
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredProjects.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setCurrentPage}
+            itemLabel="proyectos"
+          />
         </section>
       </main>
     </div>

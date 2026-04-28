@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MdAssessment, MdFilterAlt, MdOutlineRemoveRedEye } from 'react-icons/md'
+import { MdAssessment, MdDownload, MdFilterAlt } from 'react-icons/md'
 import DashboardNavbar from '../../../components/navbar/DashboardNavbar'
 import { COORDINADOR_LINKS } from '../../../components/navbar/dashboardLinks'
 import { getCompanies } from '../../../services/companies'
 import { getProject, getProjects } from '../../../services/projects'
+import { downloadReportExcel } from '../../../utils/reportExcel'
 import { clearSessionUser } from '../../../utils/session'
 import './Reportes.css'
 
@@ -54,6 +55,20 @@ function formatDate(value) {
   }).format(date)
 }
 
+function formatDateTime(value) {
+  return new Intl.DateTimeFormat('es-CO', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(value)
+}
+
+function getStatusLabel(value) {
+  return STATUS_OPTIONS.find((option) => option.value === value)?.label ?? value ?? '-'
+}
+
 function toDateTimestamp(value, fallback = Number.NaN) {
   if (!value) return fallback
 
@@ -73,12 +88,19 @@ function buildPreviewProject(project) {
 
 function Reportes() {
   const navigate = useNavigate()
-  const previewRef = useRef(null)
   const [companies, setCompanies] = useState([])
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [filters, setFilters] = useState({
+    companyId: '',
+    projectId: '',
+    phase: '',
+    status: '',
+    startDate: '',
+    endDate: '',
+  })
+  const [appliedFilters, setAppliedFilters] = useState({
     companyId: '',
     projectId: '',
     phase: '',
@@ -179,22 +201,22 @@ function Reportes() {
   }, [filters.endDate, filters.startDate])
 
   const filteredProjects = useMemo(() => {
-    const selectedStart = toDateTimestamp(filters.startDate)
-    const selectedEnd = toDateTimestamp(filters.endDate)
+    const selectedStart = toDateTimestamp(appliedFilters.startDate)
+    const selectedEnd = toDateTimestamp(appliedFilters.endDate)
     const hasStart = Number.isFinite(selectedStart)
     const hasEnd = Number.isFinite(selectedEnd)
-    const selectedPhase = normalizePhaseName(filters.phase)
+    const selectedPhase = normalizePhaseName(appliedFilters.phase)
 
     return projects.filter((project) => {
-      if (filters.companyId && String(project.companyId) !== filters.companyId) {
+      if (appliedFilters.companyId && String(project.companyId) !== appliedFilters.companyId) {
         return false
       }
 
-      if (filters.projectId && String(project.id) !== filters.projectId) {
+      if (appliedFilters.projectId && String(project.id) !== appliedFilters.projectId) {
         return false
       }
 
-      if (filters.status && project.estado !== filters.status) {
+      if (appliedFilters.status && project.estado !== appliedFilters.status) {
         return false
       }
 
@@ -226,9 +248,17 @@ function Reportes() {
 
       return true
     })
-  }, [filters, projects])
+  }, [appliedFilters, projects])
 
   const reportStats = useMemo(() => {
+    if (!Object.values(appliedFilters).some((value) => value.trim() !== '')) {
+      return {
+        projects: 0,
+        companies: 0,
+        phases: 0,
+      }
+    }
+
     return {
       projects: filteredProjects.length,
       companies: new Set(filteredProjects.map((project) => project.company?.nombre).filter(Boolean)).size,
@@ -236,7 +266,17 @@ function Reportes() {
         filteredProjects.flatMap((project) => project.phaseNames ?? []).map((phaseName) => normalizePhaseName(phaseName)),
       ).size,
     }
-  }, [filteredProjects])
+  }, [appliedFilters, filteredProjects])
+
+  const hasDraftFilters = useMemo(() => {
+    return Object.values(filters).some((value) => value.trim() !== '')
+  }, [filters])
+
+  const hasAppliedFilters = useMemo(() => {
+    return Object.values(appliedFilters).some((value) => value.trim() !== '')
+  }, [appliedFilters])
+
+  const exportProjects = hasAppliedFilters ? filteredProjects : projects
 
   function handleLogout() {
     clearSessionUser()
@@ -276,20 +316,42 @@ function Reportes() {
       startDate: '',
       endDate: '',
     })
+    setAppliedFilters({
+      companyId: '',
+      projectId: '',
+      phase: '',
+      status: '',
+      startDate: '',
+      endDate: '',
+    })
   }
 
-  function handlePreview() {
-    previewRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
+  function handleApplyFilters() {
+    if (!hasDraftFilters || dateRangeError) {
+      return
+    }
+
+    setAppliedFilters({ ...filters })
+  }
+
+  function handleDownloadReport() {
+    const currentDate = new Date()
+    const fileDate = currentDate.toISOString().slice(0, 10)
+
+    downloadReportExcel({
+      projects: exportProjects,
+      generatedAt: formatDateTime(currentDate),
+      fileName: `reporte-livinglab-${fileDate}.xls`,
+      getStatusLabel,
+      formatDate,
     })
   }
 
   return (
-    <div className="coor-report-page">
+    <div className="coor-report-page dashboard-layout-page">
       <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={4} />
 
-      <main className="coor-report-main">
+      <main className="coor-report-main dashboard-layout-main">
         <section className="coor-report-hero">
           <div>
             <p className="coor-report-eyebrow">Coordinacion</p>
@@ -297,10 +359,6 @@ function Reportes() {
             <p>Aplica filtros basicos para previsualizar los proyectos que entrarian en tu reporte.</p>
           </div>
 
-          <div className="coor-report-hero-badge">
-            <MdAssessment aria-hidden="true" />
-            <span>{reportStats.projects} proyectos filtrados</span>
-          </div>
         </section>
 
         <section className="coor-report-card">
@@ -432,105 +490,107 @@ function Reportes() {
           </div>
 
           <div className="coor-report-actions">
+            <button
+              type="button"
+              className="coor-report-btn primary"
+              onClick={handleApplyFilters}
+              disabled={!hasDraftFilters || Boolean(dateRangeError)}
+            >
+              <MdAssessment aria-hidden="true" />
+              <span>Aplicar filtros</span>
+            </button>
+
             <button type="button" className="coor-report-btn ghost" onClick={handleResetFilters}>
               <MdFilterAlt aria-hidden="true" />
               <span>Limpiar filtros</span>
             </button>
-
-            <button
-              type="button"
-              className="coor-report-btn primary"
-              onClick={handlePreview}
-              disabled={Boolean(dateRangeError)}
-            >
-              <MdOutlineRemoveRedEye aria-hidden="true" />
-              <span>Previsualizar</span>
-            </button>
           </div>
         </section>
 
-        <section className="coor-report-table-card" ref={previewRef}>
-          <div className="coor-report-table-head">
-            <div>
-              <h2>Previsualizacion del reporte</h2>
-              <p>Listado de proyectos que cumplen con los filtros seleccionados.</p>
-            </div>
-          </div>
+        {hasAppliedFilters ? (
+          <section className="coor-report-table-card">
+            <div className="coor-report-table-head">
+              <div>
+                <h2>Previsualizacion del reporte</h2>
+                <p>Listado de proyectos que cumplen con los filtros seleccionados.</p>
+              </div>
 
-          {loading ? (
-            <div className="coor-report-empty">Cargando informacion del reporte...</div>
-          ) : filteredProjects.length === 0 ? (
-            <div className="coor-report-empty">No hay proyectos que coincidan con los filtros aplicados.</div>
-          ) : (
-            <div className="coor-report-table-wrap">
-              <table className="coor-report-table">
-                <thead>
-                  <tr>
-                    <th>Empresa</th>
-                    <th>Proyecto</th>
-                    <th>Fases</th>
-                    <th>Estado</th>
-                    <th>Fecha inicio</th>
-                    <th>Fecha fin</th>
-                    <th>Usuarios</th>
-                    <th>Detalle</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProjects.map((project) => (
-                    <tr key={project.id}>
-                      <td>{project.company?.nombre ?? 'Sin empresa'}</td>
-                      <td>
-                        <div className="coor-report-project-cell">
-                          <strong>{project.titulo}</strong>
-                          <span>ID {project.id}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="coor-report-chip-list">
-                          {(project.phaseNames ?? []).length > 0 ? (
-                            project.phaseNames.map((phaseName) => (
-                              <span key={`${project.id}-${phaseName}`} className="coor-report-chip">
-                                {phaseName}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="coor-report-chip muted">Sin fases</span>
-                          )}
-                        </div>
-                      </td>
-                      <td>
-                        <span className={`coor-report-status ${normalizeText(project.estado)}`}>
-                          {STATUS_OPTIONS.find((option) => option.value === project.estado)?.label ?? project.estado}
-                        </span>
-                      </td>
-                      <td>{formatDate(project.fechaInicio)}</td>
-                      <td>{formatDate(project.fechaFin)}</td>
-                      <td>
-                        <div className="coor-report-chip-list">
-                          {(project.users ?? []).map((user) => (
-                            <span key={`${project.id}-${user.id}`} className="coor-report-chip user">
-                              {user.name}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="coor-report-link-btn"
-                          onClick={() => navigate(`/coordinador/proyectos/${project.id}`)}
-                        >
-                          Ver proyecto
-                        </button>
-                      </td>
+              <button
+                type="button"
+                className="coor-report-btn secondary"
+                onClick={handleDownloadReport}
+                disabled={loading || filteredProjects.length === 0}
+              >
+                <MdDownload aria-hidden="true" />
+                <span>Descargar Excel</span>
+              </button>
+            </div>
+
+            {loading ? (
+              <div className="coor-report-empty">Cargando informacion del reporte...</div>
+            ) : filteredProjects.length === 0 ? (
+              <div className="coor-report-empty">No hay proyectos que coincidan con los filtros aplicados.</div>
+            ) : (
+              <div className="coor-report-table-wrap">
+                <table className="coor-report-table">
+                  <thead>
+                    <tr>
+                      <th>Empresa</th>
+                      <th>Proyecto</th>
+                      <th>Fases</th>
+                      <th>Estado</th>
+                      <th>Fecha inicio</th>
+                      <th>Fecha fin</th>
+                      <th>Usuarios</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+                  </thead>
+                  <tbody>
+                    {filteredProjects.map((project) => (
+                      <tr key={project.id}>
+                        <td>{project.company?.nombre ?? 'Sin empresa'}</td>
+                        <td>
+                          <div className="coor-report-project-cell">
+                            <strong>{project.titulo}</strong>
+                            <span>ID {project.id}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="coor-report-chip-list">
+                            {(project.phaseNames ?? []).length > 0 ? (
+                              project.phaseNames.map((phaseName) => (
+                                <span key={`${project.id}-${phaseName}`} className="coor-report-chip">
+                                  {phaseName}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="coor-report-chip muted">Sin fases</span>
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          <span className={`coor-report-status ${normalizeText(project.estado)}`}>
+                            {STATUS_OPTIONS.find((option) => option.value === project.estado)?.label ?? project.estado}
+                          </span>
+                        </td>
+                        <td>{formatDate(project.fechaInicio)}</td>
+                        <td>{formatDate(project.fechaFin)}</td>
+                        <td>
+                          <div className="coor-report-chip-list">
+                            {(project.users ?? []).map((user) => (
+                              <span key={`${project.id}-${user.id}`} className="coor-report-chip user">
+                                {user.name}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        ) : null}
       </main>
     </div>
   )

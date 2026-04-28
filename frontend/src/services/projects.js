@@ -77,6 +77,26 @@ export function updateProjectEvaluation(projectId, data) {
 }
 
 export function updateProjectBusinessValidation(projectId, data) {
+  if (data?.firmaArchivo instanceof File) {
+    const formData = new FormData()
+
+    Object.entries(data).forEach(([key, value]) => {
+      if (key === 'firmaArchivo') {
+        formData.append(key, value)
+        return
+      }
+
+      if (value !== undefined && value !== null) {
+        formData.append(key, value)
+      }
+    })
+
+    return requestJson(`/projects/${projectId}/business-validation`, {
+      method: 'PATCH',
+      body: formData,
+    })
+  }
+
   return requestJson(`/projects/${projectId}/business-validation`, {
     method: 'PATCH',
     body: JSON.stringify(data),

@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardNavbar from '../../../components/navbar/DashboardNavbar'
+import Pagination from '../../../components/pagination/Pagination'
 import { getRepresentativeProjects } from '../../../services/projects'
 import { clearSessionUser, getSessionUser } from '../../../utils/session'
 import '../../coordinador/proyectos/Proyecto.css'
 import './RepresentanteProyecto.css'
+
+const PAGE_SIZE = 8
 
 const NAV_LINKS = [
   { label: 'Dashboard', path: '/representante' },
@@ -55,6 +58,7 @@ function RepresentanteProyecto() {
   const sessionUser = getSessionUser()
   const [projects, setProjects] = useState([])
   const [searchValue, setSearchValue] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -117,16 +121,33 @@ function RepresentanteProyecto() {
     })
   }, [projects, searchValue])
 
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchValue])
+
+  const totalPages = Math.max(1, Math.ceil(filteredProjects.length / PAGE_SIZE))
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, totalPages])
+
+  const paginatedProjects = useMemo(() => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE
+    return filteredProjects.slice(startIndex, startIndex + PAGE_SIZE)
+  }, [currentPage, filteredProjects])
+
   function handleLogout() {
     clearSessionUser()
     navigate('/login', { replace: true })
   }
 
   return (
-    <div className="coor-project-page">
+    <div className="coor-project-page dashboard-layout-page">
       <DashboardNavbar links={NAV_LINKS} onLogout={handleLogout} activeIndex={1} />
 
-      <main className="coor-project-main">
+      <main className="coor-project-main dashboard-layout-main">
         <section className="coor-project-hero">
           <div>
             <p className="coor-project-eyebrow">Representante</p>
@@ -179,7 +200,7 @@ function RepresentanteProyecto() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredProjects.map((project) => {
+                  {paginatedProjects.map((project) => {
                     const validationStatus = getValidationStatus(project)
 
                     return (
@@ -222,6 +243,14 @@ function RepresentanteProyecto() {
               </table>
             )}
           </div>
+
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredProjects.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setCurrentPage}
+            itemLabel="proyectos"
+          />
         </section>
       </main>
     </div>

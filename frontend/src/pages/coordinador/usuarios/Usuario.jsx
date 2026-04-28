@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { DeleteIcon, EditIcon } from '../../../components/icons/ActionIcons'
 import DashboardNavbar from '../../../components/navbar/DashboardNavbar'
 import { COORDINADOR_LINKS } from '../../../components/navbar/dashboardLinks'
+import Pagination from '../../../components/pagination/Pagination'
 import { clearSessionUser } from '../../../utils/session'
 import { deleteUser, getUsers } from '../../../services/users'
 import './Usuario.css'
+const PAGE_SIZE = 8
 const ROLE_OPTIONS = [
   { value: 'COORDINADOR', label: 'Coordinador' },
   { value: 'PARTICIPANTE', label: 'Participante' },
@@ -41,6 +43,7 @@ function Usuario() {
   const navigate = useNavigate()
   const [users, setUsers] = useState([])
   const [searchValue, setSearchValue] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -106,6 +109,23 @@ function Usuario() {
     })
   }, [searchValue, users])
 
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchValue])
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE))
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, totalPages])
+
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE
+    return filteredUsers.slice(startIndex, startIndex + PAGE_SIZE)
+  }, [currentPage, filteredUsers])
+
   function handleLogout() {
     clearSessionUser()
     navigate('/login', { replace: true })
@@ -131,9 +151,9 @@ function Usuario() {
   }
 
   return (
-    <div className="coor-users-page">
+      <div className="coor-users-page dashboard-layout-page">
       <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={3} />
-      <main className="coor-users-main">
+        <main className="coor-users-main dashboard-layout-main">
         <section className="coor-users-hero">
           <div className="coor-users-hero-copy">
             <p className="coor-users-eyebrow">Administracion</p>
@@ -189,7 +209,7 @@ function Usuario() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.map((user) => (
+                  {paginatedUsers.map((user) => (
                     <tr key={user.id}>
                       <td>
                         <div className="coor-users-name-cell">
@@ -232,7 +252,17 @@ function Usuario() {
               </table>
             )}
           </div>
+
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredUsers.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setCurrentPage}
+            itemLabel="usuarios"
+          />
         </section>
+
+        
       </main>
     </div>
   )

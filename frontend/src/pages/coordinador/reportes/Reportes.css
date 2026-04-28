@@ -31,6 +31,7 @@
 .coor-report-hero {
   padding: 18px 20px;
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-end;
   gap: 12px;
@@ -69,6 +70,9 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  align-self: flex-start;
   border-radius: 999px;
   padding: 10px 14px;
   background: #eef4ff;
@@ -88,6 +92,7 @@
 .coor-report-card-head,
 .coor-report-table-head {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
@@ -95,8 +100,9 @@
 
 .coor-report-metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(88px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   gap: 8px;
+  width: min(100%, 420px);
 }
 
 .coor-report-metrics article {
@@ -135,7 +141,7 @@
 .coor-report-filter-grid {
   margin-top: 16px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   gap: 14px;
 }
 
@@ -192,7 +198,7 @@
 }
 
 .coor-report-filter-card-wide {
-  grid-column: span 2;
+  grid-column: 1 / -1;
 }
 
 .coor-report-date-grid {
@@ -204,6 +210,9 @@
 .coor-report-actions {
   margin-top: 16px;
   display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -211,6 +220,8 @@
   border: none;
   border-radius: 12px;
   padding: 10px 16px;
+  width: auto;
+  flex: 0 0 auto;
   font: inherit;
   font-weight: 800;
   display: inline-flex;
@@ -229,6 +240,12 @@
   color: #fff;
 }
 
+.coor-report-btn.secondary {
+  background: #eef4ff;
+  color: #3150a1;
+  border: 1px solid #d7e3ff;
+}
+
 .coor-report-btn.ghost {
   background: #eef1f8;
   color: #304165;
@@ -241,7 +258,7 @@
 
 .coor-report-table {
   width: 100%;
-  min-width: 1120px;
+  min-width: 980px;
   border-collapse: collapse;
   font-size: 13px;
 }
@@ -348,13 +365,12 @@
   font-size: 13px;
 }
 
-@media (max-width: 1100px) {
-  .coor-report-filter-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .coor-report-filter-card-wide {
-    grid-column: span 2;
+@media (max-width: 1360px) {
+  .coor-report-hero,
+  .coor-report-card-head,
+  .coor-report-table-head {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 
@@ -370,14 +386,6 @@
 }
 
 @media (max-width: 720px) {
-  .coor-report-hero,
-  .coor-report-card-head,
-  .coor-report-table-head,
-  .coor-report-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .coor-report-filter-grid,
   .coor-report-date-grid,
   .coor-report-metrics {
@@ -385,6 +393,6 @@
   }
 
   .coor-report-filter-card-wide {
-    grid-column: span 1;
+    grid-column: 1 / -1;
   }
 }

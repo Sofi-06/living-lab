@@ -1,22 +1,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap');
 
 .coor-users-page {
-  min-height: 100vh;
+  height: 100vh;
   background: radial-gradient(circle at 18% 18%, #dbe6ff 0, transparent 34%),
     radial-gradient(circle at 95% 10%, #d8edf9 0, transparent 24%), #f2f4f8;
   display: grid;
   grid-template-columns: 90px minmax(0, 1fr);
   gap: 8px;
-  padding: 10px;
+  padding: 6px;
   color: #1f2538;
   font-family: 'Nunito', 'Segoe UI', sans-serif;
+  overflow: hidden;
 }
 
 .coor-users-main {
   min-width: 0;
   padding: 8px 10px 8px 0;
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 10px;
+  min-height: 0;
 }
 
 .coor-users-hero,
@@ -69,6 +72,7 @@
 }
 
 .coor-users-create-btn {
+  flex-shrink: 0;
   border: none;
   border-radius: 12px;
   background: linear-gradient(90deg, #4460ba 60%, #7a95e5 100%);
@@ -87,6 +91,9 @@
 
 .coor-users-card {
   padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .coor-users-toolbar {
@@ -156,7 +163,10 @@
 }
 
 .coor-users-table-wrap {
-  overflow-x: auto;
+  margin-top: 10px;
+  overflow: auto;
+  min-height: 0;
+  flex: 1;
 }
 
 .coor-users-table {
@@ -327,10 +337,14 @@
     grid-template-columns: 1fr;
     padding: 0;
     gap: 0;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
   }
 
   .coor-users-main {
     padding: 14px;
+    grid-template-rows: auto auto auto;
   }
 
   .coor-users-hero {
@@ -345,6 +359,10 @@
 
   .coor-users-search {
     min-width: 0;
+  }
+
+  .coor-users-create-btn {
+    align-self: flex-start;
   }
 }
 

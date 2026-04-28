@@ -1,0 +1,33 @@
+body .dashboard-layout-page {
+  --dashboard-nav-collapsed: 90px;
+  --dashboard-nav-expanded: 252px;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: var(--dashboard-nav-collapsed) minmax(0, 1fr);
+  gap: 8px;
+  padding: 10px;
+  overflow-x: hidden;
+  align-items: start;
+  box-sizing: border-box;
+  transition: grid-template-columns 220ms ease;
+}
+
+body .dashboard-layout-page:has(.dashboard-navbar-shell:hover),
+body .dashboard-layout-page:has(.dashboard-navbar-shell:focus-within) {
+  grid-template-columns: var(--dashboard-nav-expanded) minmax(0, 1fr);
+}
+
+body .dashboard-layout-main {
+  min-width: 0;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+
+@media (max-width: 980px) {
+  body .dashboard-layout-page {
+    grid-template-columns: 1fr;
+    padding: 0;
+    gap: 0;
+    transition: none;
+  }
+}

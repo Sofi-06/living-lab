@@ -54,6 +54,7 @@ const EMPTY_VALIDATION_FORM = {
   nombreFirmante: '',
   cargo: '',
   firma: '',
+  firmaArchivo: null,
 }
 
 const YES_NO_OPTIONS = [
@@ -66,6 +67,8 @@ const SOLVED_OPTIONS = [
   { value: 'PARCIAL', label: 'Parcial' },
   { value: 'NO', label: 'No' },
 ]
+
+const IMAGE_FILE_REGEX = /\.(png|jpe?g|gif|webp|bmp|svg)$/i
 
 function formatDate(value) {
   if (!value) return '-'
@@ -101,7 +104,16 @@ function buildValidationForm(project) {
     nombreFirmante: project.businessValidation.nombreFirmante ?? '',
     cargo: project.businessValidation.cargo ?? '',
     firma: project.businessValidation.firma ?? '',
+    firmaArchivo: null,
   }
+}
+
+function isUploadedAsset(value) {
+  return typeof value === 'string' && (value.startsWith('/uploads/') || value.startsWith('http://') || value.startsWith('https://'))
+}
+
+function isImageAsset(value) {
+  return typeof value === 'string' && IMAGE_FILE_REGEX.test(value.split('?')[0] ?? '')
 }
 
 function DetalleRepresentanteProyecto() {
@@ -116,6 +128,8 @@ function DetalleRepresentanteProyecto() {
   const [saveMessage, setSaveMessage] = useState('')
   const [savingValidation, setSavingValidation] = useState(false)
   const [validationForm, setValidationForm] = useState(EMPTY_VALIDATION_FORM)
+  const [signaturePreviewUrl, setSignaturePreviewUrl] = useState('')
+  const signatureInputId = `business-validation-signature-${id ?? 'file'}`
 
   function handleLogout() {
     clearSessionUser()
@@ -172,6 +186,20 @@ function DetalleRepresentanteProyecto() {
     return () => clearTimeout(timeout)
   }, [saveMessage])
 
+  useEffect(() => {
+    if (!validationForm.firmaArchivo || !validationForm.firmaArchivo.type.startsWith('image/')) {
+      setSignaturePreviewUrl('')
+      return undefined
+    }
+
+    const previewUrl = URL.createObjectURL(validationForm.firmaArchivo)
+    setSignaturePreviewUrl(previewUrl)
+
+    return () => {
+      URL.revokeObjectURL(previewUrl)
+    }
+  }, [validationForm.firmaArchivo])
+
   const phases = useMemo(() => ensureProjectPhases(project), [project])
   const currentPhase = useMemo(() => getCurrentProjectPhase(project, phases), [project, phases])
   const progress = useMemo(() => getProjectProgress(project, phases), [project, phases])
@@ -189,10 +217,21 @@ function DetalleRepresentanteProyecto() {
 
   const validationEnabled = Boolean(project?.validationReady || project?.estado === 'COMPLETED' || progress.percentage >= 100)
   const validationCompleted = Boolean(project?.validationCompleted || project?.businessValidation)
+  const currentSignatureUrl = isUploadedAsset(validationForm.firma) ? resolveEvidenceUrl(validationForm.firma) : ''
+  const currentSignatureIsImage = Boolean(currentSignatureUrl) && isImageAsset(validationForm.firma)
 
   function handleValidationFieldChange(event) {
     const { name, value } = event.target
     setValidationForm((current) => ({ ...current, [name]: value }))
+  }
+
+  function handleSignatureFileChange(event) {
+    const file = event.target.files?.[0] ?? null
+
+    setValidationForm((current) => ({
+      ...current,
+      firmaArchivo: file,
+    }))
   }
 
   async function handleValidationSubmit(event) {
@@ -647,15 +686,63 @@ function DetalleRepresentanteProyecto() {
 
             <label className="rep-detail-field rep-detail-field-full">
               <span>Firma de la empresa</span>
-              <textarea
-                name="firma"
-                value={validationForm.firma}
-                onChange={handleValidationFieldChange}
-                disabled={!validationEnabled || savingValidation}
-                rows="3"
-                placeholder="Registra la firma, sello o identificacion digital de la empresa"
-                required
-              />
+              <div className="rep-detail-file-input-wrapper">
+                <input
+                  id={signatureInputId}
+                  type="file"
+                  name="firmaArchivo"
+                  accept="image/*,.pdf,.doc,.docx"
+                  onChange={handleSignatureFileChange}
+                  disabled={!validationEnabled || savingValidation}
+                  className="rep-detail-file-input"
+                />
+                <button
+                  type="button"
+                  className="rep-detail-file-btn"
+                  onClick={() => document.getElementById(signatureInputId)?.click()}
+                  disabled={!validationEnabled || savingValidation}
+                >
+                  Seleccionar archivo
+                </button>
+                <span className="rep-detail-file-name">
+                  {validationForm.firmaArchivo
+                    ? validationForm.firmaArchivo.name
+                    : validationForm.firma
+                      ? 'Archivo actual cargado'
+                      : 'Sin archivos seleccionados'}
+                </span>
+              </div>
+              <small className="rep-detail-field-help">
+                Sube una foto, firma escaneada o documento firmado por la empresa.
+              </small>
+              {signaturePreviewUrl ? (
+                <div className="rep-detail-signature-preview">
+                  <img src={signaturePreviewUrl} alt="Previsualizacion de la firma seleccionada" className="rep-detail-signature-image" />
+                  <span className="rep-detail-file-name">Previsualizacion del archivo seleccionado</span>
+                </div>
+              ) : null}
+              {!validationForm.firmaArchivo && validationForm.firma ? (
+                isUploadedAsset(validationForm.firma) ? (
+                  <>
+                    {currentSignatureIsImage ? (
+                      <div className="rep-detail-signature-preview">
+                        <img src={currentSignatureUrl} alt="Firma empresarial actual" className="rep-detail-signature-image" />
+                        <span className="rep-detail-file-name">Firma actualmente registrada</span>
+                      </div>
+                    ) : null}
+                    <a
+                      href={currentSignatureUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="coor-project-detail-link"
+                    >
+                      Ver firma actual
+                    </a>
+                  </>
+                ) : (
+                  <span className="rep-detail-file-name">Firma actual: {validationForm.firma}</span>
+                )
+              ) : null}
             </label>
           </div>
         </article>
@@ -689,10 +776,10 @@ function DetalleRepresentanteProyecto() {
   }
 
   return (
-    <div className="coor-project-detail-page">
+    <div className="coor-project-detail-page dashboard-layout-page">
       <DashboardNavbar links={NAV_LINKS} onLogout={handleLogout} activeIndex={1} />
 
-      <main className="coor-project-detail-main">
+      <main className="coor-project-detail-main dashboard-layout-main">
         {loading ? (
           <section className="coor-project-detail-shell">
             <div className="coor-project-detail-empty">Cargando proyecto...</div>

@@ -79,10 +79,10 @@ function EvaluadorDashboard() {
   }
 
   return (
-    <div className="eval-page">
+    <div className="eval-page dashboard-layout-page">
       <DashboardNavbar links={EVALUADOR_NAV_LINKS} onLogout={handleLogout} activeIndex={0} />
 
-      <main className="eval-main">
+      <main className="eval-main dashboard-layout-main">
         <section className="eval-grid">
           <article className="eval-block eval-hero-block">
             <div>

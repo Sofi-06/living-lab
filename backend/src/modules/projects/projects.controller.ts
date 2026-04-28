@@ -43,8 +43,10 @@ type DiskStorageFactory = (options: {
   ) => void;
 }) => StorageEngine;
 
-function ensureUploadDirectory(projectId: string) {
-  const uploadPath = join(process.cwd(), 'uploads', projectId);
+function ensureUploadDirectory(projectId: string, subdirectory?: string) {
+  const uploadPath = subdirectory
+    ? join(process.cwd(), 'uploads', projectId, subdirectory)
+    : join(process.cwd(), 'uploads', projectId);
 
   if (!existsSync(uploadPath)) {
     mkdirSync(uploadPath, { recursive: true });
@@ -58,30 +60,44 @@ function sanitizeFilename(filename: string) {
 }
 
 const createDiskStorage = diskStorage as unknown as DiskStorageFactory;
-const evidenceStorage = createDiskStorage({
-  destination: (
-    req: ProjectRequest,
-    _file: StorageFile,
-    callback: DestinationCallback,
-  ) => {
-    callback(null, ensureUploadDirectory(String(req.params.id)));
-  },
-  filename: (
-    _req: ProjectRequest,
-    file: StorageFile,
-    callback: FilenameCallback,
-  ) => {
-    const extension = extname(file.originalname);
-    const basename = sanitizeFilename(
-      file.originalname.slice(
-        0,
-        Math.max(0, file.originalname.length - extension.length),
-      ) || 'evidencia',
-    );
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    callback(null, `${uniqueSuffix}-${basename}${extension}`);
-  },
-});
+function createProjectScopedStorage(
+  subdirectory?: string,
+  fallbackName = 'archivo',
+) {
+  return createDiskStorage({
+    destination: (
+      req: ProjectRequest,
+      _file: StorageFile,
+      callback: DestinationCallback,
+    ) => {
+      callback(
+        null,
+        ensureUploadDirectory(String(req.params.id), subdirectory),
+      );
+    },
+    filename: (
+      _req: ProjectRequest,
+      file: StorageFile,
+      callback: FilenameCallback,
+    ) => {
+      const extension = extname(file.originalname);
+      const basename = sanitizeFilename(
+        file.originalname.slice(
+          0,
+          Math.max(0, file.originalname.length - extension.length),
+        ) || fallbackName,
+      );
+      const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+      callback(null, `${uniqueSuffix}-${basename}${extension}`);
+    },
+  });
+}
+
+const evidenceStorage = createProjectScopedStorage(undefined, 'evidencia');
+const businessValidationStorage = createProjectScopedStorage(
+  'business-validation',
+  'firma-empresarial',
+);
 
 @Controller('projects')
 export class ProjectsController {
@@ -133,11 +149,17 @@ export class ProjectsController {
   }
 
   @Patch(':id/business-validation')
+  @UseInterceptors(
+    FileInterceptor('firmaArchivo', {
+      storage: businessValidationStorage,
+    }),
+  )
   updateProjectBusinessValidation(
     @Param('id') id: string,
     @Body() body: Record<string, unknown>,
+    @UploadedFile() file?: UploadedEvidenceFile,
   ) {
-    return this.projectsService.updateProjectBusinessValidation(id, body);
+    return this.projectsService.updateProjectBusinessValidation(id, body, file);
   }
 
   @Post(':id/evidences')

@@ -78,10 +78,10 @@ function CoordinadorDashboard() {
   }
 
   return (
-    <div className="coor-page">
+    <div className="coor-page dashboard-layout-page">
       <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={0} />
 
-      <main className="coor-main">
+      <main className="coor-main dashboard-layout-main">
         <section className="coor-grid">
           <article className="coor-block coor-hero-block">
             <div>

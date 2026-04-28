@@ -3,9 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { DeleteIcon, EditIcon } from '../../../components/icons/ActionIcons'
 import DashboardNavbar from '../../../components/navbar/DashboardNavbar'
 import { COORDINADOR_LINKS } from '../../../components/navbar/dashboardLinks'
+import Pagination from '../../../components/pagination/Pagination'
 import { deleteCompany, getCompanies } from '../../../services/companies'
 import { clearSessionUser } from '../../../utils/session'
 import './Empresa.css'
+
+const PAGE_SIZE = 8
 
 function normalizeText(value) {
 	return typeof value === 'string' ? value.trim().toLowerCase() : ''
@@ -15,6 +18,7 @@ function Empresa() {
 	const navigate = useNavigate()
 	const [companies, setCompanies] = useState([])
 	const [searchValue, setSearchValue] = useState('')
+	const [currentPage, setCurrentPage] = useState(1)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState('')
 	const [message, setMessage] = useState('')
@@ -87,6 +91,23 @@ function Empresa() {
 		})
 	}, [searchValue, companies])
 
+	useEffect(() => {
+		setCurrentPage(1)
+	}, [searchValue])
+
+	const totalPages = Math.max(1, Math.ceil(filteredCompanies.length / PAGE_SIZE))
+
+	useEffect(() => {
+		if (currentPage > totalPages) {
+			setCurrentPage(totalPages)
+		}
+	}, [currentPage, totalPages])
+
+	const paginatedCompanies = useMemo(() => {
+		const startIndex = (currentPage - 1) * PAGE_SIZE
+		return filteredCompanies.slice(startIndex, startIndex + PAGE_SIZE)
+	}, [currentPage, filteredCompanies])
+
 	function handleLogout() {
 		clearSessionUser()
 		navigate('/login', { replace: true })
@@ -132,7 +153,7 @@ function Empresa() {
 					</tr>
 				</thead>
 				<tbody>
-					{filteredCompanies.map((company) => (
+					{paginatedCompanies.map((company) => (
 						<tr key={company.id}>
 							<td>{company.id}</td>
 							<td>{company.nombre}</td>
@@ -170,9 +191,9 @@ function Empresa() {
 	}
 
 	return (
-		<div className="coor-company-page">
+		<div className="coor-company-page dashboard-layout-page">
 			<DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={2} />
-			<main className="coor-company-main">
+			<main className="coor-company-main dashboard-layout-main">
 				<section className="coor-company-hero">
 					<div className="coor-company-hero-copy">
 						<p className="coor-company-eyebrow">Administracion</p>
@@ -210,7 +231,16 @@ function Empresa() {
 					{error ? <div className="coor-company-alert error">{error}</div> : null}
 
 					<div className="coor-company-table-wrap">{tableContent}</div>
+					<Pagination
+						currentPage={currentPage}
+						totalItems={filteredCompanies.length}
+						pageSize={PAGE_SIZE}
+						onPageChange={setCurrentPage}
+						itemLabel="empresas"
+					/>
 				</section>
+
+                
 			</main>
 		</div>
 	)

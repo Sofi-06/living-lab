@@ -183,10 +183,10 @@ function EditarProyecto() {
   }
 
   return (
-    <div className="coor-project-form-page">
+    <div className="coor-project-form-page dashboard-layout-page">
       <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={1} />
 
-      <main className="coor-project-form-main">
+      <main className="coor-project-form-main dashboard-layout-main">
         <section className="coor-project-form-card">
           <div className="coor-project-form-head">
             <div>

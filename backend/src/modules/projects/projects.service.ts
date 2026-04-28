@@ -946,6 +946,7 @@ export class ProjectsService {
   async updateProjectBusinessValidation(
     rawId: string,
     body: Record<string, unknown>,
+    file?: UploadedEvidenceFile,
   ): Promise<ProjectDetailResponse> {
     const projectId = this.parseProjectId(rawId);
     await this.syncExpiredProjects(projectId);
@@ -980,8 +981,22 @@ export class ProjectsService {
       body.representanteId,
       'El representante es obligatorio',
     );
+    const businessValidationPayload =
+      body.businessValidation && typeof body.businessValidation === 'object'
+        ? {
+            ...(body.businessValidation as Record<string, unknown>),
+            ...(file
+              ? { firma: this.buildBusinessValidationFileUrl(projectId, file.filename) }
+              : {}),
+          }
+        : {
+            ...body,
+            ...(file
+              ? { firma: this.buildBusinessValidationFileUrl(projectId, file.filename) }
+              : {}),
+          };
     const validation = this.parseBusinessValidation(
-      body.businessValidation ?? body,
+      businessValidationPayload,
     );
 
     await this.ensureUserWithRole(
@@ -1490,6 +1505,22 @@ export class ProjectsService {
   }
 
   private buildEvidenceFileUrl(projectId: number, filename: string) {
+    return this.buildProjectScopedFileUrl(projectId, filename);
+  }
+
+  private buildBusinessValidationFileUrl(projectId: number, filename: string) {
+    return this.buildProjectScopedFileUrl(
+      projectId,
+      filename,
+      'business-validation',
+    );
+  }
+
+  private buildProjectScopedFileUrl(
+    projectId: number,
+    filename: string,
+    subdirectory?: string,
+  ) {
     const safeFilename = filename.replace(/\\/g, '/');
 
     if (
@@ -1500,7 +1531,9 @@ export class ProjectsService {
       throw new BadRequestException('Nombre de archivo invalido');
     }
 
-    return `/uploads/${projectId}/${safeFilename}`;
+    return subdirectory
+      ? `/uploads/${projectId}/${subdirectory}/${safeFilename}`
+      : `/uploads/${projectId}/${safeFilename}`;
   }
 
   private mapProject(project: ProjectWithRelations): ProjectRecord {

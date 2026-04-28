@@ -101,10 +101,10 @@ function CrearEmpresa() {
   }
 
   return (
-    <div className="coor-create-company-page">
+    <div className="coor-create-company-page dashboard-layout-page">
       <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={2} />
 
-      <main className="coor-create-company-main">
+      <main className="coor-create-company-main dashboard-layout-main">
         <section className="coor-create-company-card">
           <div className="coor-create-company-head">
             <div>
@@ -169,7 +169,7 @@ function CrearEmpresa() {
                   autoComplete="email"
                   placeholder=" "
                 />
-                <span>Correo (Opcional)</span>
+                <span>Correo Empresarial</span>
               </label>
 
               <label>
@@ -184,7 +184,7 @@ function CrearEmpresa() {
                   }}
                   placeholder=" "
                 />
-                <span>Telefono (Opcional)</span>
+                <span>Teléfono Empresarial</span>
               </label>
             </div>
             <button type="submit" disabled={loading}>

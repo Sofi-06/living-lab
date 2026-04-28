@@ -9,7 +9,7 @@ function DashboardFooter() {
           <span className="dashboard-footer-dot" aria-hidden="true" />
           <span>Campus Virtual</span>
           <span className="dashboard-footer-dot" aria-hidden="true" />
-          <span>SJ</span>
+          <span>S</span>
           <span className="dashboard-footer-dot" aria-hidden="true" />
           <span>Universidad Santo Tomas</span>
         </div>

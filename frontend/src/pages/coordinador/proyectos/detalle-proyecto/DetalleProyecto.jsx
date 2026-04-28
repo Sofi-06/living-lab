@@ -391,10 +391,10 @@ function DetalleProyecto() {
   }
 
   return (
-    <div className="coor-project-detail-page">
+    <div className="coor-project-detail-page dashboard-layout-page">
       <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={1} />
 
-      <main className="coor-project-detail-main">
+      <main className="coor-project-detail-main dashboard-layout-main">
         {loading ? (
           <section className="coor-project-detail-shell">
             <div className="coor-project-detail-empty">Cargando proyecto...</div>

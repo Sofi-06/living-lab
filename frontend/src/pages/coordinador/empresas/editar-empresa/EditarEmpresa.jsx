@@ -118,10 +118,10 @@ function EditarEmpresa() {
   }
 
   return (
-    <div className="coor-edit-company-page">
+    <div className="coor-edit-company-page dashboard-layout-page">
       <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={2} />
 
-      <main className="coor-edit-company-main">
+      <main className="coor-edit-company-main dashboard-layout-main">
         <section className="coor-edit-company-card">
           <div className="coor-edit-company-head">
             <div>

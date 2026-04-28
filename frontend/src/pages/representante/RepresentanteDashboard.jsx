@@ -98,10 +98,10 @@ function RepresentanteDashboard() {
   }
 
   return (
-    <div className="rep-page">
+    <div className="rep-page dashboard-layout-page">
       <DashboardNavbar links={NAV_LINKS} onLogout={handleLogout} activeIndex={0} />
 
-      <main className="rep-main">
+      <main className="rep-main dashboard-layout-main">
         <section className="rep-grid">
           <article className="rep-block rep-hero-block">
             <div>

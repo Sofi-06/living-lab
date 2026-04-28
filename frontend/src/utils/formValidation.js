@@ -200,7 +200,7 @@ export function validateBusinessValidationForm(form) {
     errors.cargo = 'El cargo es obligatorio'
   }
 
-  if (!normalizeFormText(form.firma)) {
+  if (!normalizeFormText(form.firma) && !form.firmaArchivo) {
     errors.firma = 'La firma de la empresa es obligatoria'
   }
 

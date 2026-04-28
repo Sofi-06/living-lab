@@ -59,10 +59,16 @@ function formatDate(value) {
   }).format(date)
 }
 
+const IMAGE_FILE_REGEX = /\.(png|jpe?g|gif|webp|bmp|svg)$/i
+
 function resolveEvidenceUrl(value) {
   if (typeof value !== 'string' || !value.trim()) return '#'
   if (value.startsWith('http://') || value.startsWith('https://')) return value
   return `${API_BASE_URL}${value}`
+}
+
+function isImageAsset(value) {
+  return typeof value === 'string' && IMAGE_FILE_REGEX.test(value.split('?')[0] ?? '')
 }
 
 function DetalleParticipanteProyecto() {
@@ -574,7 +580,26 @@ function DetalleParticipanteProyecto() {
             </div>
             <div className="coor-project-detail-meta-item full">
               <span>Firma de la empresa</span>
-              <strong>{validation.firma || '-'}</strong>
+              {typeof validation.firma === 'string' && validation.firma.trim() ? (
+                validation.firma.startsWith('/uploads/') || validation.firma.startsWith('http://') || validation.firma.startsWith('https://') ? (
+                  isImageAsset(validation.firma) ? (
+                    <div className="doc-validation-signature-preview">
+                      <img src={resolveEvidenceUrl(validation.firma)} alt="Firma empresarial adjunta" className="doc-validation-signature-image" />
+                      <a href={resolveEvidenceUrl(validation.firma)} target="_blank" rel="noreferrer" className="coor-project-detail-link">
+                        Ver firma adjunta
+                      </a>
+                    </div>
+                  ) : (
+                    <a href={resolveEvidenceUrl(validation.firma)} target="_blank" rel="noreferrer" className="coor-project-detail-link">
+                      Ver firma adjunta
+                    </a>
+                  )
+                ) : (
+                  <strong>{validation.firma}</strong>
+                )
+              ) : (
+                <strong>-</strong>
+              )}
             </div>
           </div>
         </article>
@@ -596,10 +621,10 @@ function DetalleParticipanteProyecto() {
   }
 
   return (
-    <div className="coor-project-detail-page">
+    <div className="coor-project-detail-page dashboard-layout-page">
       <DashboardNavbar links={NAV_LINKS} onLogout={handleLogout} activeIndex={1} />
 
-      <main className="coor-project-detail-main">
+      <main className="coor-project-detail-main dashboard-layout-main">
         {loading ? (
           <section className="coor-project-detail-shell">
             <div className="coor-project-detail-empty">Cargando proyecto...</div>

@@ -106,6 +106,65 @@
   grid-column: 1 / -1;
 }
 
+.rep-detail-field-help,
+.rep-detail-file-name {
+  color: #6f7f9f;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.rep-detail-file-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f5f6fa;
+  border: 1.5px solid #e0e2ea;
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+
+.rep-detail-file-input {
+  display: none;
+}
+
+.rep-detail-file-btn {
+  background: #e9ecf3;
+  border: none;
+  border-radius: 8px;
+  color: #22305a;
+  font: inherit;
+  font-weight: 700;
+  padding: 8px 18px;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.rep-detail-file-btn:hover {
+  background: #dbe6ff;
+}
+
+.rep-detail-file-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.rep-detail-signature-preview {
+  display: grid;
+  gap: 8px;
+  width: min(100%, 280px);
+  margin-top: 4px;
+}
+
+.rep-detail-signature-image {
+  width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 14px;
+  border: 1px solid #d9dfef;
+  background: #f9fbff;
+  padding: 8px;
+}
+
 @media (max-width: 980px) {
   .rep-detail-summary-grid,
   .rep-detail-form-grid {

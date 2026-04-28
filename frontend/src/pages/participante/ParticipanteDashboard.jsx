@@ -79,10 +79,10 @@ function ParticipanteDashboard() {
   }
 
   return (
-    <div className="doc-page">
+    <div className="doc-page dashboard-layout-page">
       <DashboardNavbar links={NAV_LINKS} onLogout={handleLogout} activeIndex={0} />
 
-      <main className="doc-main">
+      <main className="doc-main dashboard-layout-main">
         <section className="doc-grid">
           <article className="doc-block doc-hero-block">
             <div>

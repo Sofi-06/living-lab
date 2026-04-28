@@ -107,10 +107,10 @@ function EditarUsuario() {
   }
 
   return (
-    <div className="coor-edit-page">
+    <div className="coor-edit-page dashboard-layout-page">
       <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={3} />
 
-      <main className="coor-edit-main">
+      <main className="coor-edit-main dashboard-layout-main">
         <section className="coor-edit-card">
           <div className="coor-edit-head">
             <div>

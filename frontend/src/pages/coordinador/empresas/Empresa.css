@@ -17,7 +17,7 @@
 	min-width: 0;
 	padding: 8px 10px 8px 0;
 	display: grid;
-	grid-template-rows: auto minmax(0, 1fr);
+	grid-template-rows: auto minmax(0, 1fr) auto;
 	gap: 10px;
 	min-height: 0;
 }
@@ -234,7 +234,7 @@
 
 	.coor-company-main {
 		padding: 14px;
-		grid-template-rows: auto auto;
+		grid-template-rows: auto auto auto;
 	}
 	.coor-company-toolbar {
 		flex-direction: column;

@@ -41,7 +41,7 @@ function DashboardNavbar({ links, onLogout, activeIndex = 0 }) {
   return (
     <aside className="dashboard-navbar-shell" aria-label="Menu principal">
       <div className="dashboard-navbar-rail">
-        <div className="rail-icons" aria-hidden="true">
+        <div className="rail-icons">
           {links.map((link, index) => (
             <div
               key={`rail-${link.label}`}
@@ -50,16 +50,16 @@ function DashboardNavbar({ links, onLogout, activeIndex = 0 }) {
               <MenuIcon name={iconFromLabel(link.label, index)} />
             </div>
           ))}
-        </div>
 
-        <button
-          type="button"
-          className="rail-logout-btn"
-          onClick={onLogout}
-          aria-label="Cerrar sesion"
-        >
-          <MenuIcon name={MdLogout} className="rail-logout-icon" />
-        </button>
+          <button
+            type="button"
+            className="rail-icon-wrap rail-logout-btn"
+            onClick={onLogout}
+            aria-label="Cerrar sesion"
+          >
+            <MenuIcon name={MdLogout} className="rail-logout-icon" />
+          </button>
+        </div>
       </div>
 
       <div className="dashboard-navbar">
@@ -78,12 +78,11 @@ function DashboardNavbar({ links, onLogout, activeIndex = 0 }) {
               <span className="navbar-link-text">{link.label}</span>
             </button>
           ))}
-        </nav>
 
-        <button type="button" className="navbar-logout" onClick={onLogout}>
-          <MenuIcon name={MdLogout} className="logout-icon" />
-          <span className="navbar-logout-text">Log Out</span>
-        </button>
+          <button type="button" className="navbar-link navbar-logout-link" onClick={onLogout}>
+            <span className="navbar-link-text">Cerrar sesión</span>
+          </button>
+        </nav>
       </div>
     </aside>
   )

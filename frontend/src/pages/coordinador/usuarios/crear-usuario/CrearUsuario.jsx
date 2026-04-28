@@ -70,10 +70,10 @@ function CrearUsuario() {
   }
 
   return (
-    <div className="coor-create-page">
+    <div className="coor-create-page dashboard-layout-page">
       <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={3} />
 
-      <main className="coor-create-main">
+      <main className="coor-create-main dashboard-layout-main">
         <section className="coor-create-card">
           <div className="coor-create-head">
             <div>
