@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { EditIcon, ViewIcon } from '../../../components/icons/ActionIcons'
+import { DeleteIcon, EditIcon, ViewIcon } from '../../../components/icons/ActionIcons'
 import DashboardNavbar from '../../../components/navbar/DashboardNavbar'
 import { COORDINADOR_LINKS } from '../../../components/navbar/dashboardLinks'
 import Pagination from '../../../components/pagination/Pagination'
-import { getProjects } from '../../../services/projects'
+import { deleteProject, getProjects } from '../../../services/projects'
 import { clearSessionUser } from '../../../utils/session'
 import './Proyecto.css'
 
@@ -44,6 +44,7 @@ function Proyecto() {
   const [currentPage, setCurrentPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -83,6 +84,13 @@ function Proyecto() {
     const timeout = setTimeout(() => setError(''), 3000)
     return () => clearTimeout(timeout)
   }, [error])
+
+  useEffect(() => {
+    if (!message) return undefined
+
+    const timeout = setTimeout(() => setMessage(''), 3000)
+    return () => clearTimeout(timeout)
+  }, [message])
 
   const filteredProjects = useMemo(() => {
     const term = normalizeText(searchValue)
@@ -130,6 +138,21 @@ function Proyecto() {
     navigate('/login', { replace: true })
   }
 
+  async function handleDelete(project) {
+    const confirmed = globalThis.confirm(`Eliminar proyecto ${project.titulo}? Esta acción no se puede deshacer.`)
+    if (!confirmed) return
+
+    try {
+      await deleteProject(project.id)
+      setProjects((currentProjects) => currentProjects.filter((item) => item.id !== project.id))
+      setMessage(`Proyecto ${project.titulo} eliminado correctamente.`)
+      setError('')
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'No se pudo eliminar el proyecto')
+      setMessage('')
+    }
+  }
+
   return (
     <div className="coor-project-page dashboard-layout-page">
       <DashboardNavbar links={COORDINADOR_LINKS} onLogout={handleLogout} activeIndex={1} />
@@ -169,6 +192,7 @@ function Proyecto() {
             </label>
           </div>
 
+          {message ? <div className="coor-project-alert success">{message}</div> : null}
           {error ? <div className="coor-project-alert error">{error}</div> : null}
 
           <div className="coor-project-table-wrap">
@@ -234,8 +258,19 @@ function Proyecto() {
                             type="button"
                             className="coor-project-action secondary"
                             onClick={() => navigate(`/coordinador/proyectos/${project.id}`)}
+                            aria-label={`Ver proyecto ${project.titulo}`}
+                            title="Ver"
                           >
                             <ViewIcon />
+                          </button>
+                          <button
+                            type="button"
+                            className="coor-project-action danger icon-only"
+                            onClick={() => handleDelete(project)}
+                            aria-label={`Eliminar proyecto ${project.titulo}`}
+                            title="Eliminar"
+                          >
+                            <DeleteIcon />
                           </button>
                         </div>
                       </td>

@@ -14,7 +14,8 @@ import {
   SystemRole,
   YesNoOption,
 } from '@prisma/client';
-import { extname } from 'node:path';
+import { existsSync, rmSync } from 'node:fs';
+import { extname, join } from 'node:path';
 import { PrismaService } from '../../database/prisma.service';
 
 const DEFAULT_PROJECT_PHASES = [
@@ -1084,14 +1085,6 @@ export class ProjectsService {
         id: true,
         projectPhases: {
           select: { id: true },
-          take: 1,
-        },
-        summaryChecklist: {
-          select: { id: true },
-          take: 1,
-        },
-        businessValidation: {
-          select: { id: true },
         },
       },
     });
@@ -1100,22 +1093,78 @@ export class ProjectsService {
       throw new NotFoundException('Proyecto no encontrado');
     }
 
-    const hasAssociations =
-      existingProject.projectPhases.length > 0 ||
-      existingProject.summaryChecklist.length > 0 ||
-      existingProject.businessValidation !== null;
+    const projectPhaseIds = existingProject.projectPhases.map(
+      (projectPhase) => projectPhase.id,
+    );
 
-    if (hasAssociations) {
-      throw new BadRequestException(
-        'No se puede eliminar el proyecto porque tiene información asociada',
-      );
-    }
+    await this.prisma.$transaction(async (tx) => {
+      await this.deleteLegacyProjectUsers(tx, projectId);
 
-    await this.prisma.project.delete({
-      where: { id: projectId },
+      if (projectPhaseIds.length > 0) {
+        await tx.evidence.deleteMany({
+          where: {
+            projectPhaseId: {
+              in: projectPhaseIds,
+            },
+          },
+        });
+
+        await tx.phaseChecklist.deleteMany({
+          where: {
+            projectPhaseId: {
+              in: projectPhaseIds,
+            },
+          },
+        });
+      }
+
+      await tx.summaryChecklist.deleteMany({
+        where: { projectId },
+      });
+
+      await tx.businessValidation.deleteMany({
+        where: { projectId },
+      });
+
+      await tx.projectPhase.deleteMany({
+        where: { projectId },
+      });
+
+      await tx.project.delete({
+        where: { id: projectId },
+      });
     });
 
+    const uploadDirectory = join(process.cwd(), 'uploads', String(projectId));
+
+    if (existsSync(uploadDirectory)) {
+      rmSync(uploadDirectory, { recursive: true, force: true });
+    }
+
     return { message: 'Proyecto eliminado correctamente' };
+  }
+
+  private async deleteLegacyProjectUsers(
+    tx: Prisma.TransactionClient,
+    projectId: number,
+  ) {
+    const legacyProjectUsersTable = await tx.$queryRaw<
+      Array<{ tableName: string }>
+    >`
+      SELECT TABLE_NAME AS tableName
+      FROM information_schema.TABLES
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'project_users'
+    `;
+
+    if (legacyProjectUsersTable.length === 0) {
+      return;
+    }
+
+    await tx.$executeRaw`
+      DELETE FROM project_users
+      WHERE projectId = ${projectId}
+    `;
   }
 
   private parseProjectId(rawId: string) {

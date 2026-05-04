@@ -141,6 +141,12 @@
   border: 1px solid #f1c9c9;
 }
 
+.coor-project-alert.success {
+  background: #edf9f1;
+  color: #1f7a45;
+  border: 1px solid #cfe9d8;
+}
+
 .coor-project-table-wrap {
   margin-top: 10px;
   overflow: auto;
@@ -259,6 +265,11 @@
 .coor-project-action.secondary {
   background: #eef1f8;
   color: #304165;
+}
+
+.coor-project-action.danger {
+  background: #fff0f0;
+  color: #b23b3b;
 }
 
 .coor-project-empty {
