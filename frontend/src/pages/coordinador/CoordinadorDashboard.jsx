@@ -86,7 +86,7 @@ function CoordinadorDashboard() {
           <article className="coor-block coor-hero-block">
             <div>
               <h1>Bienvenid@, {sessionUser?.name || 'Usuario'}!</h1>
-              <p>Panel delll control de Coordinador · {today}</p>
+              <p>Panel de control de Coordinador · {today}</p>
               <p>Total de usuarios registrados: {totalUsers}</p>
             </div>
           </article>
