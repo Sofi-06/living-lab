@@ -108,7 +108,7 @@ function CrearEmpresa() {
         <section className="coor-create-company-card">
           <div className="coor-create-company-head">
             <div>
-              <p className="coor-create-company-eyebrow">Administracion</p>
+              <p className="coor-create-company-eyebrow">Administración</p>
               <h1>Crear empresa</h1>
               <p>Registra una nueva empresa aliada en la plataforma LivingLab.</p>
             </div>

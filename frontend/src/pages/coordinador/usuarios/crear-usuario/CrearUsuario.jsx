@@ -77,7 +77,7 @@ function CrearUsuario() {
         <section className="coor-create-card">
           <div className="coor-create-head">
             <div>
-              <p className="coor-create-eyebrow">Administracion</p>
+              <p className="coor-create-eyebrow">Administración</p>
               <h1>Crear usuario</h1>
               <p>Registra un nuevo usuario para la plataforma LivingLab.</p>
             </div>
@@ -122,7 +122,7 @@ function CrearUsuario() {
                 required
                 placeholder=" "
               />
-              <span>Contrasena</span>
+              <span>Contraseña</span>
             </label>
 
             <label>

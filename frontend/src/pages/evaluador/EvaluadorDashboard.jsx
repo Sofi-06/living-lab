@@ -104,7 +104,7 @@ function EvaluadorDashboard() {
           </article>
 
           <article className="eval-block">
-            <h2 className="eval-section-title">Resumen rapido</h2>
+            <h2 className="eval-section-title">Resumen rápido</h2>
             <div className="eval-stats-list">
               {summaryItems.map((item) => (
                 <div className="eval-stats-item" key={item.label}>

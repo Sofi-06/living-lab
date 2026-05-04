@@ -125,7 +125,7 @@ function EditarEmpresa() {
         <section className="coor-edit-company-card">
           <div className="coor-edit-company-head">
             <div>
-              <p className="coor-edit-company-eyebrow">Administracion</p>
+              <p className="coor-edit-company-eyebrow">Administración</p>
               <h1>Editar empresa</h1>
               <p>Actualiza los datos de la empresa vinculada en LivingLab.</p>
             </div>
@@ -203,7 +203,7 @@ function EditarEmpresa() {
                   }}
                   placeholder=" "
                 />
-                <span>Telefono (Opcional)</span>
+                <span>Teléfono (Opcional)</span>
               </label>
 
               <button type="submit" disabled={saving}>

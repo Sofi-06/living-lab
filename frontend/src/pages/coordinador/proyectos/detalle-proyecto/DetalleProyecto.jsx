@@ -26,10 +26,10 @@ const STATUS_LABELS = {
 }
 
 const TAB_OPTIONS = [
-  { id: 'informacion', label: 'Informacion' },
+  { id: 'informacion', label: 'Información' },
   { id: 'fases', label: 'Fases' },
   { id: 'evidencias', label: 'Evidencias' },
-  { id: 'evaluacion', label: 'Evaluacion' },
+  { id: 'evaluacion', label: 'Evaluación' },
 ]
 
 function formatDate(value) {
@@ -170,7 +170,7 @@ function DetalleProyecto() {
       <section className="coor-project-detail-section">
         <div className="coor-project-detail-grid">
           <div className="coor-project-detail-block">
-            <span className="coor-project-detail-label">Titulo</span>
+            <span className="coor-project-detail-label">Título</span>
             <strong>{project?.titulo}</strong>
           </div>
 
@@ -262,7 +262,7 @@ function DetalleProyecto() {
     const evidences = project?.evidences ?? []
 
     if (evidences.length === 0) {
-      return <div className="coor-project-detail-empty">Aun no hay evidencias registradas para este proyecto.</div>
+      return <div className="coor-project-detail-empty">Aún no hay evidencias registradas para este proyecto.</div>
     }
 
     return (
@@ -282,7 +282,7 @@ function DetalleProyecto() {
             <thead>
               <tr>
                 <th>Fase</th>
-                <th>Titulo</th>
+                <th>Título</th>
                 <th>Usuario</th>
                 <th>Estado</th>
                 <th>Archivo</th>
@@ -326,7 +326,7 @@ function DetalleProyecto() {
           <p>Consulta observaciones y checklist diligenciados por el evaluador en cada fase del proyecto.</p>
 
           {evaluatedPhases.length === 0 ? (
-            <div className="coor-project-detail-empty">Aun no hay evaluaciones registradas por fase.</div>
+            <div className="coor-project-detail-empty">Aún no hay evaluaciones registradas por fase.</div>
           ) : (
             <div className="coor-project-detail-evaluation-list">
               {evaluatedPhases.map((phase) => {
@@ -352,7 +352,7 @@ function DetalleProyecto() {
                             <tr>
                               <th>Item</th>
                               <th>Resultado</th>
-                              <th>Observacion</th>
+                              <th>Observación</th>
                             </tr>
                           </thead>
                           <tbody>

@@ -145,7 +145,7 @@ function Reportes() {
         if (!cancelled) {
           setCompanies([])
           setProjects([])
-          setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar la informacion de reportes')
+          setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar la información de reportes')
         }
       } finally {
         if (!cancelled) {
@@ -354,9 +354,9 @@ function Reportes() {
       <main className="coor-report-main dashboard-layout-main">
         <section className="coor-report-hero">
           <div>
-            <p className="coor-report-eyebrow">Coordinacion</p>
+            <p className="coor-report-eyebrow">Coordinación</p>
             <h1>Reportes</h1>
-            <p>Aplica filtros basicos para previsualizar los proyectos que entrarian en tu reporte.</p>
+            <p>Aplica filtros básicos para previsualizar los proyectos que entrarían en tu reporte.</p>
           </div>
 
         </section>
@@ -447,7 +447,7 @@ function Reportes() {
 
             <article className="coor-report-filter-card">
               <h3>Estado</h3>
-              <p>Consulta rapidamente proyectos pendientes, en progreso o finalizados.</p>
+              <p>Consulta rápidamente proyectos pendientes, en progreso o finalizados.</p>
               <label>
                 <span>Estado</span>
                 <select
@@ -466,7 +466,7 @@ function Reportes() {
 
             <article className="coor-report-filter-card coor-report-filter-card-wide">
               <h3>Fecha</h3>
-              <p>Define el rango de inicio y fin para la previsualizacion del reporte.</p>
+              <p>Define el rango de inicio y fin para la previsualización del reporte.</p>
               <div className="coor-report-date-grid">
                 <label>
                   <span>Fecha inicio</span>
@@ -527,7 +527,7 @@ function Reportes() {
             </div>
 
             {loading ? (
-              <div className="coor-report-empty">Cargando informacion del reporte...</div>
+              <div className="coor-report-empty">Cargando información del reporte...</div>
             ) : filteredProjects.length === 0 ? (
               <div className="coor-report-empty">No hay proyectos que coincidan con los filtros aplicados.</div>
             ) : (

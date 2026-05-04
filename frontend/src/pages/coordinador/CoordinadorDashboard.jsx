@@ -104,7 +104,7 @@ function CoordinadorDashboard() {
           </article>
 
           <article className="coor-block">
-            <h2 className="coor-section-title">Resumen rapido</h2>
+            <h2 className="coor-section-title">Resumen rápido</h2>
             <div className="coor-stats-list">
               {summaryItems.map((item) => (
                 <div className="coor-stats-item" key={item.label}>

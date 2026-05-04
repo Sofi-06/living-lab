@@ -69,7 +69,7 @@ function Login() {
       const userRole = normalizeRole(response?.user?.role)
 
       if (!userRole) {
-        throw new Error('Tu cuenta no tiene un rol valido para el dashboard')
+        throw new Error('Tu cuenta no tiene un rol válido para el dashboard')
       }
 
       saveSessionUser(response.user)
@@ -77,7 +77,7 @@ function Login() {
     } catch (error) {
       setStatus({
         type: 'error',
-        message: error instanceof Error ? error.message : 'No se pudo iniciar sesion',
+        message: error instanceof Error ? error.message : 'No se pudo iniciar sesión',
       })
     } finally {
       setIsSubmitting(false)
@@ -156,7 +156,6 @@ function Login() {
 
               <div className="login-meta login-meta-single">
                 <button type="button" className="link-btn">
-                  Olvido su contraseña?
                 </button>
               </div>
 

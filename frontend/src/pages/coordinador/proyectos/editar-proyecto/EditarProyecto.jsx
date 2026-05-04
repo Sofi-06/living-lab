@@ -190,7 +190,7 @@ function EditarProyecto() {
         <section className="coor-project-form-card">
           <div className="coor-project-form-head">
             <div>
-              <p className="coor-project-form-eyebrow">Administracion</p>
+              <p className="coor-project-form-eyebrow">Administración</p>
               <h1>Editar proyecto</h1>
               <p>Actualiza la empresa, su representante visible, el participante y el evaluador del proyecto.</p>
             </div>
@@ -247,7 +247,7 @@ function EditarProyecto() {
                     required
                     placeholder=" "
                   />
-                  <span>Titulo</span>
+                  <span>Título</span>
                 </label>
 
                 <label className={form.descripcionProblema ? 'is-filled' : ''}>
@@ -258,7 +258,7 @@ function EditarProyecto() {
                     rows={4}
                     placeholder=" "
                   />
-                  <span>Descripcion del problema</span>
+                  <span>Descripción del problema</span>
                 </label>
 
                 <label className={form.resultadoEsperado ? 'is-filled' : ''}>

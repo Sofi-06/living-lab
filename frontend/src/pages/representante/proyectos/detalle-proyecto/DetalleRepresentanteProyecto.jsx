@@ -38,11 +38,11 @@ const STATUS_LABELS = {
 }
 
 const TAB_OPTIONS = [
-  { id: 'informacion', label: 'Informacion' },
+  { id: 'informacion', label: 'Información' },
   { id: 'fases', label: 'Fases' },
   { id: 'evidencias', label: 'Evidencias' },
-  { id: 'evaluacion', label: 'Evaluacion' },
-  { id: 'validacion', label: 'Validacion empresarial' },
+  { id: 'evaluacion', label: 'Evaluación' },
+  { id: 'validacion', label: 'Validación empresarial' },
 ]
 
 const EMPTY_VALIDATION_FORM = {
@@ -128,7 +128,6 @@ function DetalleRepresentanteProyecto() {
   const [saveMessage, setSaveMessage] = useState('')
   const [savingValidation, setSavingValidation] = useState(false)
   const [validationForm, setValidationForm] = useState(EMPTY_VALIDATION_FORM)
-  const [signaturePreviewUrl, setSignaturePreviewUrl] = useState('')
   const signatureInputId = `business-validation-signature-${id ?? 'file'}`
 
   function handleLogout() {
@@ -186,19 +185,20 @@ function DetalleRepresentanteProyecto() {
     return () => clearTimeout(timeout)
   }, [saveMessage])
 
-  useEffect(() => {
+  const previewSignatureUrl = useMemo(() => {
     if (!validationForm.firmaArchivo || !validationForm.firmaArchivo.type.startsWith('image/')) {
-      setSignaturePreviewUrl('')
-      return undefined
+      return ''
     }
-
-    const previewUrl = URL.createObjectURL(validationForm.firmaArchivo)
-    setSignaturePreviewUrl(previewUrl)
-
-    return () => {
-      URL.revokeObjectURL(previewUrl)
-    }
+    return URL.createObjectURL(validationForm.firmaArchivo)
   }, [validationForm.firmaArchivo])
+
+  useEffect(() => {
+    return () => {
+      if (previewSignatureUrl) {
+        URL.revokeObjectURL(previewSignatureUrl)
+      }
+    }
+  }, [previewSignatureUrl])
 
   const phases = useMemo(() => ensureProjectPhases(project), [project])
   const currentPhase = useMemo(() => getCurrentProjectPhase(project, phases), [project, phases])
@@ -261,9 +261,9 @@ function DetalleRepresentanteProyecto() {
 
       setProject(payload?.project ?? null)
       setValidationForm(buildValidationForm(payload?.project ?? null))
-      setSaveMessage(validationCompleted ? 'La validacion empresarial fue actualizada.' : 'La validacion empresarial fue registrada correctamente.')
+      setSaveMessage(validationCompleted ? 'La validación empresarial fue actualizada.' : 'La validación empresarial fue registrada correctamente.')
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'No se pudo guardar la validacion empresarial')
+      setFormError(error instanceof Error ? error.message : 'No se pudo guardar la validación empresarial')
     } finally {
       setSavingValidation(false)
     }
@@ -308,7 +308,7 @@ function DetalleRepresentanteProyecto() {
               <strong>{progress.completedPhases}</strong>
             </div>
             <div className="coor-project-detail-progress-meta-item">
-              <span>Validacion final</span>
+              <span>Validación final</span>
               <strong>{validationCompleted ? 'Registrada' : validationEnabled ? 'Pendiente' : 'No habilitada'}</strong>
             </div>
           </div>
@@ -322,7 +322,7 @@ function DetalleRepresentanteProyecto() {
       <section className="coor-project-detail-section">
         <div className="coor-project-detail-grid">
           <div className="coor-project-detail-block">
-            <span className="coor-project-detail-label">Titulo</span>
+            <span className="coor-project-detail-label">Título</span>
             <strong>{project?.titulo}</strong>
           </div>
 
@@ -411,7 +411,7 @@ function DetalleRepresentanteProyecto() {
     const evidences = project?.evidences ?? []
 
     if (evidences.length === 0) {
-      return <div className="coor-project-detail-empty">Aun no hay evidencias registradas para este proyecto.</div>
+      return <div className="coor-project-detail-empty">Aún no hay evidencias registradas para este proyecto.</div>
     }
 
     return (
@@ -476,7 +476,7 @@ function DetalleRepresentanteProyecto() {
           <p>Consulta observaciones y checklist diligenciados por el evaluador en cada fase del proyecto.</p>
 
           {evaluatedPhases.length === 0 ? (
-            <div className="coor-project-detail-empty">Aun no hay evaluaciones registradas por fase.</div>
+            <div className="coor-project-detail-empty">Aún no hay evaluaciones registradas por fase.</div>
           ) : (
             <div className="coor-project-detail-evaluation-list">
               {evaluatedPhases.map((phase) => {
@@ -535,8 +535,8 @@ function DetalleRepresentanteProyecto() {
 
         <article className="coor-project-detail-panel">
           <div className="coor-project-detail-panel-head">
-            <h3>Estado de la validacion empresarial</h3>
-            <p>La validacion final se habilita cuando el proyecto esta listo para cierre y todas las fases fueron completadas.</p>
+            <h3>Estado de la validación empresarial</h3>
+            <p>La validación final se habilita cuando el proyecto está listo para cierre y todas las fases fueron completadas.</p>
           </div>
 
           <div className="rep-detail-summary-grid">
@@ -545,7 +545,7 @@ function DetalleRepresentanteProyecto() {
               <strong>{validationEnabled ? 'Si' : 'No'}</strong>
             </div>
             <div className="rep-detail-summary-item">
-              <span>Validacion registrada</span>
+              <span>Validación registrada</span>
               <strong>{validationCompleted ? 'Si' : 'No'}</strong>
             </div>
             <div className="rep-detail-summary-item">
@@ -556,26 +556,26 @@ function DetalleRepresentanteProyecto() {
 
           {!validationEnabled ? (
             <div className="rep-detail-feedback info">
-              La validacion empresarial aun no esta habilitada. Debes esperar a que el proyecto complete todas sus fases o alcance el 100% de progreso.
+              La validación empresarial aún no está habilitada. Debes esperar a que el proyecto complete todas sus fases o alcance el 100% de progreso.
             </div>
           ) : null}
 
           {validationCompleted ? (
             <div className="rep-detail-feedback neutral">
-              Ya existe una validacion empresarial registrada para este proyecto. Puedes actualizarla si necesitas ajustar la informacion.
+              Ya existe una validación empresarial registrada para este proyecto. Puedes actualizarla si necesitas ajustar la información.
             </div>
           ) : null}
         </article>
 
         <article className="coor-project-detail-panel">
           <div className="coor-project-detail-panel-head">
-            <h3>Formulario de validacion empresarial</h3>
-            <p>Diligencia la validacion final de la empresa sobre los resultados del proyecto.</p>
+            <h3>Formulario de validación empresarial</h3>
+            <p>Diligencia la validación final de la empresa sobre los resultados del proyecto.</p>
           </div>
 
           <div className="rep-detail-form-grid">
             <label className="rep-detail-field">
-              <span>El proyecto resolvio el problema?</span>
+              <span>¿El proyecto resolvió el problema?</span>
               <select
                 name="resolvioProblema"
                 value={validationForm.resolvioProblema}
@@ -583,7 +583,7 @@ function DetalleRepresentanteProyecto() {
                 disabled={!validationEnabled || savingValidation}
                 required
               >
-                <option value="">Selecciona una opcion</option>
+                <option value="">Selecciona una opción</option>
                 {SOLVED_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -593,7 +593,7 @@ function DetalleRepresentanteProyecto() {
             </label>
 
             <label className="rep-detail-field">
-              <span>La solucion es aplicable?</span>
+              <span>¿La solución es aplicable?</span>
               <select
                 name="esAplicable"
                 value={validationForm.esAplicable}
@@ -601,7 +601,7 @@ function DetalleRepresentanteProyecto() {
                 disabled={!validationEnabled || savingValidation}
                 required
               >
-                <option value="">Selecciona una opcion</option>
+                <option value="">Selecciona una opción</option>
                 {YES_NO_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -611,7 +611,7 @@ function DetalleRepresentanteProyecto() {
             </label>
 
             <label className="rep-detail-field">
-              <span>Genero valor para la organizacion?</span>
+              <span>¿Generó valor para la organización?</span>
               <select
                 name="generaValor"
                 value={validationForm.generaValor}
@@ -619,7 +619,7 @@ function DetalleRepresentanteProyecto() {
                 disabled={!validationEnabled || savingValidation}
                 required
               >
-                <option value="">Selecciona una opcion</option>
+                <option value="">Selecciona una opción</option>
                 {YES_NO_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -629,7 +629,7 @@ function DetalleRepresentanteProyecto() {
             </label>
 
             <label className="rep-detail-field">
-              <span>Desea implementar la solucion?</span>
+              <span>¿Desea implementar la solución?</span>
               <select
                 name="deseaImplementarla"
                 value={validationForm.deseaImplementarla}
@@ -715,10 +715,10 @@ function DetalleRepresentanteProyecto() {
               <small className="rep-detail-field-help">
                 Sube una foto, firma escaneada o documento firmado por la empresa.
               </small>
-              {signaturePreviewUrl ? (
+              {previewSignatureUrl ? (
                 <div className="rep-detail-signature-preview">
-                  <img src={signaturePreviewUrl} alt="Previsualizacion de la firma seleccionada" className="rep-detail-signature-image" />
-                  <span className="rep-detail-file-name">Previsualizacion del archivo seleccionado</span>
+                  <img src={previewSignatureUrl} alt="Previsualización de la firma seleccionada" className="rep-detail-signature-image" />
+                  <span className="rep-detail-file-name">Previsualización del archivo seleccionado</span>
                 </div>
               ) : null}
               {!validationForm.firmaArchivo && validationForm.firma ? (
@@ -753,7 +753,7 @@ function DetalleRepresentanteProyecto() {
             className="coor-project-detail-primary"
             disabled={!validationEnabled || savingValidation}
           >
-            {savingValidation ? 'Guardando...' : validationCompleted ? 'Actualizar validacion' : 'Guardar validacion'}
+            {savingValidation ? 'Guardando...' : validationCompleted ? 'Actualizar validación' : 'Guardar validación'}
           </button>
         </div>
       </form>
@@ -792,7 +792,7 @@ function DetalleRepresentanteProyecto() {
           <>
             <section className="coor-project-detail-hero">
               <div>
-                <p className="coor-project-detail-eyebrow">Validacion empresarial</p>
+                <p className="coor-project-detail-eyebrow">Validación empresarial</p>
                 <h1>{project?.titulo}</h1>
                 <div className="coor-project-detail-summary">
                   <span>Empresa: {project?.company?.nombre || '-'}</span>

@@ -31,13 +31,13 @@ export function validateLoginForm(form) {
   if (!email) {
     errors.email = 'El correo es obligatorio'
   } else if (!isValidEmail(email)) {
-    errors.email = 'Ingresa un correo valido'
+    errors.email = 'Ingresa un correo válido'
   }
 
   if (!form.password) {
-    errors.password = 'La contrasena es obligatoria'
+    errors.password = 'La contraseña es obligatoria'
   } else if (form.password.length < 4) {
-    errors.password = 'La contrasena debe tener minimo 4 caracteres'
+    errors.password = 'La contraseña debe tener mínimo 4 caracteres'
   }
 
   return errors
@@ -55,7 +55,7 @@ export function validateUserForm(form, { isEdit = false } = {}) {
   if (!email) {
     errors.email = 'El correo es obligatorio'
   } else if (!isValidEmail(email)) {
-    errors.email = 'Ingresa un correo valido'
+    errors.email = 'Ingresa un correo válido'
   }
 
   if (!normalizeFormText(form.role)) {
@@ -64,9 +64,9 @@ export function validateUserForm(form, { isEdit = false } = {}) {
 
   if (!isEdit || form.password) {
     if (!form.password) {
-      errors.password = 'La contrasena es obligatoria'
+      errors.password = 'La contraseña es obligatoria'
     } else if (form.password.length < 4) {
-      errors.password = 'La contrasena debe tener minimo 4 caracteres'
+      errors.password = 'La contraseña debe tener mínimo 4 caracteres'
     }
   }
 
@@ -93,11 +93,11 @@ export function validateCompanyForm(form) {
   }
 
   if (email && !isValidEmail(email)) {
-    errors.email = 'Ingresa un correo valido'
+    errors.email = 'Ingresa un correo válido'
   }
 
   if (telefono && !/^\d{7,15}$/.test(telefono)) {
-    errors.telefono = 'El telefono debe contener entre 7 y 15 digitos'
+    errors.telefono = 'El teléfono debe contener entre 7 y 15 dígitos'
   }
 
   return errors
@@ -119,11 +119,11 @@ export function validateProjectForm(form) {
   }
 
   if (!normalizeFormText(form.titulo)) {
-    errors.titulo = 'El titulo es obligatorio'
+    errors.titulo = 'El título es obligatorio'
   }
 
   if (!normalizeFormText(form.descripcionProblema)) {
-    errors.descripcionProblema = 'La descripcion del problema es obligatoria'
+    errors.descripcionProblema = 'La descripción del problema es obligatoria'
   }
 
   if (!normalizeFormText(form.resultadoEsperado)) {
@@ -131,11 +131,11 @@ export function validateProjectForm(form) {
   }
 
   if (form.fechaInicio && !isValidDateInput(form.fechaInicio)) {
-    errors.fechaInicio = 'La fecha de inicio es invalida'
+    errors.fechaInicio = 'La fecha de inicio es inválida'
   }
 
   if (form.fechaFin && !isValidDateInput(form.fechaFin)) {
-    errors.fechaFin = 'La fecha de fin es invalida'
+    errors.fechaFin = 'La fecha de fin es inválida'
   }
 
   if (
@@ -159,7 +159,7 @@ export function validateEvidenceForm(form, options = {}) {
   }
 
   if (!normalizeFormText(form.titulo)) {
-    errors.titulo = 'El titulo es obligatorio'
+    errors.titulo = 'El título es obligatorio'
   }
 
   if (!form.archivo) {
@@ -167,7 +167,7 @@ export function validateEvidenceForm(form, options = {}) {
   }
 
   if (options.isProjectExpired) {
-    errors.fechaFin = 'La fecha de finalizacion del proyecto ya vencio'
+    errors.fechaFin = 'La fecha de finalización del proyecto ya venció'
   }
 
   return errors
@@ -177,19 +177,19 @@ export function validateBusinessValidationForm(form) {
   const errors = {}
 
   if (!normalizeFormText(form.resolvioProblema)) {
-    errors.resolvioProblema = 'Selecciona si el proyecto resolvio el problema'
+    errors.resolvioProblema = 'Selecciona si el proyecto resolvió el problema'
   }
 
   if (!normalizeFormText(form.esAplicable)) {
-    errors.esAplicable = 'Selecciona si la solucion es aplicable'
+    errors.esAplicable = 'Selecciona si la solución es aplicable'
   }
 
   if (!normalizeFormText(form.generaValor)) {
-    errors.generaValor = 'Selecciona si la solucion genera valor'
+    errors.generaValor = 'Selecciona si la solución genera valor'
   }
 
   if (!normalizeFormText(form.deseaImplementarla)) {
-    errors.deseaImplementarla = 'Selecciona si la empresa desea implementar la solucion'
+    errors.deseaImplementarla = 'Selecciona si la empresa desea implementar la solución'
   }
 
   if (!normalizeFormText(form.nombreFirmante)) {

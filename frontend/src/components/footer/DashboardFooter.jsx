@@ -11,7 +11,7 @@ function DashboardFooter() {
           <span className="dashboard-footer-dot" aria-hidden="true" />
           <span>S</span>
           <span className="dashboard-footer-dot" aria-hidden="true" />
-          <span>Universidad Santo Tomas</span>
+          <span>Universidad Santo Tomás</span>
         </div>
       </div>
     </footer>

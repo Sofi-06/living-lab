@@ -104,7 +104,7 @@ function ParticipanteDashboard() {
           </article>
 
           <article className="doc-block">
-            <h2 className="doc-section-title">Resumen rapido</h2>
+            <h2 className="doc-section-title">Resumen rápido</h2>
             <div className="doc-stats-list">
               {summaryItems.map((item) => (
                 <div className="doc-stats-item" key={item.label}>

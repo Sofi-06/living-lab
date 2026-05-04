@@ -151,14 +151,14 @@ function EvaluadorProyecto() {
           <div className="coor-project-toolbar">
             <div>
               <h2>Proyectos asignados</h2>
-              <p>Busca por titulo, empresa, estado o participante asignado.</p>
+              <p>Busca por título, empresa, estado o participante asignado.</p>
             </div>
 
             <label className="coor-project-search">
               <span>Buscar</span>
               <input
                 type="search"
-                placeholder="Titulo, empresa, estado o participante"
+                placeholder="Título, empresa, estado o participante"
                 value={searchValue}
                 onChange={(event) => setSearchValue(event.target.value)}
               />
@@ -173,7 +173,7 @@ function EvaluadorProyecto() {
             ) : filteredProjects.length === 0 ? (
               <div className="coor-project-empty">
                 {projects.length === 0
-                  ? 'Todavia no tienes proyectos asignados para evaluar.'
+                  ? 'Todavía no tienes proyectos asignados para evaluar.'
                   : 'No se encontraron proyectos con ese criterio.'}
               </div>
             ) : (
@@ -182,8 +182,8 @@ function EvaluadorProyecto() {
                   <tr>
                     <th>ID</th>
                     <th>Empresa</th>
-                    <th>Titulo</th>
-                    <th>Descripcion del problema</th>
+                    <th>Título</th>
+                    <th>Descripción del problema</th>
                     <th>Estado</th>
                     <th>Fecha fin</th>
                     <th>Participante</th>

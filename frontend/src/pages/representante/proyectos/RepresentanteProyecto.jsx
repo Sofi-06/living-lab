@@ -152,7 +152,7 @@ function RepresentanteProyecto() {
           <div>
             <p className="coor-project-eyebrow">Representante</p>
             <h1>Proyectos de la empresa</h1>
-            <p>Consulta el estado del proyecto y completa la validacion empresarial final cuando quede habilitada.</p>
+            <p>Consulta el estado del proyecto y completa la validación empresarial final cuando quede habilitada.</p>
           </div>
         </section>
 
@@ -160,14 +160,14 @@ function RepresentanteProyecto() {
           <div className="coor-project-toolbar">
             <div>
               <h2>Listado de proyectos</h2>
-              <p>Busca por titulo, empresa, estado o estado de validacion.</p>
+              <p>Busca por título, empresa, estado o estado de validación.</p>
             </div>
 
             <label className="coor-project-search">
               <span>Buscar</span>
               <input
                 type="search"
-                placeholder="Titulo, empresa o validacion"
+                placeholder="Título, empresa o validación"
                 value={searchValue}
                 onChange={(event) => setSearchValue(event.target.value)}
               />
@@ -182,7 +182,7 @@ function RepresentanteProyecto() {
             ) : filteredProjects.length === 0 ? (
               <div className="coor-project-empty">
                 {projects.length === 0
-                  ? 'Todavia no hay proyectos asociados a la empresa del representante.'
+                  ? 'Todavía no hay proyectos asociados a la empresa del representante.'
                   : 'No se encontraron proyectos con ese criterio.'}
               </div>
             ) : (
@@ -191,10 +191,10 @@ function RepresentanteProyecto() {
                   <tr>
                     <th>ID</th>
                     <th>Empresa</th>
-                    <th>Titulo</th>
+                    <th>Título</th>
                     <th>Estado</th>
                     <th>Progreso</th>
-                    <th>Validacion empresarial</th>
+                    <th>Validación empresarial</th>
                     <th>Fecha fin</th>
                     <th>Acciones</th>
                   </tr>

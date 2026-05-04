@@ -114,7 +114,7 @@ function EditarUsuario() {
         <section className="coor-edit-card">
           <div className="coor-edit-head">
             <div>
-              <p className="coor-edit-eyebrow">Administracion</p>
+              <p className="coor-edit-eyebrow">Administración</p>
               <h1>Editar usuario</h1>
               <p>Modifica los datos del usuario en la plataforma LivingLab.</p>
             </div>
@@ -177,7 +177,7 @@ function EditarUsuario() {
                   minLength={4}
                   placeholder=" "
                 />
-                <span>Contrasena (Opcional)</span>
+                <span>Contraseña (Opcional)</span>
               </label>
 
               <button type="submit" disabled={saving}>

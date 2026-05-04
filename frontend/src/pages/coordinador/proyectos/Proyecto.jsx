@@ -117,22 +117,13 @@ function Proyecto() {
     })
   }, [projects, searchValue])
 
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [searchValue])
-
   const totalPages = Math.max(1, Math.ceil(filteredProjects.length / PAGE_SIZE))
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages)
-    }
-  }, [currentPage, totalPages])
+  const validatedCurrentPage = currentPage > totalPages ? totalPages : currentPage
 
   const paginatedProjects = useMemo(() => {
-    const startIndex = (currentPage - 1) * PAGE_SIZE
+    const startIndex = (validatedCurrentPage - 1) * PAGE_SIZE
     return filteredProjects.slice(startIndex, startIndex + PAGE_SIZE)
-  }, [currentPage, filteredProjects])
+  }, [validatedCurrentPage, filteredProjects])
 
   function handleLogout() {
     clearSessionUser()
@@ -146,7 +137,7 @@ function Proyecto() {
       <main className="coor-project-main dashboard-layout-main">
         <section className="coor-project-hero">
           <div>
-            <p className="coor-project-eyebrow">Administracion</p>
+            <p className="coor-project-eyebrow">Administración</p>
             <h1>Proyectos</h1>
             <p>Crea proyectos reales, asigna empresa y vincula las personas responsables.</p>
           </div>
@@ -164,14 +155,14 @@ function Proyecto() {
           <div className="coor-project-toolbar">
             <div>
               <h2>Listado de proyectos</h2>
-              <p>Filtra por titulo, empresa, estado o responsables del proyecto.</p>
+              <p>Filtra por título, empresa, estado o responsables del proyecto.</p>
             </div>
 
             <label className="coor-project-search">
               <span>Buscar</span>
               <input
                 type="search"
-                placeholder="Titulo, empresa, estado o responsable"
+                placeholder="Título, empresa, estado o responsable"
                 value={searchValue}
                 onChange={(event) => setSearchValue(event.target.value)}
               />
@@ -191,8 +182,8 @@ function Proyecto() {
                   <tr>
                     <th>ID</th>
                     <th>Empresa</th>
-                    <th>Titulo</th>
-                    <th>Descripcion del problema</th>
+                    <th>Título</th>
+                    <th>Descripción del problema</th>
                     <th>Resultado esperado</th>
                     <th>Estado</th>
                     <th>Fecha inicio</th>

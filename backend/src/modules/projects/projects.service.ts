@@ -303,11 +303,11 @@ export class ProjectsService {
     );
     const titulo = this.parseRequiredText(
       body.titulo,
-      'El titulo es obligatorio',
+      'El t\u00edtulo es obligatorio',
     );
     const descripcionProblema = this.parseRequiredText(
       body.descripcionProblema,
-      'La descripcion del problema es obligatoria',
+      'La descripción del problema es obligatoria',
     );
     const resultadoEsperado = this.parseRequiredText(
       body.resultadoEsperado,
@@ -363,7 +363,7 @@ export class ProjectsService {
 
     const search = typeof rawSearch === 'string' ? rawSearch.trim() : '';
     const userId = rawUserId
-      ? this.parseEntityId(rawUserId, 'Identificador de usuario invalido')
+      ? this.parseEntityId(rawUserId, 'Identificador de usuario inválido')
       : null;
     const filters: Prisma.ProjectWhereInput[] = [];
     const searchFilter = this.buildProjectSearchFilter(search);
@@ -397,7 +397,7 @@ export class ProjectsService {
 
     const representanteId = this.parseEntityId(
       rawRepresentanteId,
-      'Identificador de representante invalido',
+      'Identificador de representante inválido',
     );
     const search = typeof rawSearch === 'string' ? rawSearch.trim() : '';
 
@@ -467,7 +467,7 @@ export class ProjectsService {
     const userId = this.parseEntityId(body.userId, 'El usuario es obligatorio');
     const titulo = this.parseRequiredText(
       body.titulo,
-      'El titulo es obligatorio',
+      'El t\u00edtulo es obligatorio',
     );
     const descripcion =
       typeof body.descripcion === 'string'
@@ -512,7 +512,7 @@ export class ProjectsService {
 
     if (this.hasProjectExpired(projectPhase.project.fechaFin)) {
       throw new BadRequestException(
-        'La fecha de finalizacion del proyecto ha vencido. El proyecto fue marcado como cancelado. No se pueden registrar mas evidencias.',
+        'La fecha de finalización del proyecto ha vencido. El proyecto fue marcado como cancelado. No se pueden registrar más evidencias.',
       );
     }
 
@@ -561,7 +561,7 @@ export class ProjectsService {
 
     if (projectPhase.estado === PhaseStatus.IN_REVIEW) {
       throw new BadRequestException(
-        'La fase actual esta siendo revisada por el evaluador',
+        'La fase actual está siendo revisada por el evaluador',
       );
     }
 
@@ -694,14 +694,14 @@ export class ProjectsService {
     if (typeof body.titulo === 'string') {
       data.titulo = this.parseExistingText(
         body.titulo,
-        'El titulo es obligatorio',
+        'El título es obligatorio',
       );
     }
 
     if (typeof body.descripcionProblema === 'string') {
       data.descripcionProblema = this.parseExistingText(
         body.descripcionProblema,
-        'La descripcion del problema es obligatoria',
+        'La descripción del problema es obligatoria',
       );
     }
 
@@ -787,7 +787,7 @@ export class ProjectsService {
     if (projectState.estado === ProjectStatus.CANCELLED) {
       if (this.hasProjectExpired(projectState.fechaFin)) {
         throw new BadRequestException(
-          'La fecha de finalizacion del proyecto ha vencido. El proyecto fue marcado como cancelado y no admite evaluaciones.',
+          'La fecha de finalizaci\u00f3n del proyecto ha vencido. El proyecto fue marcado como cancelado y no admite evaluaciones.',
         );
       }
 
@@ -843,7 +843,7 @@ export class ProjectsService {
 
       if (activePhase.evidences.length === 0) {
         throw new BadRequestException(
-          'No puedes evaluar una fase que aun no tiene evidencias registradas',
+          'No puedes evaluar una fase que aún no tiene evidencias registradas',
         );
       }
 
@@ -968,12 +968,12 @@ export class ProjectsService {
     if (projectState.estado === ProjectStatus.CANCELLED) {
       if (this.hasProjectExpired(projectState.fechaFin)) {
         throw new BadRequestException(
-          'La fecha de finalizacion del proyecto ha vencido. El proyecto fue marcado como cancelado y no admite validacion empresarial.',
+          'La fecha de finalización del proyecto ha vencido. El proyecto fue marcado como cancelado y no admite validación empresarial.',
         );
       }
 
       throw new BadRequestException(
-        'El proyecto fue cancelado y no admite validacion empresarial',
+        'El proyecto fue cancelado y no admite validación empresarial',
       );
     }
 
@@ -986,18 +986,26 @@ export class ProjectsService {
         ? {
             ...(body.businessValidation as Record<string, unknown>),
             ...(file
-              ? { firma: this.buildBusinessValidationFileUrl(projectId, file.filename) }
+              ? {
+                  firma: this.buildBusinessValidationFileUrl(
+                    projectId,
+                    file.filename,
+                  ),
+                }
               : {}),
           }
         : {
             ...body,
             ...(file
-              ? { firma: this.buildBusinessValidationFileUrl(projectId, file.filename) }
+              ? {
+                  firma: this.buildBusinessValidationFileUrl(
+                    projectId,
+                    file.filename,
+                  ),
+                }
               : {}),
           };
-    const validation = this.parseBusinessValidation(
-      businessValidationPayload,
-    );
+    const validation = this.parseBusinessValidation(businessValidationPayload);
 
     await this.ensureUserWithRole(
       representanteId,
@@ -1042,7 +1050,7 @@ export class ProjectsService {
 
       if (!this.isProjectReadyForBusinessValidation(existingProject)) {
         throw new BadRequestException(
-          'La validacion empresarial solo se habilita cuando el proyecto esta listo para cierre',
+          'La validación empresarial solo se habilita cuando el proyecto está listo para cierre',
         );
       }
 
@@ -1099,7 +1107,7 @@ export class ProjectsService {
 
     if (hasAssociations) {
       throw new BadRequestException(
-        'No se puede eliminar el proyecto porque tiene informacion asociada',
+        'No se puede eliminar el proyecto porque tiene información asociada',
       );
     }
 
@@ -1114,7 +1122,7 @@ export class ProjectsService {
     const projectId = Number(rawId);
 
     if (!Number.isInteger(projectId) || projectId <= 0) {
-      throw new BadRequestException('Identificador de proyecto invalido');
+      throw new BadRequestException('Identificador de proyecto inválido');
     }
 
     return projectId;
@@ -1528,7 +1536,7 @@ export class ProjectsService {
       safeFilename.includes('..') ||
       extname(safeFilename) === ''
     ) {
-      throw new BadRequestException('Nombre de archivo invalido');
+      throw new BadRequestException('Nombre de archivo inválido');
     }
 
     return subdirectory
@@ -1730,7 +1738,7 @@ export class ProjectsService {
 
       if (!Array.isArray(payload.items) || payload.items.length === 0) {
         throw new BadRequestException(
-          `La fase ${fase} debe contener items de evaluacion`,
+          `La fase ${fase} debe contener items de evaluación`,
         );
       }
 
@@ -1786,14 +1794,14 @@ export class ProjectsService {
   private parsePhaseReviewChecklist(rawValue: unknown) {
     if (!Array.isArray(rawValue) || rawValue.length === 0) {
       throw new BadRequestException(
-        'El checklist de evaluacion de la fase es obligatorio',
+        'El checklist de evaluación de la fase es obligatorio',
       );
     }
 
     return rawValue.map((itemEntry) => {
       if (!itemEntry || typeof itemEntry !== 'object') {
         throw new BadRequestException(
-          'Formato invalido en checklist de evaluacion',
+          'Formato inválido en checklist de evaluación',
         );
       }
 
@@ -1845,7 +1853,7 @@ export class ProjectsService {
 
   private parseBusinessValidation(rawValue: unknown) {
     if (!rawValue || typeof rawValue !== 'object') {
-      throw new BadRequestException('La validacion empresarial es obligatoria');
+      throw new BadRequestException('La validación empresarial es obligatoria');
     }
 
     const payload = rawValue as Record<string, unknown>;
@@ -1873,7 +1881,7 @@ export class ProjectsService {
 
   private parseChecklistResult(rawValue: unknown): ChecklistResult {
     if (typeof rawValue !== 'string') {
-      throw new BadRequestException('Resultado de checklist invalido');
+      throw new BadRequestException('Resultado de checklist inválido');
     }
 
     const value = rawValue.trim().toUpperCase();
@@ -1884,7 +1892,7 @@ export class ProjectsService {
       case ChecklistResult.NO_APLICA:
         return value;
       default:
-        throw new BadRequestException('Resultado de checklist invalido');
+        throw new BadRequestException('Resultado de checklist inválido');
     }
   }
 
@@ -1893,7 +1901,7 @@ export class ProjectsService {
   ): SummaryChecklistResult {
     if (typeof rawValue !== 'string') {
       throw new BadRequestException(
-        'Resultado del checklist resumido invalido',
+        'Resultado del checklist resumido inválido',
       );
     }
 
@@ -1906,7 +1914,7 @@ export class ProjectsService {
         return value;
       default:
         throw new BadRequestException(
-          'Resultado del checklist resumido invalido',
+          'Resultado del checklist resumido inválido',
         );
     }
   }
@@ -1923,14 +1931,14 @@ export class ProjectsService {
       case YesNoOption.NO:
         return value;
       default:
-        throw new BadRequestException('Opcion de validacion invalida');
+        throw new BadRequestException('Opción de validación inválida');
     }
   }
 
   private parseSolvedProblemOption(rawValue: unknown): SolvedProblemOption {
     if (typeof rawValue !== 'string') {
       throw new BadRequestException(
-        'La respuesta de resolucion del problema es invalida',
+        'La respuesta de resolución del problema es inválida',
       );
     }
 
@@ -1943,7 +1951,7 @@ export class ProjectsService {
         return value;
       default:
         throw new BadRequestException(
-          'La respuesta de resolucion del problema es invalida',
+          'La respuesta de resolución del problema es inválida',
         );
     }
   }

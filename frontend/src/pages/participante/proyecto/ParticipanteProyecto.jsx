@@ -149,14 +149,14 @@ function ParticipanteProyecto() {
           <div className="coor-project-toolbar">
             <div>
               <h2>Tus proyectos</h2>
-              <p>Busca por titulo, empresa, problema o estado.</p>
+              <p>Busca por título, empresa, problema o estado.</p>
             </div>
 
             <label className="coor-project-search">
               <span>Buscar</span>
               <input
                 type="search"
-                placeholder="Titulo, empresa o estado"
+                placeholder="Título, empresa o estado"
                 value={searchValue}
                 onChange={(event) => setSearchValue(event.target.value)}
               />
@@ -171,7 +171,7 @@ function ParticipanteProyecto() {
             ) : filteredProjects.length === 0 ? (
               <div className="coor-project-empty">
                 {projects.length === 0
-                  ? 'Todavia no tienes proyectos asignados.'
+                  ? 'Todavía no tienes proyectos asignados.'
                   : 'No se encontraron proyectos con ese criterio.'}
               </div>
             ) : (
@@ -180,8 +180,8 @@ function ParticipanteProyecto() {
                   <tr>
                     <th>ID</th>
                     <th>Empresa</th>
-                    <th>Titulo</th>
-                    <th>Descripcion del problema</th>
+                    <th>Título</th>
+                    <th>Descripción del problema</th>
                     <th>Resultado esperado</th>
                     <th>Estado</th>
                     <th>Fecha inicio</th>

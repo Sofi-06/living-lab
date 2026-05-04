@@ -121,6 +121,290 @@ function buildReviewChecklist(project, currentPhase) {
   })
 }
 
+function EvaluationPhaseForm({
+  projectId,
+  currentPhase,
+  currentPhaseEvidences,
+  reviewableCurrentPhaseEvidences,
+  initialReviewChecklist,
+  initialPhaseObservations,
+  formError,
+  saveMessage,
+  savingEvaluation,
+  onSubmitEvaluation,
+}) {
+  const [reviewChecklist, setReviewChecklist] = useState(initialReviewChecklist)
+  const [phaseObservations, setPhaseObservations] = useState(initialPhaseObservations)
+  const [reviewDecision, setReviewDecision] = useState('')
+
+  function handleDetailedResultChange(itemIndex, resultado) {
+    setReviewChecklist((current) =>
+      current.map((itemEntry, currentItemIndex) =>
+        currentItemIndex === itemIndex
+          ? { ...itemEntry, resultado }
+          : itemEntry,
+      ),
+    )
+  }
+
+  function handleDetailedObservationChange(itemIndex, observacion) {
+    setReviewChecklist((current) =>
+      current.map((itemEntry, currentItemIndex) =>
+        currentItemIndex === itemIndex
+          ? { ...itemEntry, observacion }
+          : itemEntry,
+      ),
+    )
+  }
+
+  function validateEvaluationForm() {
+    if (!currentPhase?.id) {
+      return 'No hay una fase activa para evaluar.'
+    }
+
+    if (currentPhaseEvidences.length === 0) {
+      return 'La fase actual debe tener evidencias antes de ser evaluada.'
+    }
+
+    if (reviewableCurrentPhaseEvidences.length === 0) {
+      return 'Esta fase ya tiene un concepto emitido para las evidencias actuales. Debes esperar una nueva evidencia del participante para volver a revisar.'
+    }
+
+    if (!reviewDecision) {
+      return 'Selecciona si la fase se aprueba o si se solicitan ajustes.'
+    }
+
+    const checklistComplete = reviewChecklist.every((itemEntry) => Boolean(itemEntry.resultado))
+
+    if (!checklistComplete) {
+      return 'Completa todos los resultados del checklist de la fase antes de guardar.'
+    }
+
+    if (reviewDecision === 'reject' && !phaseObservations.trim()) {
+      return 'Cuando solicitas ajustes debes registrar observaciones para el participante.'
+    }
+
+    return ''
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+
+    const nextFormError = validateEvaluationForm()
+
+    if (nextFormError) {
+      onSubmitEvaluation({ formError: nextFormError })
+      return
+    }
+
+    await onSubmitEvaluation({
+      formError: '',
+      payload: {
+        projectId,
+        projectPhaseId: currentPhase.id,
+        approved: reviewDecision === 'approve',
+        observaciones: phaseObservations.trim(),
+        phaseChecklist: reviewChecklist.map((itemEntry) => ({
+          item: itemEntry.item,
+          resultado: itemEntry.resultado,
+          observacion: itemEntry.observacion.trim(),
+        })),
+      },
+    })
+  }
+
+  if (!currentPhase) {
+    return (
+      <section className="coor-project-detail-section">
+        <div className="coor-project-detail-empty">Todas las fases del proyecto ya fueron completadas.</div>
+      </section>
+    )
+  }
+
+  return (
+    <form className="coor-project-detail-section" onSubmit={handleSubmit}>
+      {formError ? <div className="eval-detail-feedback error">{formError}</div> : null}
+      {saveMessage ? <div className="eval-detail-feedback success">{saveMessage}</div> : null}
+
+      <article className="coor-project-detail-panel">
+        <div className="coor-project-detail-panel-head">
+          <h3>Revision de la fase actual</h3>
+          <p>Evalua exclusivamente la fase activa. Si la apruebas, se desbloquea la siguiente fase del proyecto.</p>
+        </div>
+
+        <div className="eval-detail-summary-grid">
+          <div className="eval-detail-summary-item">
+            <span>Fase actual</span>
+            <strong>{currentPhase.nombre}</strong>
+          </div>
+          <div className="eval-detail-summary-item">
+            <span>Estado</span>
+            <strong>{PHASE_STATUS_LABELS[currentPhase.estado] ?? currentPhase.estado}</strong>
+          </div>
+          <div className="eval-detail-summary-item">
+            <span>Evidencias pendientes</span>
+            <strong>{reviewableCurrentPhaseEvidences.length}</strong>
+          </div>
+        </div>
+      </article>
+
+      <article className="coor-project-detail-panel">
+        <div className="coor-project-detail-panel-head">
+          <h3>Evidencias de {currentPhase.nombre}</h3>
+          <p>Solo puedes emitir una nueva revision cuando exista al menos una evidencia pendiente o en revision en esta fase.</p>
+        </div>
+
+        {currentPhaseEvidences.length === 0 ? (
+          <div className="eval-detail-feedback error">
+            La fase actual aun no tiene evidencias. El participante debe registrar entregables antes de que puedas evaluar.
+          </div>
+        ) : (
+          <>
+            {reviewableCurrentPhaseEvidences.length === 0 ? (
+              <div className="eval-detail-feedback info">
+                Ya emitiste un concepto para las evidencias actuales de esta fase. Cuando el participante suba una nueva evidencia, el formulario se habilitara de nuevo.
+              </div>
+            ) : null}
+
+            <div className="coor-project-detail-table-wrap">
+              <table className="coor-project-detail-table">
+                <thead>
+                  <tr>
+                    <th>Titulo</th>
+                    <th>Descripcion</th>
+                    <th>Usuario</th>
+                    <th>Estado</th>
+                    <th>Observaciones</th>
+                    <th>Archivo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentPhaseEvidences.map((evidence) => (
+                    <tr key={evidence.id}>
+                      <td>{evidence.titulo}</td>
+                      <td>{evidence.descripcion || '-'}</td>
+                      <td>{evidence.user?.name ?? '-'}</td>
+                      <td>
+                        <span className={`coor-project-detail-badge ${normalizeText(evidence.estado)}`}>
+                          {EVIDENCE_STATUS_LABELS[evidence.estado] ?? evidence.estado}
+                        </span>
+                      </td>
+                      <td>{evidence.observaciones || '-'}</td>
+                      <td>
+                        <a
+                          href={resolveEvidenceUrl(evidence.archivo)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="coor-project-detail-link"
+                        >
+                          Ver archivo
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </article>
+
+      <article className="coor-project-detail-panel">
+        <div className="coor-project-detail-panel-head">
+          <h3>Checklist de la fase</h3>
+          <p>Marca el cumplimiento de cada criterio para esta fase y agrega observaciones cuando aplique.</p>
+        </div>
+
+        <div className="coor-project-detail-table-wrap">
+          <table className="coor-project-detail-table eval-detail-checklist-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Cumple</th>
+                <th>No cumple</th>
+                <th>No aplica</th>
+                <th>Observaciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reviewChecklist.map((itemEntry, itemIndex) => (
+                <tr key={`${currentPhase.id}-${itemEntry.item}`}>
+                  <td>{itemEntry.item}</td>
+                  {DETAILED_RESULT_OPTIONS.map((option) => (
+                    <td key={option.value}>
+                      <label className="eval-detail-radio">
+                        <input
+                          type="radio"
+                          name={`detailed-${itemIndex}`}
+                          checked={itemEntry.resultado === option.value}
+                          onChange={() => handleDetailedResultChange(itemIndex, option.value)}
+                        />
+                        <span>{option.label}</span>
+                      </label>
+                    </td>
+                  ))}
+                  <td>
+                    <textarea
+                      value={itemEntry.observacion}
+                      onChange={(event) => handleDetailedObservationChange(itemIndex, event.target.value)}
+                      rows="3"
+                      placeholder="Observaciones del evaluador"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article className="coor-project-detail-panel">
+        <div className="coor-project-detail-panel-head">
+          <h3>Decision del evaluador</h3>
+          <p>La aprobacion completa la fase. Si la evidencia requiere mejoras, solicita ajustes y espera una nueva entrega del participante.</p>
+        </div>
+
+        <div className="eval-detail-decision-grid">
+          <button
+            type="button"
+            className={reviewDecision === 'approve' ? 'eval-detail-decision active approve' : 'eval-detail-decision approve'}
+            onClick={() => setReviewDecision('approve')}
+          >
+            Aprobar fase
+          </button>
+          <button
+            type="button"
+            className={reviewDecision === 'reject' ? 'eval-detail-decision active reject' : 'eval-detail-decision reject'}
+            onClick={() => setReviewDecision('reject')}
+          >
+            Solicitar ajustes
+          </button>
+        </div>
+
+        <label className="eval-detail-field eval-detail-field-full">
+          <span>Observaciones generales</span>
+          <textarea
+            value={phaseObservations}
+            onChange={(event) => setPhaseObservations(event.target.value)}
+            rows="5"
+            placeholder="Retroalimentacion visible para el participante"
+          />
+        </label>
+      </article>
+
+      <div className="coor-project-detail-actions-strip">
+        <button
+          type="submit"
+          className="coor-project-detail-primary"
+          disabled={savingEvaluation || currentPhaseEvidences.length === 0 || reviewableCurrentPhaseEvidences.length === 0}
+        >
+          {savingEvaluation ? 'Guardando...' : 'Guardar revision'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
 function DetalleEvaluadorProyecto() {
   const navigate = useNavigate()
   const { id } = useParams()
@@ -132,9 +416,6 @@ function DetalleEvaluadorProyecto() {
   const [formError, setFormError] = useState('')
   const [saveMessage, setSaveMessage] = useState('')
   const [savingEvaluation, setSavingEvaluation] = useState(false)
-  const [reviewChecklist, setReviewChecklist] = useState([])
-  const [phaseObservations, setPhaseObservations] = useState('')
-  const [reviewDecision, setReviewDecision] = useState('')
 
   function handleLogout() {
     clearSessionUser()
@@ -195,10 +476,11 @@ function DetalleEvaluadorProyecto() {
 
   const currentPhaseEvidences = useMemo(() => {
     if (!currentPhase?.nombre) return []
+
     return (project?.evidences ?? []).filter(
       (evidence) => normalizeText(evidence.fase) === normalizeText(currentPhase.nombre),
     )
-  }, [currentPhase?.nombre, project])
+  }, [currentPhase, project?.evidences])
 
   const reviewableCurrentPhaseEvidences = useMemo(
     () =>
@@ -208,96 +490,30 @@ function DetalleEvaluadorProyecto() {
     [currentPhaseEvidences],
   )
 
-  useEffect(() => {
-    setReviewChecklist(buildReviewChecklist(project, currentPhase))
-    setPhaseObservations(currentPhase?.observaciones ?? '')
-    setReviewDecision('')
-  }, [currentPhase, project])
+  const initialReviewChecklist = useMemo(() => buildReviewChecklist(project, currentPhase), [project, currentPhase])
+  const initialPhaseObservations = currentPhase?.observaciones ?? ''
 
-  function handleDetailedResultChange(itemIndex, resultado) {
-    setReviewChecklist((current) =>
-      current.map((itemEntry, currentItemIndex) =>
-        currentItemIndex === itemIndex
-          ? { ...itemEntry, resultado }
-          : itemEntry,
-      ),
-    )
-  }
-
-  function handleDetailedObservationChange(itemIndex, observacion) {
-    setReviewChecklist((current) =>
-      current.map((itemEntry, currentItemIndex) =>
-        currentItemIndex === itemIndex
-          ? { ...itemEntry, observacion }
-          : itemEntry,
-      ),
-    )
-  }
-
-  function validateEvaluationForm() {
-    if (!currentPhase?.id) {
-      return false
-    }
-
-    if (currentPhaseEvidences.length === 0) {
-      setFormError('La fase actual debe tener evidencias antes de ser evaluada.')
-      return false
-    }
-
-    if (reviewableCurrentPhaseEvidences.length === 0) {
-      setFormError('Esta fase ya tiene un concepto emitido para las evidencias actuales. Debes esperar una nueva evidencia del participante para volver a revisar.')
-      return false
-    }
-
-    if (!reviewDecision) {
-      setFormError('Selecciona si la fase se aprueba o si se solicitan ajustes.')
-      return false
-    }
-
-    const checklistComplete = reviewChecklist.every((itemEntry) => Boolean(itemEntry.resultado))
-
-    if (!checklistComplete) {
-      setFormError('Completa todos los resultados del checklist de la fase antes de guardar.')
-      return false
-    }
-
-    if (reviewDecision === 'reject' && !phaseObservations.trim()) {
-      setFormError('Cuando solicitas ajustes debes registrar observaciones para el participante.')
-      return false
-    }
-
-    return true
-  }
-
-  async function handleEvaluationSubmit(event) {
-    event.preventDefault()
-
-    if (!id || !currentPhase?.id) return
-
-    setFormError('')
+  async function handleEvaluationSubmit({ formError: nextFormError = '', payload } = {}) {
+    setFormError(nextFormError)
     setSaveMessage('')
 
-    if (!validateEvaluationForm()) {
+    if (nextFormError || !payload) {
       return
     }
 
     setSavingEvaluation(true)
 
     try {
-      const payload = await updateProjectEvaluation(id, {
-        projectPhaseId: currentPhase.id,
-        approved: reviewDecision === 'approve',
-        observaciones: phaseObservations.trim(),
-        phaseChecklist: reviewChecklist.map((itemEntry) => ({
-          item: itemEntry.item,
-          resultado: itemEntry.resultado,
-          observacion: itemEntry.observacion.trim(),
-        })),
+      const response = await updateProjectEvaluation(payload.projectId, {
+        projectPhaseId: payload.projectPhaseId,
+        approved: payload.approved,
+        observaciones: payload.observaciones,
+        phaseChecklist: payload.phaseChecklist,
       })
 
-      setProject(payload?.project ?? null)
+      setProject(response?.project ?? null)
       setSaveMessage(
-        reviewDecision === 'approve'
+        payload.approved
           ? 'Fase aprobada correctamente. La siguiente fase quedo desbloqueada.'
           : 'Se solicitaron ajustes. El proyecto permanece en la misma fase hasta que el participante suba una nueva evidencia.',
       )
@@ -396,12 +612,8 @@ function DetalleEvaluadorProyecto() {
         <article className="coor-project-detail-copy-card">
           <span className="coor-project-detail-label">Responsables</span>
           <div className="coor-project-detail-users">
-            <span className="coor-project-detail-chip">
-              Participante: {project?.participante?.name ?? '-'}
-            </span>
-            <span className="coor-project-detail-chip">
-              Evaluador: {project?.evaluador?.name ?? '-'}
-            </span>
+            <span className="coor-project-detail-chip">Participante: {project?.participante?.name ?? '-'}</span>
+            <span className="coor-project-detail-chip">Evaluador: {project?.evaluador?.name ?? '-'}</span>
           </div>
         </article>
       </section>
@@ -510,204 +722,21 @@ function DetalleEvaluadorProyecto() {
     )
   }
 
-  function renderCurrentPhaseEvidence() {
-    if (currentPhaseEvidences.length === 0) {
-      return (
-        <div className="eval-detail-feedback error">
-          La fase actual aun no tiene evidencias. El participante debe registrar entregables antes de que puedas evaluar.
-        </div>
-      )
-    }
-
-    return (
-      <>
-        {reviewableCurrentPhaseEvidences.length === 0 ? (
-          <div className="eval-detail-feedback info">
-            Ya emitiste un concepto para las evidencias actuales de esta fase. Cuando el participante suba una nueva evidencia, el formulario se habilitara de nuevo.
-          </div>
-        ) : null}
-
-        <div className="coor-project-detail-table-wrap">
-          <table className="coor-project-detail-table">
-            <thead>
-              <tr>
-                <th>Titulo</th>
-                <th>Descripcion</th>
-                <th>Usuario</th>
-                <th>Estado</th>
-                <th>Observaciones</th>
-                <th>Archivo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentPhaseEvidences.map((evidence) => (
-                <tr key={evidence.id}>
-                  <td>{evidence.titulo}</td>
-                  <td>{evidence.descripcion || '-'}</td>
-                  <td>{evidence.user?.name ?? '-'}</td>
-                  <td>
-                    <span className={`coor-project-detail-badge ${normalizeText(evidence.estado)}`}>
-                      {EVIDENCE_STATUS_LABELS[evidence.estado] ?? evidence.estado}
-                    </span>
-                  </td>
-                  <td>{evidence.observaciones || '-'}</td>
-                  <td>
-                    <a
-                      href={resolveEvidenceUrl(evidence.archivo)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="coor-project-detail-link"
-                    >
-                      Ver archivo
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </>
-    )
-  }
-
   function renderEvaluationTab() {
-    if (!currentPhase) {
-      return (
-        <section className="coor-project-detail-section">
-          <div className="coor-project-detail-empty">Todas las fases del proyecto ya fueron completadas.</div>
-        </section>
-      )
-    }
-
     return (
-      <form className="coor-project-detail-section" onSubmit={handleEvaluationSubmit}>
-        {formError ? <div className="eval-detail-feedback error">{formError}</div> : null}
-        {saveMessage ? <div className="eval-detail-feedback success">{saveMessage}</div> : null}
-
-        <article className="coor-project-detail-panel">
-          <div className="coor-project-detail-panel-head">
-            <h3>Revision de la fase actual</h3>
-            <p>Evalua exclusivamente la fase activa. Si la apruebas, se desbloquea la siguiente fase del proyecto.</p>
-          </div>
-
-          <div className="eval-detail-summary-grid">
-            <div className="eval-detail-summary-item">
-              <span>Fase actual</span>
-              <strong>{currentPhase.nombre}</strong>
-            </div>
-            <div className="eval-detail-summary-item">
-              <span>Estado</span>
-              <strong>{PHASE_STATUS_LABELS[currentPhase.estado] ?? currentPhase.estado}</strong>
-            </div>
-            <div className="eval-detail-summary-item">
-              <span>Evidencias pendientes</span>
-              <strong>{reviewableCurrentPhaseEvidences.length}</strong>
-            </div>
-          </div>
-        </article>
-
-        <article className="coor-project-detail-panel">
-          <div className="coor-project-detail-panel-head">
-            <h3>Evidencias de {currentPhase.nombre}</h3>
-            <p>Solo puedes emitir una nueva revision cuando exista al menos una evidencia pendiente o en revision en esta fase.</p>
-          </div>
-
-          {renderCurrentPhaseEvidence()}
-        </article>
-
-        <article className="coor-project-detail-panel">
-          <div className="coor-project-detail-panel-head">
-            <h3>Checklist de la fase</h3>
-            <p>Marca el cumplimiento de cada criterio para esta fase y agrega observaciones cuando aplique.</p>
-          </div>
-
-          <div className="coor-project-detail-table-wrap">
-            <table className="coor-project-detail-table eval-detail-checklist-table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Cumple</th>
-                  <th>No cumple</th>
-                  <th>No aplica</th>
-                  <th>Observaciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reviewChecklist.map((itemEntry, itemIndex) => (
-                  <tr key={`${currentPhase.id}-${itemEntry.item}`}>
-                    <td>{itemEntry.item}</td>
-                    {DETAILED_RESULT_OPTIONS.map((option) => (
-                      <td key={option.value}>
-                        <label className="eval-detail-radio">
-                          <input
-                            type="radio"
-                            name={`detailed-${itemIndex}`}
-                            checked={itemEntry.resultado === option.value}
-                            onChange={() => handleDetailedResultChange(itemIndex, option.value)}
-                          />
-                          <span>{option.label}</span>
-                        </label>
-                      </td>
-                    ))}
-                    <td>
-                      <textarea
-                        value={itemEntry.observacion}
-                        onChange={(event) => handleDetailedObservationChange(itemIndex, event.target.value)}
-                        rows="3"
-                        placeholder="Observaciones del evaluador"
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </article>
-
-        <article className="coor-project-detail-panel">
-          <div className="coor-project-detail-panel-head">
-            <h3>Decision del evaluador</h3>
-            <p>La aprobacion completa la fase. Si la evidencia requiere mejoras, solicita ajustes y espera una nueva entrega del participante.</p>
-          </div>
-
-          <div className="eval-detail-decision-grid">
-            <button
-              type="button"
-              className={reviewDecision === 'approve' ? 'eval-detail-decision active approve' : 'eval-detail-decision approve'}
-              onClick={() => setReviewDecision('approve')}
-            >
-              Aprobar fase
-            </button>
-            <button
-              type="button"
-              className={reviewDecision === 'reject' ? 'eval-detail-decision active reject' : 'eval-detail-decision reject'}
-              onClick={() => setReviewDecision('reject')}
-            >
-              Solicitar ajustes
-            </button>
-          </div>
-
-          <label className="eval-detail-field eval-detail-field-full">
-            <span>Observaciones generales</span>
-            <textarea
-              value={phaseObservations}
-              onChange={(event) => setPhaseObservations(event.target.value)}
-              rows="5"
-              placeholder="Retroalimentacion visible para el participante"
-            />
-          </label>
-        </article>
-
-        <div className="coor-project-detail-actions-strip">
-          <button
-            type="submit"
-            className="coor-project-detail-primary"
-            disabled={savingEvaluation || currentPhaseEvidences.length === 0 || reviewableCurrentPhaseEvidences.length === 0}
-          >
-            {savingEvaluation ? 'Guardando...' : 'Guardar revision'}
-          </button>
-        </div>
-      </form>
+      <EvaluationPhaseForm
+        key={currentPhase?.id ?? 'completed'}
+        projectId={id}
+        currentPhase={currentPhase}
+        currentPhaseEvidences={currentPhaseEvidences}
+        reviewableCurrentPhaseEvidences={reviewableCurrentPhaseEvidences}
+        initialReviewChecklist={initialReviewChecklist}
+        initialPhaseObservations={initialPhaseObservations}
+        formError={formError}
+        saveMessage={saveMessage}
+        savingEvaluation={savingEvaluation}
+        onSubmitEvaluation={handleEvaluationSubmit}
+      />
     )
   }
 

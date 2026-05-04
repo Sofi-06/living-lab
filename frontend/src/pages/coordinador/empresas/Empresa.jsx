@@ -91,22 +91,13 @@ function Empresa() {
 		})
 	}, [searchValue, companies])
 
-	useEffect(() => {
-		setCurrentPage(1)
-	}, [searchValue])
-
 	const totalPages = Math.max(1, Math.ceil(filteredCompanies.length / PAGE_SIZE))
-
-	useEffect(() => {
-		if (currentPage > totalPages) {
-			setCurrentPage(totalPages)
-		}
-	}, [currentPage, totalPages])
+	const validatedCurrentPage = currentPage > totalPages ? totalPages : currentPage
 
 	const paginatedCompanies = useMemo(() => {
-		const startIndex = (currentPage - 1) * PAGE_SIZE
+		const startIndex = (validatedCurrentPage - 1) * PAGE_SIZE
 		return filteredCompanies.slice(startIndex, startIndex + PAGE_SIZE)
-	}, [currentPage, filteredCompanies])
+	}, [validatedCurrentPage, filteredCompanies])
 
 	function handleLogout() {
 		clearSessionUser()
@@ -118,7 +109,7 @@ function Empresa() {
 	}
 
 	async function handleDelete(company) {
-		const confirmed = globalThis.confirm(`Eliminar empresa ${company.nombre}? Esta accion no se puede deshacer.`)
+		const confirmed = globalThis.confirm(`Eliminar empresa ${company.nombre}? Esta acción no se puede deshacer.`)
 		if (!confirmed) return
 
 		try {
@@ -148,7 +139,7 @@ function Empresa() {
 						<th>Sector</th>
 						<th>Representante</th>
 						<th>Email</th>
-						<th>Telefono</th>
+						<th>Teléfono</th>
 						<th>Acciones</th>
 					</tr>
 				</thead>
@@ -196,9 +187,9 @@ function Empresa() {
 			<main className="coor-company-main dashboard-layout-main">
 				<section className="coor-company-hero">
 					<div className="coor-company-hero-copy">
-						<p className="coor-company-eyebrow">Administracion</p>
+						<p className="coor-company-eyebrow">Administración</p>
 						<h1>Empresas aliadas</h1>
-						<p>Consulta y administra la informacion de las empresas vinculadas a LivingLab.</p>
+						<p>Consulta y administra la información de las empresas vinculadas a LivingLab.</p>
 					</div>
 					<button
 						type="button"
@@ -220,7 +211,7 @@ function Empresa() {
 							<span>Buscar</span>
 							<input
 								type="search"
-								placeholder="Nombre, sector, representante o telefono"
+								placeholder="Nombre, sector, representante o teléfono"
 								value={searchValue}
 								onChange={(event) => setSearchValue(event.target.value)}
 							/>

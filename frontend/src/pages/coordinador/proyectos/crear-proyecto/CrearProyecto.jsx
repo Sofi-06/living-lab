@@ -65,7 +65,7 @@ function CrearProyecto() {
           setCompanies([])
           setParticipantes([])
           setEvaluadores([])
-          setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar la informacion del formulario')
+          setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar la información del formulario')
         }
       } finally {
         if (!cancelled) {
@@ -147,7 +147,7 @@ function CrearProyecto() {
         <section className="coor-project-form-card">
           <div className="coor-project-form-head">
             <div>
-              <p className="coor-project-form-eyebrow">Administracion</p>
+              <p className="coor-project-form-eyebrow">Administración</p>
               <h1>Crear proyecto</h1>
               <p>Selecciona la empresa, revisa su representante y asigna participante y evaluador.</p>
             </div>
@@ -204,7 +204,7 @@ function CrearProyecto() {
                     required
                     placeholder=" "
                   />
-                  <span>Titulo</span>
+                  <span>Título</span>
                 </label>
 
                 <label className={form.descripcionProblema ? 'is-filled' : ''}>
@@ -215,7 +215,7 @@ function CrearProyecto() {
                     rows={4}
                     placeholder=" "
                   />
-                  <span>Descripcion del problema</span>
+                  <span>Descripción del problema</span>
                 </label>
 
                 <label className={form.resultadoEsperado ? 'is-filled' : ''}>
@@ -285,8 +285,8 @@ function CrearProyecto() {
               <aside className="coor-project-assignment-card">
                 <div className="coor-project-assignment-head">
                   <div>
-                    <h2>Resumen de asignacion</h2>
-                    <p>El estado inicial se registra automaticamente como pendiente.</p>
+                    <h2>Resumen de asignación</h2>
+                    <p>El estado inicial se registra automáticamente como pendiente.</p>
                   </div>
                 </div>
 

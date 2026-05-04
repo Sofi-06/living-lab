@@ -106,7 +106,7 @@ function RepresentanteDashboard() {
           <article className="rep-block rep-hero-block">
             <div>
               <h1>Bienvenid@, {sessionUser?.name || 'Representante'}!</h1>
-              <p>Panel de validacion empresarial · {today}</p>
+              <p>Panel de validación empresarial · {today}</p>
               <span className="rep-hero-chip">{companyName}</span>
             </div>
           </article>
@@ -159,7 +159,7 @@ function RepresentanteDashboard() {
                 <div className="rep-stats-item empty">Cargando proyectos...</div>
               ) : projects.length === 0 ? (
                 <div className="rep-stats-item empty">
-                  {error || 'Todavia no hay proyectos asociados a la empresa del representante.'}
+                  {error || 'Todavía no hay proyectos asociados a la empresa del representante.'}
                 </div>
               ) : (
                 projects.slice(0, 5).map((project) => (

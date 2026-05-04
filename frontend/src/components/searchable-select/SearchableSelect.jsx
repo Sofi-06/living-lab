@@ -45,7 +45,7 @@ function SearchableSelect({
   useEffect(() => {
     if (!inputRef.current) return
 
-    inputRef.current.setCustomValidity(required && !value ? 'Selecciona una opcion de la lista.' : '')
+    inputRef.current.setCustomValidity(required && !value ? 'Selecciona una opción de la lista.' : '')
   }, [required, value])
 
   const filteredOptions = options.filter((option) => {

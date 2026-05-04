@@ -109,22 +109,13 @@ function Usuario() {
     })
   }, [searchValue, users])
 
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [searchValue])
-
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE))
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages)
-    }
-  }, [currentPage, totalPages])
+  const validatedCurrentPage = currentPage > totalPages ? totalPages : currentPage
 
   const paginatedUsers = useMemo(() => {
-    const startIndex = (currentPage - 1) * PAGE_SIZE
+    const startIndex = (validatedCurrentPage - 1) * PAGE_SIZE
     return filteredUsers.slice(startIndex, startIndex + PAGE_SIZE)
-  }, [currentPage, filteredUsers])
+  }, [validatedCurrentPage, filteredUsers])
 
   function handleLogout() {
     clearSessionUser()
@@ -136,7 +127,7 @@ function Usuario() {
   }
 
   async function handleDelete(user) {
-    const confirmed = globalThis.confirm(`Eliminar a ${user.name}? Esta accion no se puede deshacer.`)
+    const confirmed = globalThis.confirm(`Eliminar a ${user.name}? Esta acción no se puede deshacer.`)
     if (!confirmed) return
 
     try {
@@ -156,7 +147,7 @@ function Usuario() {
         <main className="coor-users-main dashboard-layout-main">
         <section className="coor-users-hero">
           <div className="coor-users-hero-copy">
-            <p className="coor-users-eyebrow">Administracion</p>
+            <p className="coor-users-eyebrow">Administración</p>
             <h1>Usuarios del sistema</h1>
             <p>
               Busca, revisa y administra las cuentas registradas en la plataforma.

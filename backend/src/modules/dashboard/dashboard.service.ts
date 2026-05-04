@@ -197,7 +197,7 @@ export class DashboardService {
         ]);
 
       return [
-        { label: 'Casos en revision', value: casesInReview },
+        { label: 'Casos en revisión', value: casesInReview },
         { label: 'Comites programados', value: committeesScheduled },
         { label: 'Informes emitidos', value: reportsIssued },
       ];
@@ -301,7 +301,7 @@ export class DashboardService {
 
       return activity.length > 0
         ? activity
-        : [{ label: 'Sin actividad registrada todavia', value: '-' }];
+        : [{ label: 'Sin actividad registrada todavía', value: '-' }];
     }
 
     if (role === SystemRole.EVALUADOR) {
@@ -401,7 +401,7 @@ export class DashboardService {
 
       return activity.length > 0
         ? activity
-        : [{ label: 'Sin actividad registrada todavia', value: '-' }];
+        : [{ label: 'Sin actividad registrada todavía', value: '-' }];
     }
 
     if (role === SystemRole.REPRESENTANTE) {
@@ -449,14 +449,14 @@ export class DashboardService {
 
       if (latestPendingValidation) {
         activity.push({
-          label: `Validacion pendiente: ${latestPendingValidation.titulo}`,
+          label: `Validación pendiente: ${latestPendingValidation.titulo}`,
           value: 'Requiere tu concepto',
         });
       }
 
       if (latestValidatedProject) {
         activity.push({
-          label: `Validacion registrada: ${latestValidatedProject.titulo}`,
+          label: `Validación registrada: ${latestValidatedProject.titulo}`,
           value: 'Concepto empresarial emitido',
         });
       }
@@ -470,7 +470,7 @@ export class DashboardService {
 
       return activity.length > 0
         ? activity
-        : [{ label: 'Sin actividad registrada todavia', value: '-' }];
+        : [{ label: 'Sin actividad registrada todavía', value: '-' }];
     }
 
     const [latestEvidence, latestUser, latestPhaseReview] = await Promise.all([
@@ -542,7 +542,7 @@ export class DashboardService {
     }
 
     if (activity.length === 0) {
-      return [{ label: 'Sin actividad registrada todavia', value: '-' }];
+      return [{ label: 'Sin actividad registrada todavía', value: '-' }];
     }
 
     return activity.slice(0, 3);

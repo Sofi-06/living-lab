@@ -32,10 +32,10 @@ const STATUS_LABELS = {
 }
 
 const TAB_OPTIONS = [
-  { id: 'informacion', label: 'Informacion' },
+  { id: 'informacion', label: 'Información' },
   { id: 'fases', label: 'Fases' },
   { id: 'evidencias', label: 'Evidencias' },
-  { id: 'validacion', label: 'Validacion empresarial' },
+  { id: 'validacion', label: 'Validación empresarial' },
 ]
 
 const EMPTY_EVIDENCE_FORM = {
@@ -105,7 +105,7 @@ function DetalleParticipanteProyecto() {
         if (!cancelled) {
           if (!isAssigned) {
             setProject(null)
-            setError('Este proyecto no esta asignado a tu usuario.')
+            setError('Este proyecto no está asignado a tu usuario.')
           } else {
             setProject(nextProject)
           }
@@ -246,7 +246,7 @@ function DetalleParticipanteProyecto() {
       <section className="coor-project-detail-section">
         <div className="coor-project-detail-grid">
           <div className="coor-project-detail-block">
-            <span className="coor-project-detail-label">Titulo</span>
+            <span className="coor-project-detail-label">Título</span>
             <strong>{project?.titulo}</strong>
           </div>
 
@@ -328,8 +328,8 @@ function DetalleParticipanteProyecto() {
         </div>
 
         <article className="coor-project-detail-evaluation-card">
-          <h3>Retroalimentacion del evaluador</h3>
-          <p>Aqui puedes consultar observaciones y checklist diligenciados para cada fase revisada.</p>
+          <h3>Retroalimentación del evaluador</h3>
+          <p>Aquí puedes consultar observaciones y checklist diligenciados para cada fase revisada.</p>
 
           {phases.some((phase) => {
             const phaseChecklist = phaseChecklistMap.get(normalizeText(phase.nombre))
@@ -382,7 +382,7 @@ function DetalleParticipanteProyecto() {
               })}
             </div>
           ) : (
-            <div className="coor-project-detail-empty">Aun no hay retroalimentacion registrada por fase.</div>
+            <div className="coor-project-detail-empty">Aún no hay retroalimentación registrada por fase.</div>
           )}
         </article>
       </section>
@@ -428,7 +428,7 @@ function DetalleParticipanteProyecto() {
             </label>
 
             <label className="doc-evidence-field doc-evidence-field-full">
-              <span>Descripcion</span>
+              <span>Descripción</span>
               <textarea
                 name="descripcion"
                 value={evidenceForm.descripcion}
@@ -486,7 +486,7 @@ function DetalleParticipanteProyecto() {
           </div>
 
           {evidences.length === 0 ? (
-            <div className="coor-project-detail-empty">Aun no hay evidencias registradas para este proyecto.</div>
+            <div className="coor-project-detail-empty">Aún no hay evidencias registradas para este proyecto.</div>
           ) : (
             <div className="coor-project-detail-table-wrap">
               <table className="coor-project-detail-table">
@@ -535,7 +535,7 @@ function DetalleParticipanteProyecto() {
       return (
         <section className="coor-project-detail-section">
           <div className="coor-project-detail-empty">
-            La validacion empresarial aun no ha sido registrada por el representante de la empresa.
+            La validación empresarial aún no ha sido registrada por el representante de la empresa.
           </div>
         </section>
       )
@@ -551,15 +551,15 @@ function DetalleParticipanteProyecto() {
 
           <div className="coor-project-detail-validation-grid">
             <div className="coor-project-detail-meta-item">
-              <span>Resolvio el problema</span>
+              <span>Resolvió el problema</span>
               <strong>{validation.resolvioProblema}</strong>
             </div>
             <div className="coor-project-detail-meta-item">
-              <span>La solucion es aplicable</span>
+              <span>La solución es aplicable</span>
               <strong>{validation.esAplicable}</strong>
             </div>
             <div className="coor-project-detail-meta-item">
-              <span>Genero valor</span>
+              <span>Generó valor</span>
               <strong>{validation.generaValor}</strong>
             </div>
             <div className="coor-project-detail-meta-item">

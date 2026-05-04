@@ -35,7 +35,7 @@ export class UsersService {
     );
     const password = this.parsePassword(
       body.password,
-      'La contrasena es obligatoria',
+      'La contraseña es obligatoria',
     );
     const hashedPassword = await hash(password, PASSWORD_SALT_ROUNDS);
     const role = this.parseRole(
@@ -164,7 +164,7 @@ export class UsersService {
       const password = body.password.trim();
       if (password) {
         data.password = await hash(
-          this.parsePassword(password, 'La contrasena es obligatoria'),
+          this.parsePassword(password, 'La contraseña es obligatoria'),
           PASSWORD_SALT_ROUNDS,
         );
       }
@@ -216,7 +216,7 @@ export class UsersService {
     const userId = Number(rawId);
 
     if (!Number.isInteger(userId) || userId <= 0) {
-      throw new BadRequestException('Identificador de usuario invalido');
+      throw new BadRequestException('Identificador de usuario inválido');
     }
 
     return userId;
@@ -243,7 +243,7 @@ export class UsersService {
     ).toLowerCase();
 
     if (!EMAIL_REGEX.test(email)) {
-      throw new BadRequestException('El correo es invalido');
+      throw new BadRequestException('El correo es inválido');
     }
 
     return email;
@@ -262,7 +262,7 @@ export class UsersService {
 
     if (password.length < MIN_PASSWORD_LENGTH) {
       throw new BadRequestException(
-        `La contrasena debe tener minimo ${MIN_PASSWORD_LENGTH} caracteres`,
+        `La contraseña debe tener mínimo ${MIN_PASSWORD_LENGTH} caracteres`,
       );
     }
 
@@ -279,7 +279,7 @@ export class UsersService {
       case SystemRole.REPRESENTANTE:
         return role;
       default:
-        throw new BadRequestException('Rol invalido');
+        throw new BadRequestException('Rol inválido');
     }
   }
 
@@ -308,7 +308,7 @@ export class UsersService {
 
   private handlePrismaError(error: unknown) {
     if (this.isKnownPrismaError(error, 'P2002')) {
-      throw new BadRequestException('El correo ya esta registrado');
+      throw new BadRequestException('El correo ya está registrado');
     }
   }
 
