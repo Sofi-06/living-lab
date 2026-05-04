@@ -1,0 +1,256 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap');
+
+.coor-company-page {
+	height: 100vh;
+	background: radial-gradient(circle at 18% 18%, #dbe6ff 0, transparent 34%),
+		radial-gradient(circle at 95% 10%, #d8edf9 0, transparent 24%), #f2f4f8;
+	display: grid;
+	grid-template-columns: 90px minmax(0, 1fr);
+	gap: 8px;
+	padding: 6px;
+	color: #1f2538;
+	font-family: 'Nunito', 'Segoe UI', sans-serif;
+	overflow: hidden;
+}
+
+.coor-company-main {
+	min-width: 0;
+	padding: 8px 10px 8px 0;
+	display: grid;
+	grid-template-rows: auto minmax(0, 1fr) auto;
+	gap: 10px;
+	min-height: 0;
+}
+.coor-company-hero,
+.coor-company-card {
+	background: #ffffff;
+	border-radius: 20px;
+	border: 1px solid #e4e7f0;
+	box-shadow: 0 9px 28px rgba(46, 58, 91, 0.05);
+}
+
+.coor-company-hero {
+	padding: 14px 18px;
+	display: flex;
+	align-items: end;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.coor-company-eyebrow {
+	margin: 0 0 4px;
+	text-transform: uppercase;
+	letter-spacing: 0.14em;
+	font-size: 11px;
+	font-weight: 800;
+	color: #4460ba;
+}
+
+.coor-company-hero-copy {
+	max-width: 780px;
+}
+
+.coor-company-hero h1,
+.coor-company-card h2 {
+	margin: 0;
+}
+
+.coor-company-hero h1 {
+	font-size: 32px;
+	line-height: 1.05;
+	color: #22305a;
+}
+
+.coor-company-hero p {
+	margin: 6px 0 0;
+	color: #5f6f92;
+	font-size: 13px;
+	line-height: 1.3;
+}
+
+.coor-company-card {
+	padding: 14px 16px;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+}
+
+.coor-company-create-btn {
+	flex-shrink: 0;
+	border: none;
+	border-radius: 12px;
+	background: linear-gradient(90deg, #4460ba 60%, #7a95e5 100%);
+	color: #fff;
+	font: inherit;
+	font-weight: 800;
+	padding: 8px 14px;
+	cursor: pointer;
+	white-space: nowrap;
+	font-size: 14px;
+}
+
+.coor-company-create-btn:hover {
+	background: linear-gradient(90deg, #3b56ab 60%, #6f8add 100%);
+}
+
+.coor-company-toolbar {
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	align-items: end;
+	margin-bottom: 14px;
+}
+
+.coor-company-toolbar p {
+	margin: 6px 0 0;
+	color: #6b768f;
+}
+
+.coor-company-search {
+	display: grid;
+	gap: 6px;
+	min-width: min(360px, 100%);
+}
+
+.coor-company-search span {
+	font-size: 12px;
+	font-weight: 700;
+	color: #5f6f92;
+}
+
+.coor-company-search input {
+	width: 100%;
+	border: 1px solid #dbe1ef;
+	border-radius: 14px;
+	padding: 11px 14px;
+	font: inherit;
+	background: #fbfcff;
+	color: #23314f;
+	outline: none;
+}
+
+.coor-company-search input:focus {
+	border-color: #7a95e5;
+	box-shadow: 0 0 0 3px rgba(119, 146, 232, 0.16);
+}
+
+.coor-company-alert {
+	margin-bottom: 12px;
+	border-radius: 14px;
+	padding: 12px 14px;
+	font-size: 14px;
+	font-weight: 700;
+}
+
+.coor-company-alert.success {
+	background: #eefbf3;
+	color: #1c7b44;
+	border: 1px solid #ccefd9;
+}
+
+.coor-company-alert.error {
+	background: #fff0f0;
+	color: #b23b3b;
+	border: 1px solid #f1c9c9;
+}
+
+.coor-company-table-wrap {
+	margin-top: 10px;
+	overflow: auto;
+	min-height: 0;
+	flex: 1;
+}
+
+.coor-company-table {
+	width: 100%;
+	border-collapse: collapse;
+	min-width: 900px;
+}
+
+.coor-company-table th,
+.coor-company-table td {
+	padding: 12px 10px;
+	border-bottom: 1px solid #e9edf7;
+	text-align: left;
+	font-size: 14px;
+}
+
+.coor-company-table th {
+	color: #5f6f92;
+	font-weight: 800;
+	background: #f8f9fc;
+}
+
+.coor-company-actions {
+	display: flex;
+	gap: 8px;
+}
+
+.coor-company-actions button {
+	border: none;
+	border-radius: 12px;
+	padding: 10px 14px;
+	cursor: pointer;
+	font: inherit;
+	font-weight: 800;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	background: #e9efff;
+	color: #2d4ca3;
+}
+
+.coor-company-actions button svg {
+	width: 14px;
+	height: 14px;
+}
+
+.coor-company-actions button.icon-only {
+	justify-content: center;
+	min-width: 42px;
+	padding: 10px;
+}
+
+.coor-company-actions button.danger {
+	background: #ffecec;
+	color: #b24141;
+}
+
+.coor-company-empty {
+	padding: 28px 16px;
+	text-align: center;
+	color: #6b768f;
+}
+
+@media (max-width: 980px) {
+	.coor-company-page {
+		grid-template-columns: 1fr;
+		padding: 0;
+		gap: 0;
+		height: auto;
+		min-height: 100vh;
+		overflow: visible;
+	}
+
+	.coor-company-main {
+		padding: 14px;
+		grid-template-rows: auto auto auto;
+	}
+	.coor-company-toolbar {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.coor-company-hero {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.coor-company-search {
+		min-width: 0;
+	}
+
+	.coor-company-create-btn {
+		align-self: flex-start;
+	}
+}

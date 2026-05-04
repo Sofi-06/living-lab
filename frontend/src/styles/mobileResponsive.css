@@ -1,0 +1,342 @@
+@media (max-width: 980px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  body .dashboard-layout-page,
+  body .dashboard-layout-main {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  body .dashboard-layout-page {
+    overflow-x: clip;
+  }
+
+  body .dashboard-layout-main {
+    width: 100%;
+  }
+
+  body .coor-project-page,
+  body .coor-company-page,
+  body .coor-users-page,
+  body .coor-report-page,
+  body .coor-project-detail-page,
+  body .coor-create-page,
+  body .coor-edit-page,
+  body .coor-create-company-page,
+  body .coor-edit-company-page,
+  body .coor-project-form-page {
+    min-height: 100vh;
+    height: auto;
+    overflow: visible;
+  }
+
+  body .coor-project-main,
+  body .coor-company-main,
+  body .coor-users-main,
+  body .coor-report-main,
+  body .coor-project-detail-main,
+  body .coor-create-main,
+  body .coor-edit-main,
+  body .coor-create-company-main,
+  body .coor-edit-company-main,
+  body .coor-project-form-main {
+    width: 100%;
+  }
+
+  body .coor-project-hero > *,
+  body .coor-company-hero > *,
+  body .coor-users-hero > *,
+  body .coor-report-hero > *,
+  body .coor-project-toolbar > *,
+  body .coor-company-toolbar > *,
+  body .coor-users-toolbar > *,
+  body .coor-report-card-head > *,
+  body .coor-report-table-head > *,
+  body .coor-create-company-head > *,
+  body .coor-project-form-head > *,
+  body .coor-create-head > *,
+  body .coor-edit-head > *,
+  body .coor-edit-company-head > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  body .coor-project-hero,
+  body .coor-company-hero,
+  body .coor-users-hero,
+  body .coor-report-hero,
+  body .coor-project-detail-hero,
+  body .coor-project-toolbar,
+  body .coor-company-toolbar,
+  body .coor-users-toolbar,
+  body .coor-report-card-head,
+  body .coor-report-table-head,
+  body .coor-create-company-head,
+  body .coor-project-form-head,
+  body .coor-create-head,
+  body .coor-edit-head,
+  body .coor-edit-company-head,
+  body .coor-project-detail-progress-head,
+  body .coor-project-detail-evaluation-item-head,
+  body .coor-users-modal-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body .coor-project-hero,
+  body .coor-company-hero,
+  body .coor-users-hero,
+  body .coor-report-hero,
+  body .coor-project-card,
+  body .coor-company-card,
+  body .coor-users-card,
+  body .coor-report-card,
+  body .coor-report-table-card,
+  body .coor-project-detail-shell,
+  body .coor-create-company-card,
+  body .coor-project-form-card,
+  body .coor-create-card,
+  body .coor-edit-card {
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  body .coor-project-search,
+  body .coor-company-search,
+  body .coor-users-search,
+  body .coor-report-metrics {
+    width: 100%;
+    min-width: 0;
+  }
+
+  body .coor-project-create-btn,
+  body .coor-company-create-btn,
+  body .coor-users-create-btn,
+  body .coor-report-btn,
+  body .coor-project-detail-primary,
+  body .coor-project-detail-outline,
+  body .coor-project-form button,
+  body .coor-create-company-form button,
+  body .coor-create-main button,
+  body .coor-edit-main button {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  body .coor-project-search,
+  body .coor-company-search,
+  body .coor-users-search,
+  body .coor-report-metrics,
+  body .coor-project-search input,
+  body .coor-company-search input,
+  body .coor-users-search input {
+    box-sizing: border-box;
+  }
+
+  body .coor-project-actions,
+  body .coor-company-actions,
+  body .coor-users-actions,
+  body .coor-report-actions,
+  body .coor-users-form-actions,
+  body .coor-project-detail-actions-strip {
+    width: 100%;
+  }
+
+  body .coor-project-detail-actions-strip {
+    justify-content: stretch;
+  }
+
+  body .coor-project-actions button,
+  body .coor-company-actions button,
+  body .coor-users-actions button,
+  body .coor-users-form-actions button,
+  body .coor-project-detail-actions-strip button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  body .coor-project-table-wrap,
+  body .coor-company-table-wrap,
+  body .coor-users-table-wrap,
+  body .coor-report-table-wrap,
+  body .coor-project-detail-table-wrap,
+  body .coor-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+
+  body .coor-project-detail-shell,
+  body .coor-project-detail-hero,
+  body .coor-project-detail-panel,
+  body .coor-project-detail-progress-card,
+  body .coor-report-card,
+  body .coor-report-table-card,
+  body .coor-project-card,
+  body .coor-company-card,
+  body .coor-users-card {
+    border-radius: 18px;
+  }
+
+  body .coor-project-detail-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  body .coor-project-detail-tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  body .custom-file-input-wrapper,
+  body .rep-detail-file-input-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 720px) {
+  body .dashboard-layout-main {
+    padding-inline: 0;
+  }
+
+  body .dashboard-navbar {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  body .navbar-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  body .navbar-link {
+    min-height: 44px;
+    padding: 0 12px;
+    box-sizing: border-box;
+  }
+
+  body .navbar-link-text {
+    font-size: 13px;
+  }
+
+  body .brand-title {
+    font-size: 20px;
+  }
+
+  body .coor-project-main,
+  body .coor-company-main,
+  body .coor-users-main,
+  body .coor-report-main,
+  body .coor-project-detail-main,
+  body .coor-create-main,
+  body .coor-edit-main,
+  body .coor-create-company-main,
+  body .coor-edit-company-main,
+  body .coor-project-form-main {
+    padding: 12px;
+  }
+
+  body .coor-project-hero,
+  body .coor-company-hero,
+  body .coor-users-hero,
+  body .coor-report-hero,
+  body .coor-project-detail-hero,
+  body .coor-project-card,
+  body .coor-company-card,
+  body .coor-users-card,
+  body .coor-report-card,
+  body .coor-report-table-card,
+  body .coor-project-detail-shell,
+  body .coor-create-company-card,
+  body .coor-project-form-card,
+  body .coor-create-card,
+  body .coor-edit-card {
+    padding: 16px;
+  }
+
+  body .coor-project-table,
+  body .coor-company-table,
+  body .coor-users-table,
+  body .coor-report-table,
+  body .coor-project-detail-table,
+  body .eval-detail-checklist-table,
+  body .coor-table {
+    min-width: 640px;
+  }
+
+  body .coor-project-detail-progress-card {
+    padding: 18px;
+  }
+
+  body .coor-project-detail-progress-value {
+    font-size: clamp(30px, 9vw, 40px);
+  }
+
+  body .coor-project-detail-progress-meta {
+    grid-template-columns: 1fr;
+  }
+
+  body .coor-project-detail-phase-track {
+    grid-template-columns: 1fr;
+  }
+
+  body .coor-report-filter-grid,
+  body .coor-report-date-grid,
+  body .coor-report-metrics,
+  body .rep-detail-summary-grid,
+  body .rep-detail-form-grid,
+  body .eval-detail-summary-grid,
+  body .eval-detail-decision-grid,
+  body .eval-detail-form-grid,
+  body .doc-evidence-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  body .dashboard-navbar-shell {
+    border-radius: 20px;
+  }
+
+  body .navbar-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body .dashboard-footer-shell {
+    padding-top: 18px;
+  }
+
+  body .dashboard-footer {
+    border-radius: 20px;
+    padding: 14px 16px;
+  }
+
+  body .coor-project-detail-summary,
+  body .coor-project-detail-users {
+    gap: 8px;
+  }
+
+  body .coor-project-detail-chip,
+  body .coor-report-chip,
+  body .coor-project-user-chip {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 380px) {
+  body .navbar-links {
+    grid-template-columns: 1fr;
+  }
+}

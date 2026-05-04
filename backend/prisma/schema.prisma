@@ -4,6 +4,14 @@ generator client {
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum SystemRole {
+  PARTICIPANTE
+  EVALUADOR
+  COORDINADOR
+  REPRESENTANTE
 }
 
 enum ProjectStatus {
@@ -39,13 +47,6 @@ enum SummaryChecklistResult {
   PARCIAL
 }
 
-enum ProjectUserRole {
-  DOCENTE
-  EVALUADOR
-  COORDINADOR
-  ESTUDIANTE
-}
-
 enum YesNoOption {
   SI
   NO
@@ -58,58 +59,67 @@ enum SolvedProblemOption {
 }
 
 model User {
-  id           Int           @id @default(autoincrement())
-  name         String
-  email        String        @unique
-  password     String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  projectUsers ProjectUser[]
-  evidences    Evidence[]
+  id        Int        @id @default(autoincrement())
+  name      String
+  email     String     @unique
+  password  String?
+  role      SystemRole
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Empresas donde este usuario es representante
+  representedCompanies Company[] @relation("CompanyRepresentative")
+
+  // Proyectos donde este usuario es participante
+  participantProjects Project[] @relation("ProjectParticipant")
+
+  // Proyectos donde este usuario es evaluador
+  evaluatedProjects Project[] @relation("ProjectEvaluator")
+
+  // Evidencias que sube el usuario
+  evidences Evidence[]
 
   @@map("users")
 }
 
 model Company {
-  id       Int       @id @default(autoincrement())
+  id       Int     @id @default(autoincrement())
   nombre   String
   sector   String
-  contacto String
   email    String?
   telefono String?
+
+  representanteId Int
+  representante   User @relation("CompanyRepresentative", fields: [representanteId], references: [id])
+
   projects Project[]
 
   @@map("companies")
 }
 
 model Project {
-  id                  Int                 @id @default(autoincrement())
-  companyId           Int
+  id             Int @id @default(autoincrement())
+  companyId      Int
+  participanteId Int
+  evaluadorId    Int
+
   titulo              String
   descripcionProblema String
   resultadoEsperado   String
-  estado              ProjectStatus       @default(PENDING)
+  estado              ProjectStatus @default(PENDING)
   fechaInicio         DateTime?
   fechaFin            DateTime?
-  company             Company             @relation(fields: [companyId], references: [id])
-  projectUsers        ProjectUser[]
-  projectPhases       ProjectPhase[]
-  summaryChecklist    SummaryChecklist[]
-  businessValidation  BusinessValidation?
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  participante User @relation("ProjectParticipant", fields: [participanteId], references: [id])
+  evaluador    User @relation("ProjectEvaluator", fields: [evaluadorId], references: [id])
+
+  projectPhases      ProjectPhase[]
+  summaryChecklist   SummaryChecklist[]
+  businessValidation BusinessValidation?
 
   @@map("projects")
-}
-
-model ProjectUser {
-  id        Int             @id @default(autoincrement())
-  projectId Int
-  userId    Int
-  rol       ProjectUserRole
-  project   Project         @relation(fields: [projectId], references: [id])
-  user      User            @relation(fields: [userId], references: [id])
-
-  @@unique([projectId, userId])
-  @@map("project_users")
 }
 
 model Phase {
@@ -121,15 +131,17 @@ model Phase {
 }
 
 model ProjectPhase {
-  id            Int              @id @default(autoincrement())
+  id            Int         @id @default(autoincrement())
   projectId     Int
   phaseId       Int
-  estado        PhaseStatus      @default(PENDING)
+  estado        PhaseStatus @default(PENDING)
   observaciones String?
-  project       Project          @relation(fields: [projectId], references: [id])
-  phase         Phase            @relation(fields: [phaseId], references: [id])
-  evidences     Evidence[]
-  checklist     PhaseChecklist[]
+
+  project Project @relation(fields: [projectId], references: [id])
+  phase   Phase   @relation(fields: [phaseId], references: [id])
+
+  evidences Evidence[]
+  checklist PhaseChecklist[]
 
   @@unique([projectId, phaseId])
   @@map("project_phases")
@@ -145,8 +157,9 @@ model Evidence {
   estado         EvidenceStatus @default(PENDING)
   observaciones  String?
   fecha          DateTime       @default(now())
-  projectPhase   ProjectPhase   @relation(fields: [projectPhaseId], references: [id])
-  user           User           @relation(fields: [userId], references: [id])
+
+  projectPhase ProjectPhase @relation(fields: [projectPhaseId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
 
   @@map("evidences")
 }
@@ -157,7 +170,8 @@ model PhaseChecklist {
   item           String
   resultado      ChecklistResult
   observacion    String?
-  projectPhase   ProjectPhase    @relation(fields: [projectPhaseId], references: [id])
+
+  projectPhase ProjectPhase @relation(fields: [projectPhaseId], references: [id])
 
   @@map("phase_checklist")
 }
@@ -169,7 +183,8 @@ model SummaryChecklist {
   criterio    String
   resultado   SummaryChecklistResult
   observacion String?
-  project     Project                @relation(fields: [projectId], references: [id])
+
+  project Project @relation(fields: [projectId], references: [id])
 
   @@map("summary_checklist")
 }
@@ -184,7 +199,9 @@ model BusinessValidation {
   comentarios        String?
   nombreFirmante     String
   cargo              String
-  project            Project             @relation(fields: [projectId], references: [id])
+  firma              String
+
+  project Project @relation(fields: [projectId], references: [id])
 
   @@map("business_validation")
 }

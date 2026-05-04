@@ -1,0 +1,339 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap');
+
+.coor-page {
+  --nav-collapsed: 90px;
+  --nav-expanded: 252px;
+  min-height: 100vh;
+  background: radial-gradient(circle at 18% 18%, #dbe6ff 0, transparent 35%),
+    radial-gradient(circle at 95% 12%, #d8edf9 0, transparent 28%), #f2f4f8;
+  display: grid;
+  grid-template-columns: var(--nav-collapsed) minmax(0, 1fr);
+  gap: 8px;
+  padding: 10px;
+  overflow-x: hidden;
+  align-items: start;
+  color: #1f2538;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  transition: grid-template-columns 220ms ease;
+}
+
+.coor-page:has(.dashboard-navbar-shell:hover),
+.coor-page:has(.dashboard-navbar-shell:focus-within) {
+  grid-template-columns: var(--nav-expanded) minmax(0, 1fr);
+}
+
+.coor-main {
+  min-width: 0;
+  padding: 10px 10px 24px 0;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+}
+
+.coor-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  grid-auto-rows: minmax(120px, auto);
+  gap: 16px;
+}
+
+.coor-block {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e4e7f0;
+  box-shadow: 0 9px 28px rgba(46, 58, 91, 0.05);
+  padding: 18px;
+}
+
+.coor-hero-block {
+  grid-column: 1 / -1;
+  position: relative;
+  overflow: hidden;
+  min-height: 180px;
+  display: flex;
+  align-items: flex-end;
+  background-image: linear-gradient(105deg, rgba(17, 71, 121, 0.72), rgba(44, 107, 167, 0.56)),
+    url('../../assets/Universidad_Santo_Tomas_Seccional_Tunja.jpg');
+  background-size: cover;
+  background-position: center;
+  border: none;
+}
+
+.coor-hero-block h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 3vw, 3rem);
+  color: #f8fbff;
+}
+
+.coor-hero-block p {
+  margin: 10px 0 0;
+  color: rgba(237, 247, 255, 0.95);
+  font-size: clamp(1.05rem, 1.5vw, 1.5rem);
+  font-weight: 600;
+}
+
+.coor-kpi-block {
+  grid-column: 1 / -1;
+}
+
+.coor-kpi-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.coor-kpi-card {
+  border-radius: 14px;
+  border: 1px solid #e4e7f0;
+  background: #f8f9fc;
+  padding: 12px;
+}
+
+.coor-kpi-card p {
+  margin: 0;
+  font-size: 13px;
+  color: #6e7993;
+}
+
+.coor-kpi-card strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 24px;
+  color: #233b73;
+}
+
+.coor-kpi-card.active {
+  background: #f1f8ff;
+}
+
+.coor-kpi-card.done {
+  background: #f3fff8;
+}
+
+.coor-kpi-card.warning {
+  background: #fff8ef;
+}
+
+.coor-quick-actions {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.coor-action-btn {
+  border: 1px solid #d7e0f8;
+  border-radius: 12px;
+  background: #f4f8ff;
+  color: #2d4ca3;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.coor-action-btn:hover {
+  background: #eaf1ff;
+}
+
+.coor-stats-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.coor-stats-item {
+  border: 1px solid #e4e7f0;
+  border-radius: 12px;
+  background: #f8f9fc;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.coor-stats-item strong {
+  color: #3357c3;
+}
+
+.coor-bars-list {
+  display: grid;
+  gap: 12px;
+}
+
+.coor-bar-row {
+  display: grid;
+  gap: 8px;
+}
+
+.coor-bar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #5f6f92;
+}
+
+.coor-bar-head strong {
+  color: #2d477e;
+}
+
+.coor-bar-track {
+  height: 10px;
+  background: #e9edf8;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.coor-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.coor-bar-fill.pending {
+  background: #f0a14a;
+}
+
+.coor-bar-fill.progress {
+  background: #4f7de8;
+}
+
+.coor-bar-fill.complete {
+  background: #35b270;
+}
+
+.coor-phase-list {
+  display: grid;
+  gap: 8px;
+}
+
+.coor-phase-item {
+  border: 1px solid #e4e7f0;
+  border-radius: 10px;
+  background: #f8f9fc;
+  padding: 9px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.coor-phase-item strong {
+  color: #2c4fa8;
+}
+
+.coor-table-block {
+  grid-column: 1 / -1;
+}
+
+.coor-table-wrapper {
+  margin-top: 10px;
+  overflow-x: auto;
+}
+
+.coor-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 580px;
+}
+
+.coor-table th,
+.coor-table td {
+  padding: 10px;
+  font-size: 13px;
+  border-bottom: 1px solid #e9edf7;
+  text-align: left;
+}
+
+.coor-table th {
+  color: #5f6f92;
+  font-weight: 700;
+  background: #f8f9fc;
+}
+
+.coor-agenda-list {
+  display: grid;
+  gap: 8px;
+}
+
+.coor-agenda-item {
+  border: 1px solid #e4e7f0;
+  border-radius: 12px;
+  padding: 9px;
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 8px;
+}
+
+.coor-agenda-hour {
+  margin: 0;
+  color: #99a3bb;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.coor-agenda-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.coor-agenda-meta {
+  margin: 3px 0 0;
+  color: #667289;
+  font-size: 12px;
+}
+
+.coor-section-title {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+@media (max-width: 980px) {
+  .coor-page {
+    grid-template-columns: 1fr;
+    padding: 0;
+    gap: 0;
+    transition: none;
+  }
+
+  .coor-main {
+    padding: 14px;
+  }
+
+  .coor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .coor-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .coor-table-block {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .coor-topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .coor-user {
+    justify-content: space-between;
+  }
+
+  .coor-hero-block {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .coor-kpi-grid,
+  .coor-quick-actions {
+    grid-template-columns: 1fr;
+  }
+}

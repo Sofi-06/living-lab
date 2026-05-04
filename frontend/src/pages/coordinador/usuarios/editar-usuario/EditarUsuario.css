@@ -1,0 +1,185 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap');
+
+.coor-edit-page {
+  min-height: 100vh;
+  background: radial-gradient(circle at 18% 18%, #dbe6ff 0, transparent 34%),
+    radial-gradient(circle at 95% 10%, #d8edf9 0, transparent 24%), #f2f4f8;
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 8px;
+  padding: 10px;
+  color: #1f2538;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+}
+
+.coor-edit-main {
+  min-width: 0;
+  padding: 20px 20px 20px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.coor-edit-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e4e7f0;
+  box-shadow: 0 9px 28px rgba(46, 58, 91, 0.05);
+  padding: 20px;
+  width: min(100%, 760px);
+}
+
+.coor-edit-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.coor-edit-eyebrow {
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 12px;
+  font-weight: 800;
+  color: #4460ba;
+}
+
+.coor-edit-head h1 {
+  margin: 0;
+  color: #22305a;
+}
+
+.coor-edit-head p {
+  margin: 8px 0 0;
+  color: #5f6f92;
+}
+
+.coor-edit-back {
+  border: none;
+  border-radius: 12px;
+  background: #eef1f8;
+  color: #304165;
+  font: inherit;
+  font-weight: 800;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.coor-edit-alert {
+  margin-top: 14px;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.coor-edit-alert.success {
+  background: #eefbf3;
+  color: #1c7b44;
+  border: 1px solid #ccefd9;
+}
+
+.coor-edit-alert.error {
+  background: #fff0f0;
+  color: #b23b3b;
+  border: 1px solid #f1c9c9;
+}
+
+.coor-edit-form {
+  margin-top: 30px;
+  display: grid;
+  gap: 12px;
+}
+
+
+.coor-edit-form label {
+  display: block;
+  position: relative;
+  margin-bottom: 18px;
+}
+
+.coor-edit-form span {
+  position: absolute;
+  left: 0;
+  top: 13px;
+  font-size: 15px;
+  color: #7a95e5;
+  pointer-events: none;
+  transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+
+.coor-edit-form input,
+.coor-edit-form select {
+  width: 100%;
+  border: none;
+  border-bottom: 2px solid #dbe1ef;
+  border-radius: 0;
+  padding: 13px 0 7px 0;
+  font: inherit;
+  background: transparent;
+  color: #22305a;
+  outline: none;
+  transition: border-color 0.2s;
+  box-shadow: none;
+}
+
+.coor-edit-form input:focus,
+.coor-edit-form select:focus {
+  border-color: #4460ba;
+}
+
+.coor-edit-form input:focus + span,
+.coor-edit-form input:not(:placeholder-shown) + span,
+.coor-edit-form select:focus + span,
+.coor-edit-form select:not([value=""]) + span {
+  top: -10px;
+  font-size: 12px;
+  color: #4460ba;
+  background: #fff;
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
+.coor-edit-form button {
+  margin-top: 8px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #4460ba 60%, #7a95e5 100%);
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  padding: 13px 0;
+  cursor: pointer;
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(68,96,186,0.08);
+  transition: background 0.2s;
+}
+
+.coor-edit-form button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+@media (max-width: 980px) {
+  .coor-edit-page {
+    grid-template-columns: 1fr;
+    padding: 0;
+    gap: 0;
+  }
+
+  .coor-edit-main {
+    padding: 14px;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .coor-edit-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
