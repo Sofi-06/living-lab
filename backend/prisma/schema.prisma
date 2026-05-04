@@ -7,6 +7,143 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                   Int        @id @default(autoincrement())
+  name                 String
+  email                String     @unique
+  password             String?
+  role                 SystemRole
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  representedCompanies Company[]  @relation("CompanyRepresentative")
+  evidences            Evidence[]
+  evaluatedProjects    Project[]  @relation("ProjectEvaluator")
+  participantProjects  Project[]  @relation("ProjectParticipant")
+
+  @@map("users")
+}
+
+model Company {
+  id              Int       @id @default(autoincrement())
+  nombre          String
+  sector          String
+  email           String?
+  telefono        String?
+  representanteId Int
+  representante   User      @relation("CompanyRepresentative", fields: [representanteId], references: [id])
+  projects        Project[]
+
+  @@index([representanteId], map: "companies_representanteId_fkey")
+  @@map("companies")
+}
+
+model Project {
+  id                  Int                 @id @default(autoincrement())
+  companyId           Int
+  participanteId      Int
+  evaluadorId         Int
+  titulo              String
+  descripcionProblema String
+  resultadoEsperado   String
+  estado              ProjectStatus       @default(PENDING)
+  fechaInicio         DateTime?
+  fechaFin            DateTime?
+  businessValidation  BusinessValidation?
+  projectPhases       ProjectPhase[]
+  company             Company             @relation(fields: [companyId], references: [id])
+  evaluador           User                @relation("ProjectEvaluator", fields: [evaluadorId], references: [id])
+  participante        User                @relation("ProjectParticipant", fields: [participanteId], references: [id])
+  summaryChecklist    SummaryChecklist[]
+
+  @@index([companyId], map: "projects_companyId_fkey")
+  @@index([evaluadorId], map: "projects_evaluadorId_fkey")
+  @@index([participanteId], map: "projects_participanteId_fkey")
+  @@map("projects")
+}
+
+model Phase {
+  id            Int            @id @default(autoincrement())
+  nombre        String         @unique
+  projectPhases ProjectPhase[]
+
+  @@map("phases")
+}
+
+model ProjectPhase {
+  id            Int              @id @default(autoincrement())
+  projectId     Int
+  phaseId       Int
+  estado        PhaseStatus      @default(PENDING)
+  observaciones String?
+  evidences     Evidence[]
+  checklist     PhaseChecklist[]
+  phase         Phase            @relation(fields: [phaseId], references: [id])
+  project       Project          @relation(fields: [projectId], references: [id])
+
+  @@unique([projectId, phaseId])
+  @@index([phaseId], map: "project_phases_phaseId_fkey")
+  @@map("project_phases")
+}
+
+model Evidence {
+  id             Int            @id @default(autoincrement())
+  projectPhaseId Int
+  userId         Int
+  titulo         String
+  descripcion    String?
+  archivo        String
+  estado         EvidenceStatus @default(PENDING)
+  observaciones  String?
+  fecha          DateTime       @default(now())
+  projectPhase   ProjectPhase   @relation(fields: [projectPhaseId], references: [id])
+  user           User           @relation(fields: [userId], references: [id])
+
+  @@index([projectPhaseId], map: "evidences_projectPhaseId_fkey")
+  @@index([userId], map: "evidences_userId_fkey")
+  @@map("evidences")
+}
+
+model PhaseChecklist {
+  id             Int             @id @default(autoincrement())
+  projectPhaseId Int
+  item           String
+  resultado      ChecklistResult
+  observacion    String?
+  projectPhase   ProjectPhase    @relation(fields: [projectPhaseId], references: [id])
+
+  @@index([projectPhaseId], map: "phase_checklist_projectPhaseId_fkey")
+  @@map("phase_checklist")
+}
+
+model SummaryChecklist {
+  id          Int                    @id @default(autoincrement())
+  projectId   Int
+  fase        String
+  criterio    String
+  resultado   SummaryChecklistResult
+  observacion String?
+  project     Project                @relation(fields: [projectId], references: [id])
+
+  @@index([projectId], map: "summary_checklist_projectId_fkey")
+  @@map("summary_checklist")
+}
+
+model BusinessValidation {
+  id                 Int                 @id @default(autoincrement())
+  projectId          Int                 @unique
+  resolvioProblema   SolvedProblemOption
+  esAplicable        YesNoOption
+  generaValor        YesNoOption
+  deseaImplementarla YesNoOption
+  comentarios        String?
+  nombreFirmante     String
+  cargo              String
+  firma              String
+  project            Project             @relation(fields: [projectId], references: [id])
+
+  @@map("business_validation")
+}
+
 enum SystemRole {
   PARTICIPANTE
   EVALUADOR
@@ -56,152 +193,4 @@ enum SolvedProblemOption {
   SI
   PARCIAL
   NO
-}
-
-model User {
-  id        Int        @id @default(autoincrement())
-  name      String
-  email     String     @unique
-  password  String?
-  role      SystemRole
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-
-  // Empresas donde este usuario es representante
-  representedCompanies Company[] @relation("CompanyRepresentative")
-
-  // Proyectos donde este usuario es participante
-  participantProjects Project[] @relation("ProjectParticipant")
-
-  // Proyectos donde este usuario es evaluador
-  evaluatedProjects Project[] @relation("ProjectEvaluator")
-
-  // Evidencias que sube el usuario
-  evidences Evidence[]
-
-  @@map("users")
-}
-
-model Company {
-  id       Int     @id @default(autoincrement())
-  nombre   String
-  sector   String
-  email    String?
-  telefono String?
-
-  representanteId Int
-  representante   User @relation("CompanyRepresentative", fields: [representanteId], references: [id])
-
-  projects Project[]
-
-  @@map("companies")
-}
-
-model Project {
-  id             Int @id @default(autoincrement())
-  companyId      Int
-  participanteId Int
-  evaluadorId    Int
-
-  titulo              String
-  descripcionProblema String
-  resultadoEsperado   String
-  estado              ProjectStatus @default(PENDING)
-  fechaInicio         DateTime?
-  fechaFin            DateTime?
-
-  company Company @relation(fields: [companyId], references: [id])
-
-  participante User @relation("ProjectParticipant", fields: [participanteId], references: [id])
-  evaluador    User @relation("ProjectEvaluator", fields: [evaluadorId], references: [id])
-
-  projectPhases      ProjectPhase[]
-  summaryChecklist   SummaryChecklist[]
-  businessValidation BusinessValidation?
-
-  @@map("projects")
-}
-
-model Phase {
-  id            Int            @id @default(autoincrement())
-  nombre        String         @unique
-  projectPhases ProjectPhase[]
-
-  @@map("phases")
-}
-
-model ProjectPhase {
-  id            Int         @id @default(autoincrement())
-  projectId     Int
-  phaseId       Int
-  estado        PhaseStatus @default(PENDING)
-  observaciones String?
-
-  project Project @relation(fields: [projectId], references: [id])
-  phase   Phase   @relation(fields: [phaseId], references: [id])
-
-  evidences Evidence[]
-  checklist PhaseChecklist[]
-
-  @@unique([projectId, phaseId])
-  @@map("project_phases")
-}
-
-model Evidence {
-  id             Int            @id @default(autoincrement())
-  projectPhaseId Int
-  userId         Int
-  titulo         String
-  descripcion    String?
-  archivo        String
-  estado         EvidenceStatus @default(PENDING)
-  observaciones  String?
-  fecha          DateTime       @default(now())
-
-  projectPhase ProjectPhase @relation(fields: [projectPhaseId], references: [id])
-  user         User         @relation(fields: [userId], references: [id])
-
-  @@map("evidences")
-}
-
-model PhaseChecklist {
-  id             Int             @id @default(autoincrement())
-  projectPhaseId Int
-  item           String
-  resultado      ChecklistResult
-  observacion    String?
-
-  projectPhase ProjectPhase @relation(fields: [projectPhaseId], references: [id])
-
-  @@map("phase_checklist")
-}
-
-model SummaryChecklist {
-  id          Int                    @id @default(autoincrement())
-  projectId   Int
-  fase        String
-  criterio    String
-  resultado   SummaryChecklistResult
-  observacion String?
-
-  project Project @relation(fields: [projectId], references: [id])
-
-  @@map("summary_checklist")
-}
-
-model BusinessValidation {
-  id                 Int                 @id @default(autoincrement())
-  projectId          Int                 @unique
-  resolvioProblema   SolvedProblemOption
-  esAplicable        YesNoOption
-  generaValor        YesNoOption
-  deseaImplementarla YesNoOption
-  comentarios        String?
-  nombreFirmante     String
-  cargo              String
-  firma              String
-
-  project Project @relation(fields: [projectId], references: [id])
-
-  @@map("business_validation")
 }
