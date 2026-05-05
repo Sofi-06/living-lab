@@ -17,12 +17,12 @@ const STATUS_OPTIONS = [
 ]
 
 const DEFAULT_PHASES = [
-  'Co-creacion',
-  'Accion',
-  'Medicion',
-  'Iteracion',
+  'Co-creación',
+  'Acción',
+  'Medición',
+  'Iteración',
   'Narrativa',
-  'Apropiacion',
+  'Apropiación',
 ]
 
 function normalizeText(value) {
@@ -511,7 +511,7 @@ function Reportes() {
           <section className="coor-report-table-card">
             <div className="coor-report-table-head">
               <div>
-                <h2>Previsualizacion del reporte</h2>
+                <h2>Previsualización del reporte</h2>
                 <p>Listado de proyectos que cumplen con los filtros seleccionados.</p>
               </div>
 
