@@ -193,24 +193,41 @@ export class UsersService {
       throw error;
     }
   }
+async deleteUser(rawId: string) {
+  const userId = this.parseUserId(rawId);
 
-  async deleteUser(rawId: string) {
-    const userId = this.parseUserId(rawId);
-    const existingUser = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true },
-    });
+  const existingUser = await this.prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
+  });
 
-    if (!existingUser) {
-      throw new NotFoundException('Usuario no encontrado');
-    }
+  if (!existingUser) {
+    throw new NotFoundException('Usuario no encontrado');
+  }
 
+  try {
     await this.prisma.user.delete({
       where: { id: userId },
     });
 
     return { message: 'Usuario eliminado correctamente' };
+
+  } catch (error) {
+
+    // 🔥 AQUÍ ESTÁ LA CLAVE
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2003'
+    ) {
+      throw new BadRequestException(
+        'No se puede eliminar el usuario porque está asociado a proyectos o empresas'
+      );
+    }
+
+    // cualquier otro error
+    throw error;
   }
+}
 
   private parseUserId(rawId: string) {
     const userId = Number(rawId);
