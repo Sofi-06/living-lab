@@ -26,6 +26,7 @@ model User {
 model Company {
   id              Int       @id @default(autoincrement())
   nombre          String
+  nit             String?
   sector          String
   email           String?
   telefono        String?
