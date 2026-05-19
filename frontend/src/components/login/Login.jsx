@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import './Login.css'
 import universityBackdrop from '../../assets/715.jpg'
 import campusLogo from '../../assets/Logo santoto camina-02.png'
+import { ViewIcon, HideIcon } from '../icons/ActionIcons'
 import { loginUser } from '../../services/auth'
 import { validateLoginForm } from '../../utils/formValidation'
 import { getSessionUser, saveSessionUser } from '../../utils/session'
@@ -36,6 +37,7 @@ function Login() {
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState({ type: '', message: '' })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     const currentUser = getSessionUser()
@@ -138,7 +140,7 @@ function Login() {
                 <span>Contraseña</span>
                 <div className="field-control">
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     name="password"
                     placeholder="********"
                     value={form.password}
@@ -148,6 +150,14 @@ function Login() {
                     aria-invalid={Boolean(errors.password)}
                     aria-describedby={errors.password ? 'password-error' : undefined}
                   />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  >
+                    {showPassword ? <HideIcon /> : <ViewIcon />}
+                  </button>
                 </div>
                 {errors.password ? (
                   <small id="password-error">{errors.password}</small>
@@ -156,6 +166,7 @@ function Login() {
 
               <div className="login-meta login-meta-single">
                 <button type="button" className="link-btn">
+                  ¿Olvidó su contraseña?
                 </button>
               </div>
 
