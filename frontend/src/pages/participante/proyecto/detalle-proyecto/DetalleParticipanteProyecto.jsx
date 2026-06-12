@@ -506,7 +506,6 @@ function DetalleParticipanteProyecto() {
                 </span>
               </div>
               {evidenceFieldErrors.archivo ? <small id="evidence-archivo-error">{evidenceFieldErrors.archivo}</small> : null}
-              </div>
             </label>
 
             <div className="coor-project-detail-actions-strip">
