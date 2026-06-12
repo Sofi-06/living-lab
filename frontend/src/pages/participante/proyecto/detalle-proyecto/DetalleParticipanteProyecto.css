@@ -116,3 +116,25 @@
 	padding: 8px;
 }
 
+.evidence-delete-btn {
+	background: transparent;
+	border: none;
+	padding: 6px;
+	cursor: pointer;
+	color: #b23b3b;
+	border-radius: 8px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	transition: background 0.18s;
+}
+
+.evidence-delete-btn:hover {
+	background: #fff0f0;
+}
+
+.evidence-delete-btn svg {
+	width: 18px;
+	height: 18px;
+}
+

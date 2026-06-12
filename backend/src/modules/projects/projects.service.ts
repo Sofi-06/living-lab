@@ -15,7 +15,7 @@ import {
   YesNoOption,
 } from '@prisma/client';
 import { existsSync, rmSync } from 'node:fs';
-import { extname, join } from 'node:path';
+import { basename, extname, join } from 'node:path';
 import { PrismaService } from '../../database/prisma.service';
 
 const DEFAULT_PROJECT_PHASES = [
@@ -1142,6 +1142,104 @@ export class ProjectsService {
     }
 
     return { message: 'Proyecto eliminado correctamente' };
+  }
+
+  async deleteEvidence(
+    rawId: string,
+    rawEvidenceId: string,
+  ): Promise<ProjectDetailResponse> {
+    const projectId = this.parseProjectId(rawId);
+    const evidenceId = this.parseEntityId(
+      rawEvidenceId,
+      'Identificador de evidencia inválido',
+    );
+    await this.syncExpiredProjects(projectId);
+    await this.ensureDefaultProjectPhases(projectId);
+
+    const evidence = await this.prisma.evidence.findFirst({
+      where: { id: evidenceId, projectPhase: { projectId } },
+      select: {
+        id: true,
+        archivo: true,
+        projectPhase: {
+          select: {
+            id: true,
+            estado: true,
+            phase: { select: { nombre: true } },
+          },
+        },
+      },
+    });
+
+    if (!evidence) {
+      throw new NotFoundException('Evidencia no encontrada');
+    }
+
+    const archivoPath = evidence.archivo;
+
+    if (typeof archivoPath === 'string' && archivoPath.trim()) {
+      const filename = basename(archivoPath);
+      const filePath = join(
+        process.cwd(),
+        'uploads',
+        String(projectId),
+        filename,
+      );
+
+      if (existsSync(filePath)) {
+        rmSync(filePath, { force: true });
+      }
+    }
+
+    await this.prisma.evidence.delete({ where: { id: evidenceId } });
+
+    const remainingEvidences = await this.prisma.evidence.count({
+      where: { projectPhaseId: evidence.projectPhase.id },
+    });
+
+    if (remainingEvidences === 0) {
+      await this.prisma.projectPhase.update({
+        where: { id: evidence.projectPhase.id },
+        data: { estado: PhaseStatus.PENDING },
+      });
+    }
+
+    const allProjectPhases = await this.prisma.projectPhase.findMany({
+      where: { projectId },
+      select: {
+        id: true,
+        _count: { select: { evidences: true } },
+      },
+    });
+
+    const allPhasesEmpty = allProjectPhases.every(
+      (phase) => phase._count.evidences === 0,
+    );
+
+    if (allPhasesEmpty) {
+      await this.prisma.projectPhase.updateMany({
+        where: { projectId },
+        data: { estado: PhaseStatus.PENDING },
+      });
+
+      await this.prisma.project.updateMany({
+        where: { id: projectId, estado: ProjectStatus.IN_PROGRESS },
+        data: { estado: ProjectStatus.PENDING },
+      });
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: projectDetailSelect,
+    });
+
+    if (!project) {
+      throw new NotFoundException(
+        'Proyecto no encontrado después de eliminar la evidencia',
+      );
+    }
+
+    return { project: this.mapProjectDetail(project) };
   }
 
   private async deleteLegacyProjectUsers(

@@ -38,22 +38,22 @@ const TAB_OPTIONS = [
 ]
 
 const PHASE_REVIEW_TEMPLATES = {
-  'co-creacion': [
+  'co-creación': [
     'El problema fue validado con la empresa',
     'Se identificaron actores y necesidades reales',
     'La evidencia muestra una definicion clara del reto',
   ],
-  accion: [
+  acción: [
     'La evidencia muestra una accion ejecutada',
     'La accion responde al reto priorizado',
     'La solucion presentada tiene aplicacion practica',
   ],
-  medicion: [
+  medición: [
     'Se registraron indicadores o criterios de resultado',
     'La evidencia permite comparar avances o hallazgos',
     'La medicion se relaciona con la accion realizada',
   ],
-  iteracion: [
+  iteración: [
     'Se documentaron ajustes o mejoras',
     'La retroalimentacion se incorporo en la propuesta',
     'La fase evidencia aprendizaje del ciclo anterior',
@@ -63,7 +63,7 @@ const PHASE_REVIEW_TEMPLATES = {
     'La narrativa comunica resultados y aprendizajes',
     'La evidencia es comprensible para terceros',
   ],
-  apropiacion: [
+  apropiación: [
     'La empresa reconoce el valor de la solucion',
     'Se evidencia transferencia o adopcion',
     'La fase muestra sostenibilidad o continuidad',

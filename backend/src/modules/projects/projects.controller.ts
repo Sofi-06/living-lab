@@ -181,4 +181,12 @@ export class ProjectsController {
   deleteProject(@Param('id') id: string) {
     return this.projectsService.deleteProject(id);
   }
+
+  @Delete(':id/evidences/:evidenceId')
+  deleteEvidence(
+    @Param('id') id: string,
+    @Param('evidenceId') evidenceId: string,
+  ) {
+    return this.projectsService.deleteEvidence(id, evidenceId);
+  }
 }

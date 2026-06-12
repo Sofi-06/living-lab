@@ -123,3 +123,9 @@ export function deleteProject(projectId) {
     method: 'DELETE',
   })
 }
+
+export function deleteProjectEvidence(projectId, evidenceId) {
+  return requestJson(`/projects/${projectId}/evidences/${evidenceId}`, {
+    method: 'DELETE',
+  })
+}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import DashboardNavbar from '../../../../components/navbar/DashboardNavbar'
-import { createProjectEvidence, getProject } from '../../../../services/projects'
+import { createProjectEvidence, deleteProjectEvidence, getProject } from '../../../../services/projects'
 import {
   EVIDENCE_STATUS_LABELS,
   PHASE_STATUS_LABELS,
@@ -13,6 +13,7 @@ import {
   normalizeText,
 } from '../../../../utils/projectPhases'
 import { getFirstValidationError, validateEvidenceForm } from '../../../../utils/formValidation'
+import { DeleteIcon } from '../../../../components/icons/ActionIcons'
 import { clearSessionUser, getSessionUser } from '../../../../utils/session'
 import '../../../coordinador/proyectos/detalle-proyecto/DetalleProyecto.css'
 import './DetalleParticipanteProyecto.css'
@@ -190,6 +191,25 @@ function DetalleParticipanteProyecto() {
       setError(saveError instanceof Error ? saveError.message : 'No se pudo registrar la evidencia')
     } finally {
       setSavingEvidence(false)
+    }
+  }
+
+  async function handleDeleteEvidence(evidenceId) {
+    if (!globalThis.confirm('¿Estás seguro de eliminar esta evidencia? Esta acción no se puede deshacer.')) return
+
+    setSaveMessage('')
+    setError('')
+
+    try {
+      await deleteProjectEvidence(id, evidenceId)
+      const refreshedPayload = await getProject(id)
+      const refreshedProject = refreshedPayload?.project ?? null
+      const isAssigned = refreshedProject?.participante?.id === sessionUser?.id
+
+      setProject(isAssigned ? refreshedProject : null)
+      setSaveMessage('Evidencia eliminada correctamente.')
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'No se pudo eliminar la evidencia')
     }
   }
 
@@ -498,6 +518,7 @@ function DetalleParticipanteProyecto() {
                     <th>Estado</th>
                     <th>Observaciones</th>
                     <th>Archivo</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -516,6 +537,16 @@ function DetalleParticipanteProyecto() {
                         <a href={resolveEvidenceUrl(evidence.archivo)} target="_blank" rel="noreferrer" className="coor-project-detail-link">
                           Ver archivo
                         </a>
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="evidence-delete-btn"
+                          onClick={() => handleDeleteEvidence(evidence.id)}
+                          aria-label={`Eliminar evidencia ${evidence.titulo}`}
+                        >
+                          <DeleteIcon />
+                        </button>
                       </td>
                     </tr>
                   ))}
