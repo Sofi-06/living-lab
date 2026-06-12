@@ -66,12 +66,12 @@ INSERT INTO users (name, email, password, role, createdAt, updatedAt) VALUES
 -- ============================================================
 
 INSERT INTO phases (nombre) VALUES
-('Co-creacion'),   -- id 1
-('Accion'),        -- id 2
-('Medicion'),      -- id 3
-('Iteracion'),     -- id 4
+('Co-creación'),   -- id 1
+('Acción'),        -- id 2
+('Medición'),      -- id 3
+('Iteración'),     -- id 4
 ('Narrativa'),     -- id 5
-('Apropiacion');   -- id 6
+('Apropiación');   -- id 6
 
 
 -- ============================================================

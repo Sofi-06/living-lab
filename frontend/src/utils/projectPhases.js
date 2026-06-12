@@ -1,10 +1,10 @@
 export const DEFAULT_PROJECT_PHASES = [
-  'Co-creacion',
-  'Accion',
-  'Medicion',
-  'Iteracion',
+  'Co-creación',
+  'Acción',
+  'Medición',
+  'Iteración',
   'Narrativa',
-  'Apropiacion',
+  'Apropiación',
 ]
 
 export const PHASE_STATUS_LABELS = {

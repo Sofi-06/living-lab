@@ -19,12 +19,12 @@ import { extname, join } from 'node:path';
 import { PrismaService } from '../../database/prisma.service';
 
 const DEFAULT_PROJECT_PHASES = [
-  'Co-creacion',
-  'Accion',
-  'Medicion',
-  'Iteracion',
+  'Co-creación',
+  'Acción',
+  'Medición',
+  'Iteración',
   'Narrativa',
-  'Apropiacion',
+  'Apropiación',
 ] as const;
 
 const userSummarySelect = {
