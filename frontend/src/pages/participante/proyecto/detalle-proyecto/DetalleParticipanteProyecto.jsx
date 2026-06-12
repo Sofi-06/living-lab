@@ -81,6 +81,8 @@ function DetalleParticipanteProyecto() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [saveMessage, setSaveMessage] = useState('')
+  const [evidenceError, setEvidenceError] = useState('')
+  const [evidenceFieldErrors, setEvidenceFieldErrors] = useState({})
   const [savingEvidence, setSavingEvidence] = useState(false)
   const [evidenceForm, setEvidenceForm] = useState(EMPTY_EVIDENCE_FORM)
 
@@ -151,6 +153,12 @@ function DetalleParticipanteProyecto() {
     const { name, value, files } = event.target
     const nextValue = name === 'archivo' ? files?.[0] ?? null : value
     setEvidenceForm((current) => ({ ...current, [name]: nextValue }))
+    setEvidenceError('')
+    setEvidenceFieldErrors((prev) => {
+      const next = { ...prev }
+      delete next[name]
+      return next
+    })
   }
 
   async function handleEvidenceSubmit(event) {
@@ -163,15 +171,17 @@ function DetalleParticipanteProyecto() {
       isProjectExpired,
     })
 
+    setEvidenceFieldErrors(validationErrors)
+
     if (Object.keys(validationErrors).length > 0) {
-      setError(getFirstValidationError(validationErrors))
+      setEvidenceError(getFirstValidationError(validationErrors))
       setSaveMessage('')
       return
     }
 
     setSavingEvidence(true)
     setSaveMessage('')
-    setError('')
+    setEvidenceError('')
 
     try {
       await createProjectEvidence(id, {
@@ -185,10 +195,11 @@ function DetalleParticipanteProyecto() {
 
       setProject(isAssigned ? refreshedProject : null)
       setEvidenceForm(EMPTY_EVIDENCE_FORM)
+      setEvidenceFieldErrors({})
       setSaveMessage('Evidencia registrada correctamente.')
       setActiveTab('evidencias')
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'No se pudo registrar la evidencia')
+      setEvidenceError(saveError instanceof Error ? saveError.message : 'No se pudo registrar la evidencia')
     } finally {
       setSavingEvidence(false)
     }
@@ -426,6 +437,12 @@ function DetalleParticipanteProyecto() {
             </div>
           ) : null}
 
+          {evidenceError ? (
+            <div className="coor-project-detail-alert error" role="alert">
+              <strong>Error:</strong> {evidenceError}
+            </div>
+          ) : null}
+
           <form className="doc-evidence-form" onSubmit={handleEvidenceSubmit} noValidate style={isProjectExpired ? { opacity: 0.6, pointerEvents: 'none' } : {}}>
             <label className="doc-evidence-field">
               <span>Fase</span>
@@ -444,7 +461,10 @@ function DetalleParticipanteProyecto() {
                 placeholder="Ej. Informe de avance"
                 required
                 disabled={isProjectExpired}
+                aria-invalid={Boolean(evidenceFieldErrors.titulo)}
+                aria-describedby={evidenceFieldErrors.titulo ? 'evidence-titulo-error' : undefined}
               />
+              {evidenceFieldErrors.titulo ? <small id="evidence-titulo-error">{evidenceFieldErrors.titulo}</small> : null}
             </label>
 
             <label className="doc-evidence-field doc-evidence-field-full">
@@ -470,6 +490,8 @@ function DetalleParticipanteProyecto() {
                   onChange={handleEvidenceFieldChange}
                   required
                   disabled={isProjectExpired}
+                  aria-invalid={Boolean(evidenceFieldErrors.archivo)}
+                  aria-describedby={evidenceFieldErrors.archivo ? 'evidence-archivo-error' : undefined}
                 />
                 <button
                   type="button"
@@ -482,6 +504,8 @@ function DetalleParticipanteProyecto() {
                 <span className="custom-file-name">
                   {evidenceForm.archivo ? evidenceForm.archivo.name : 'Sin archivos seleccionados'}
                 </span>
+              </div>
+              {evidenceFieldErrors.archivo ? <small id="evidence-archivo-error">{evidenceFieldErrors.archivo}</small> : null}
               </div>
             </label>
 
