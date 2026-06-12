@@ -1147,6 +1147,7 @@ export class ProjectsService {
   async deleteEvidence(
     rawId: string,
     rawEvidenceId: string,
+    rawUserId?: string,
   ): Promise<ProjectDetailResponse> {
     const projectId = this.parseProjectId(rawId);
     const evidenceId = this.parseEntityId(
@@ -1161,6 +1162,7 @@ export class ProjectsService {
       select: {
         id: true,
         archivo: true,
+        estado: true,
         projectPhase: {
           select: {
             id: true,
@@ -1173,6 +1175,32 @@ export class ProjectsService {
 
     if (!evidence) {
       throw new NotFoundException('Evidencia no encontrada');
+    }
+
+    if (rawUserId) {
+      const userId = this.parseEntityId(
+        rawUserId,
+        'Identificador de usuario inválido',
+      );
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, role: true },
+      });
+
+      if (!user) {
+        throw new NotFoundException('Usuario no encontrado');
+      }
+
+      if (user.role === SystemRole.PARTICIPANTE) {
+        if (
+          evidence.estado !== EvidenceStatus.PENDING &&
+          evidence.estado !== EvidenceStatus.IN_REVIEW
+        ) {
+          throw new BadRequestException(
+            'No puedes eliminar una evidencia que ya fue evaluada. Solicita al coordinador que lo haga.',
+          );
+        }
+      }
     }
 
     const archivoPath = evidence.archivo;

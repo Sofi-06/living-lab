@@ -98,7 +98,10 @@ function resolveEvidenceUrl(value) {
 
 function getPhaseReviewTemplate(phaseName) {
   const normalizedPhase = normalizeText(phaseName)
-  return PHASE_REVIEW_TEMPLATES[normalizedPhase] ?? []
+  const templateKey = Object.keys(PHASE_REVIEW_TEMPLATES).find(
+    (key) => normalizeText(key) === normalizedPhase,
+  )
+  return templateKey ? PHASE_REVIEW_TEMPLATES[templateKey] : []
 }
 
 function buildReviewChecklist(project, currentPhase) {

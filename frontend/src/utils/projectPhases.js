@@ -22,7 +22,12 @@ export const EVIDENCE_STATUS_LABELS = {
 }
 
 export function normalizeText(value) {
-  return typeof value === 'string' ? value.trim().toLowerCase() : ''
+  if (typeof value !== 'string') return ''
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
 }
 
 export function ensureProjectPhases(project) {

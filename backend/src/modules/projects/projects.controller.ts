@@ -186,7 +186,8 @@ export class ProjectsController {
   deleteEvidence(
     @Param('id') id: string,
     @Param('evidenceId') evidenceId: string,
+    @Query('userId') userId?: string,
   ) {
-    return this.projectsService.deleteEvidence(id, evidenceId);
+    return this.projectsService.deleteEvidence(id, evidenceId, userId);
   }
 }

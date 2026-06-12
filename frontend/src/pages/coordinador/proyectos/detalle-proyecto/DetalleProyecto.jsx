@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import DashboardNavbar from '../../../../components/navbar/DashboardNavbar'
 import { COORDINADOR_LINKS } from '../../../../components/navbar/dashboardLinks'
-import { getProject } from '../../../../services/projects'
+import { deleteProjectEvidence, getProject } from '../../../../services/projects'
 import {
   EVIDENCE_STATUS_LABELS,
   PHASE_STATUS_LABELS,
@@ -13,7 +13,8 @@ import {
   getProjectProgress,
   normalizeText,
 } from '../../../../utils/projectPhases'
-import { clearSessionUser } from '../../../../utils/session'
+import { DeleteIcon } from '../../../../components/icons/ActionIcons'
+import { clearSessionUser, getSessionUser } from '../../../../utils/session'
 import './DetalleProyecto.css'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
@@ -59,6 +60,20 @@ function DetalleProyecto() {
   const [activeTab, setActiveTab] = useState('informacion')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  const sessionUser = getSessionUser()
+
+  async function handleDeleteEvidence(evidenceId) {
+    if (!globalThis.confirm('¿Estás seguro de eliminar esta evidencia? Esta acción no se puede deshacer.')) return
+
+    try {
+      await deleteProjectEvidence(id, evidenceId, sessionUser?.id)
+      const refreshedPayload = await getProject(id)
+      setProject(refreshedPayload?.project ?? null)
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'No se pudo eliminar la evidencia')
+    }
+  }
 
   function handleLogout() {
     clearSessionUser()
@@ -286,6 +301,7 @@ function DetalleProyecto() {
                 <th>Usuario</th>
                 <th>Estado</th>
                 <th>Archivo</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -308,6 +324,16 @@ function DetalleProyecto() {
                     >
                       Ver archivo
                     </a>
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      className="evidence-delete-btn"
+                      onClick={() => handleDeleteEvidence(evidence.id)}
+                      aria-label={`Eliminar evidencia ${evidence.titulo}`}
+                    >
+                      <DeleteIcon />
+                    </button>
                   </td>
                 </tr>
               ))}

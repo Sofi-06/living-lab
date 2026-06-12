@@ -91,7 +91,7 @@ model Evidence {
   projectPhaseId Int
   userId         Int
   titulo         String
-  descripcion    String?
+  descripcion    String?        @db.Text
   archivo        String
   estado         EvidenceStatus @default(PENDING)
   observaciones  String?

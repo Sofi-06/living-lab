@@ -124,8 +124,9 @@ export function deleteProject(projectId) {
   })
 }
 
-export function deleteProjectEvidence(projectId, evidenceId) {
-  return requestJson(`/projects/${projectId}/evidences/${evidenceId}`, {
+export function deleteProjectEvidence(projectId, evidenceId, userId) {
+  const suffix = userId ? `?userId=${userId}` : ''
+  return requestJson(`/projects/${projectId}/evidences/${evidenceId}${suffix}`, {
     method: 'DELETE',
   })
 }

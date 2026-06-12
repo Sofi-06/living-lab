@@ -201,7 +201,7 @@ function DetalleParticipanteProyecto() {
     setError('')
 
     try {
-      await deleteProjectEvidence(id, evidenceId)
+      await deleteProjectEvidence(id, evidenceId, sessionUser.id)
       const refreshedPayload = await getProject(id)
       const refreshedProject = refreshedPayload?.project ?? null
       const isAssigned = refreshedProject?.participante?.id === sessionUser?.id
@@ -539,14 +539,16 @@ function DetalleParticipanteProyecto() {
                         </a>
                       </td>
                       <td>
-                        <button
-                          type="button"
-                          className="evidence-delete-btn"
-                          onClick={() => handleDeleteEvidence(evidence.id)}
-                          aria-label={`Eliminar evidencia ${evidence.titulo}`}
-                        >
-                          <DeleteIcon />
-                        </button>
+                        {evidence.estado === 'PENDING' || evidence.estado === 'IN_REVIEW' ? (
+                          <button
+                            type="button"
+                            className="evidence-delete-btn"
+                            onClick={() => handleDeleteEvidence(evidence.id)}
+                            aria-label={`Eliminar evidencia ${evidence.titulo}`}
+                          >
+                            <DeleteIcon />
+                          </button>
+                        ) : null}
                       </td>
                     </tr>
                   ))}
